@@ -1,0 +1,30 @@
+{
+  "generator-angularjs-library": {
+    "props": {
+      "author": {
+        "name": "Verena Ojeda",
+        "email": "vereojeda@gmail.com"
+      },
+      "libraryName": {
+        "original": "qualita-core-frontend",
+        "camelized": "qualitaCoreFrontend",
+        "dasherized": "qualita-core-frontend",
+        "slugified": "qualita-core-frontend",
+        "parts": [
+          "qualita",
+          "core",
+          "frontend"
+        ]
+      },
+      "includeModuleDirectives": true,
+      "includeModuleFilters": true,
+      "includeModuleServices": true,
+      "includeAngularModuleResource": true,
+      "includeAngularModuleCookies": true,
+      "includeAngularModuleSanitize": true,
+      "librarySrcDirectory": "src/qualita-core-frontend",
+      "libraryUnitTestDirectory": "test/unit/qualita-core-frontend",
+      "libraryUnitE2eDirectory": "test/e2e/qualita-core-frontend"
+    }
+  }
+}

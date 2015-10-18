@@ -1,0 +1,23 @@
+<div>
+    <h2>{{options.title}}<button type="button" ng-show="canCreate()" style="margin-left:10px;" class="btn btn-default glyphicon glyphicon-plus-sign" ng-click="new()"></button></h2>
+    <hr>
+    <table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" class="table table-striped no-footer">
+        <tfoot>
+            <tr>
+            </tr>
+        </tfoot>
+    </table>
+    <div ng-if="selected">
+        <h3>Detalles</h3>
+        <table class="table table-striped table-bordered table-detail">
+            <tbody>
+                <tr ng-repeat="row in options.detailRows">
+                    <td ng-if="selected[row.data]" class="row-title">{{row.title}}</td>
+                    <td ng-if="selected[row.data] && row.renderWith">{{row.renderWith(selected[row.data])}}</td>
+                    <td ng-if="selected[row.data] && !row.renderWith">{{selected[row.data]}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+      
+</div>

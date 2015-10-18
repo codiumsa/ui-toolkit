@@ -1,0 +1,2 @@
+# qualita-core-frontend
+
