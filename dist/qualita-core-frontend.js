@@ -961,7 +961,7 @@ angular.module('qualitaCoreFrontend')
           $('thead+tfoot').remove();
           var tableId = dtInstance.id;
           //console.log($scope.visibleColumns)
-          for (var i = 0; i <= $scope.visibleColumns; i++) {
+          for (var i = 0; i < $scope.visibleColumns; i++) {
             $('#' + tableId + ' tfoot tr').append('<th></th>');
           }
 
