@@ -124,12 +124,12 @@ angular.module('qualitaCoreFrontend')
                 '</div>' +
               '</div>' +
               '<div class="btn-group">' +
-                '<a class="btn btn-xs btn-warning" ng-click="file.pause()" ng-show="!file.paused && file.isUploading()">' +
-                  'Pausar' +
-                '</a>' +
-                '<a class="btn btn-xs btn-warning" ng-click="file.resume()" ng-show="file.paused">' +
-                  'Reanudar' +
-                '</a>' +
+                //'<a class="btn btn-xs btn-warning" ng-click="file.pause()" ng-show="!file.paused && file.isUploading()">' +
+                //  'Pausar' +
+                //'</a>' +
+                //'<a class="btn btn-xs btn-warning" ng-click="file.resume()" ng-show="file.paused">' +
+                //  'Reanudar' +
+                //'</a>' +
                 '<a class="btn btn-xs btn-danger" ng-click="file.cancel()">' +
                   'Cancelar' +
                 '</a>' +
@@ -887,7 +887,6 @@ angular.module('qualitaCoreFrontend')
         selectionColumn = DTColumnBuilder.newColumn(null).withTitle('Seleccionar').notSortable()
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
-              $scope.options.selection[full.id] = false;
               var checkbox = '<label class="checkbox-inline">' +
                 '<input type="checkbox" ng-model="$scope.options.selection[' + data.id + ']" ng-click="toggleOne($scope.options.selection)">' +
               '</label>';
@@ -910,7 +909,10 @@ angular.module('qualitaCoreFrontend')
           return hasPermission('upload_' + $scope.options.resource);        
         };
 
-        $scope.dtColumns.push(actionsColumn);
+        if($scope.options.hasOptions) {
+          $scope.dtColumns.push(actionsColumn);
+          $scope.visibleColumns += 1;
+        }
 
         if($scope.options.isSelectable) {
           $scope.dtColumns.push(selectionColumn);
