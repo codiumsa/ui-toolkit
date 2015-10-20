@@ -15,12 +15,14 @@ angular.module('qualitaCoreFrontend')
       template: '<div>' +
           '<h2>{{options.title}}<button type="button" ng-show="canCreate()" style="margin-left:10px;" class="btn btn-default glyphicon glyphicon-plus-sign" ng-click="new()"></button></h2>' +
           '<hr>' +
-          '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" class="table table-striped no-footer">' +
-              '<tfoot>' +
-                  '<tr>' +
-                  '</tr>' +
-              '</tfoot>' +
-          '</table>' +
+          '<div class="table-responsive">' +
+            '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" class="table table-striped no-footer">' +
+                '<tfoot>' +
+                    '<tr>' +
+                    '</tr>' +
+                '</tfoot>' +
+            '</table>' +
+          '</div>' + 
           '<div ng-if="selected">' +
               '<h3>Detalles</h3>' +
               '<table class="table table-striped table-bordered table-detail">' +
@@ -230,7 +232,7 @@ angular.module('qualitaCoreFrontend')
               var title = $('#' + tableId + ' thead th').eq($(this).index()).text();
               $(this).html(
                   '<input class="column-filter form-control input-sm" type="text" placeholder="'
-                      + title + '" style="min-width:60px" />');
+                      + title + '" style="min-width:60px; width: 100%;" />');
           });
 
           $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
