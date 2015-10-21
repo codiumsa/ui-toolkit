@@ -124,12 +124,12 @@ angular.module('qualitaCoreFrontend')
                 '</div>' +
               '</div>' +
               '<div class="btn-group">' +
-                '<a class="btn btn-xs btn-warning" ng-click="file.pause()" ng-show="!file.paused && file.isUploading()">' +
-                  'Pausar' +
-                '</a>' +
-                '<a class="btn btn-xs btn-warning" ng-click="file.resume()" ng-show="file.paused">' +
-                  'Reanudar' +
-                '</a>' +
+                //'<a class="btn btn-xs btn-warning" ng-click="file.pause()" ng-show="!file.paused && file.isUploading()">' +
+                //  'Pausar' +
+                //'</a>' +
+                //'<a class="btn btn-xs btn-warning" ng-click="file.resume()" ng-show="file.paused">' +
+                //  'Reanudar' +
+                //'</a>' +
                 '<a class="btn btn-xs btn-danger" ng-click="file.cancel()">' +
                   'Cancelar' +
                 '</a>' +
@@ -756,12 +756,14 @@ angular.module('qualitaCoreFrontend')
       template: '<div>' +
           '<h2>{{options.title}}<button type="button" ng-show="canCreate()" style="margin-left:10px;" class="btn btn-default glyphicon glyphicon-plus-sign" ng-click="new()"></button></h2>' +
           '<hr>' +
-          '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" class="table table-striped no-footer">' +
-              '<tfoot>' +
-                  '<tr>' +
-                  '</tr>' +
-              '</tfoot>' +
-          '</table>' +
+          '<div class="table-responsive">' +
+            '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-striped no-footer">' +
+                '<tfoot>' +
+                    '<tr>' +
+                    '</tr>' +
+                '</tfoot>' +
+            '</table>' +
+          '</div>' + 
           '<div ng-if="selected">' +
               '<h3>Detalles</h3>' +
               '<table class="table table-striped table-bordered table-detail">' +
@@ -887,7 +889,6 @@ angular.module('qualitaCoreFrontend')
         selectionColumn = DTColumnBuilder.newColumn(null).withTitle('Seleccionar').notSortable()
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
-              $scope.options.selection[full.id] = false;
               var checkbox = '<label class="checkbox-inline">' +
                 '<input type="checkbox" ng-model="$scope.options.selection[' + data.id + ']" ng-click="toggleOne($scope.options.selection)">' +
               '</label>';
@@ -910,7 +911,10 @@ angular.module('qualitaCoreFrontend')
           return hasPermission('upload_' + $scope.options.resource);        
         };
 
-        $scope.dtColumns.push(actionsColumn);
+        if($scope.options.hasOptions) {
+          $scope.dtColumns.push(actionsColumn);
+          $scope.visibleColumns += 1;
+        }
 
         if($scope.options.isSelectable) {
           $scope.dtColumns.push(selectionColumn);
@@ -959,7 +963,7 @@ angular.module('qualitaCoreFrontend')
           $('thead+tfoot').remove();
           var tableId = dtInstance.id;
           //console.log($scope.visibleColumns)
-          for (var i = 0; i <= $scope.visibleColumns; i++) {
+          for (var i = 0; i < $scope.visibleColumns; i++) {
             $('#' + tableId + ' tfoot tr').append('<th></th>');
           }
 
@@ -969,7 +973,7 @@ angular.module('qualitaCoreFrontend')
               var title = $('#' + tableId + ' thead th').eq($(this).index()).text();
               $(this).html(
                   '<input class="column-filter form-control input-sm" type="text" placeholder="'
-                      + title + '" style="min-width:60px" />');
+                      + title + '" style="min-width:60px; width: 100%;" />');
           });
 
           $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
