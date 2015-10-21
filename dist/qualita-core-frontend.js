@@ -1016,6 +1016,13 @@ angular.module('qualitaCoreFrontend')
                   });
           });*/
 
+          _.each($scope.dtColumns, function(col, index) {
+              if(col.filter) {
+                var a = $('.input-sm')[index + 1]; // data: estado
+                a.value = col.filter;
+              }
+          });
+
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
           $scope.dtOptions.reloadData = function(){
