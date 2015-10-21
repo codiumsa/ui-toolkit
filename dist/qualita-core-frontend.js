@@ -757,7 +757,7 @@ angular.module('qualitaCoreFrontend')
           '<h2>{{options.title}}<button type="button" ng-show="canCreate()" style="margin-left:10px;" class="btn btn-default glyphicon glyphicon-plus-sign" ng-click="new()"></button></h2>' +
           '<hr>' +
           '<div class="table-responsive">' +
-            '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" class="table table-striped no-footer">' +
+            '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-striped no-footer">' +
                 '<tfoot>' +
                     '<tr>' +
                     '</tr>' +
