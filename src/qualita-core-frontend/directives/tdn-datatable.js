@@ -282,6 +282,8 @@ angular.module('qualitaCoreFrontend')
               }
           });
 
+          $('.input-sm').keyup();
+
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
           $scope.dtOptions.reloadData = function(){
