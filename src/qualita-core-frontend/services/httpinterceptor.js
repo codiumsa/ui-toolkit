@@ -40,6 +40,7 @@ angular.module('qualitaCoreFrontend')
         if(rejection.status === 401) {
           if(rejection.data && rejection.data.code === 403) {
             // error de autorización
+            console.log('HttpInterceptor -> error de autorizacion');
             notify({
               message: rejection.data.error,
               classes: ['alert-danger']
