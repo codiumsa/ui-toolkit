@@ -150,7 +150,7 @@ angular.module('qualitaCoreFrontend')
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
               var checkbox = '<label class="checkbox-inline">' +
-                '<input type="checkbox" ng-model="$scope.options.selection[' + data.id + ']" ng-click="toggleOne($scope.options.selection)">' +
+                '<input id="' + title + '" type="checkbox" ng-model="$scope.options.selection[' + data.id + ']" ng-click="toggleOne($scope.options.selection)">' +
               '</label>';
               return checkbox;
           });
@@ -246,7 +246,7 @@ angular.module('qualitaCoreFrontend')
                       var realIndex;
                       var that = this;
                       _.each($scope.dtColumns, function(object, index) {
-                          if (object.sTitle == that.placeholder) {
+                          if (object.sTitle == that.id) {
                               realIndex = index;
                           }
                       });
