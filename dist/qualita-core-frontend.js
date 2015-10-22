@@ -809,6 +809,7 @@ angular.module('qualitaCoreFrontend')
           .withDataProp('data')
           .withOption('processing', true)
           .withOption('serverSide', true)
+          .withOption('order', [[ $scope.options.defaultOrderColumn, $scope.options.defaultOrderDir ]])
           .withOption('language', {
                   'sProcessing' : 'Procesando...',
                   'sLengthMenu' : 'Mostrar _MENU_ registros',
