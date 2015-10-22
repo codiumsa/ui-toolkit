@@ -145,7 +145,7 @@ angular.module('qualitaCoreFrontend')
             return basicOpts;
           });
 
-        selectionColumn = DTColumnBuilder.newColumn(null).withTitle('Seleccionar').notSortable()
+        selectionColumn = DTColumnBuilder.newColumn(null).withTitle('').notSortable()
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
               var checkbox = '<label class="checkbox-inline">' +
@@ -231,8 +231,7 @@ angular.module('qualitaCoreFrontend')
             function() {
               var title = $('#' + tableId + ' thead th').eq($(this).index()).text();
               $(this).html(
-                  '<input class="column-filter form-control input-sm" type="text" placeholder="'
-                      + title + '" style="min-width:60px; width: 100%;" />');
+                  '<input class="column-filter form-control input-sm" type="text" style="min-width:60px; width: 100%;" />');
           });
 
           $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
