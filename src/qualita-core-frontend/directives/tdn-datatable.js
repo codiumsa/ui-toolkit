@@ -150,7 +150,7 @@ angular.module('qualitaCoreFrontend')
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
               var checkbox = '<label class="checkbox-inline">' +
-                '<input id="' + title + '" type="checkbox" ng-model="$scope.options.selection[' + data.id + ']" ng-click="toggleOne($scope.options.selection)">' +
+                '<input type="checkbox" ng-model="$scope.options.selection[' + data.id + ']" ng-click="toggleOne($scope.options.selection)">' +
               '</label>';
               return checkbox;
           });
@@ -232,7 +232,7 @@ angular.module('qualitaCoreFrontend')
             function() {
               var title = $('#' + tableId + ' thead th').eq($(this).index()).text();
               $(this).html(
-                  '<input class="column-filter form-control input-sm" type="text" style="min-width:60px; width: 100%;" />');
+                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" style="min-width:60px; width: 100%;" />');
           });
 
           $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
