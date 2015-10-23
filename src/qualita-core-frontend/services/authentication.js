@@ -8,7 +8,7 @@
  * Service in the qualita.
  */
 angular.module('qualitaCoreFrontend')
-  .service('AuthenticationService', function ($resource, baseurl) {
+  .service('AuthenticationService', function ($resource, $rootScope, $http, baseurl) {
     var Authentication = $resource(baseurl.getBaseUrl() + '/:action', {action: '@action'});
 
     return {
