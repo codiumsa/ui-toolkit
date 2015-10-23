@@ -18,7 +18,7 @@ angular.module('qualitaCoreFrontend')
        * Retorna true si el usuario actual de la aplicación posee el permiso dado como
        * parámetro.
        **/
-      hasPermission: function(permission) {
+      hasPermission: function(permission, userToCheck) {
         /*var permissions = $rootScope.AuthParams.permissions || [];
         return permissions.indexOf(permission) >= 0;*/
         var user = userToCheck || AuthenticationService.getCurrentUser();
