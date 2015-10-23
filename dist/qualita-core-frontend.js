@@ -1105,16 +1105,16 @@ angular.module('qualitaCoreFrontend')
     var Authentication = $resource(baseurl.getBaseUrl() + '/:action', {action: '@action'});
 
     return {
-      login: function(username, password) {
+      /*login: function(username, password) {
         var auth = new Authentication({username: username, password: password});
         return auth.$save({action: 'login'});
-      },
+      },*/
 
       postLogin: function(authParams) {
         return new Authentication.save({action: 'loginApp'}, {username: authParams.username});
       },
 
-      token: function(authParams) {
+      /*token: function(authParams) {
         //$log.debug("en token");
         var auth = new Authentication({username: authParams.username,
                                        accessToken: authParams.accessToken,
@@ -1126,7 +1126,57 @@ angular.module('qualitaCoreFrontend')
         var auth = new Authentication({accessToken: authParams.accessToken,
                                        requestToken: authParams.requestToken});
         return auth.$save({action: 'logout'});
+      }*/
+
+      login: function (username, password) {
+        $rootScope.auxiliarUsername = username;
+        var auth = new Authentication({username: username, password: password});
+        return auth.$save({action: 'login'});
+      },
+
+      token: function (authParams) {
+        //var auth = new Authentication({username: authParams.username,
+        //accessToken: authParams.accessToken,
+        //requestToken: authParams.requestToken});
+        // TODO: eventualmente va a cambiar cuando se tengan las aplicaciones. Ya que las mismas
+        // deberan mandar su requestToken
+        var auth = new Authentication({
+          username: authParams.username,
+          accessToken: authParams.accessToken,
+          requestToken: authParams.requestToken
+        });
+        return auth.$save({action: 'token'});
+      },
+
+      logout: function () {
+        //var auth = new Authentication({accessToken: authParams.accessToken,
+        //                               requestToken: authParams.requestToken});
+        // TODO: eventualmente va a cambiar cuando se tengan las aplicaciones. Ya que las mismas
+        // deberan mandar su requestToken
+        var authParams = this.getCurrentUser();
+        var auth = new Authentication({
+          username: authParams.username,
+          accessToken: authParams.accessToken
+        });
+        $rootScope.AuthParams = {};
+        localStorage.removeItem('AUTH_PARAMS');
+
+        return auth.$save({action: 'logout'});
+      },
+
+      getCurrentUser: function () {
+        var user = $rootScope.AuthParams;
+
+        if (!user || Object.keys(user).length === 0) {
+          user = JSON.parse(localStorage.getItem('AUTH_PARAMS')) || undefined;
+
+          if (user) {
+            $http.defaults.headers.common.Authorization = 'Bearer ' + user.accessToken;
+          }
+        }
+        return user;
       }
+
     };
   });
 
@@ -1151,7 +1201,14 @@ angular.module('qualitaCoreFrontend')
        * parámetro.
        **/
       hasPermission: function(permission) {
-        var permissions = $rootScope.AuthParams.permissions || [];
+        /*var permissions = $rootScope.AuthParams.permissions || [];
+        return permissions.indexOf(permission) >= 0;*/
+        var user = userToCheck || AuthenticationService.getCurrentUser();
+        var permissions = [];
+
+        if (user) {
+          permissions = user.permissions || [];
+        }
         return permissions.indexOf(permission) >= 0;
       },
 
@@ -1159,7 +1216,7 @@ angular.module('qualitaCoreFrontend')
         return Authorization.get({action: 'principal'}).$promise;
       },
 
-      setupCredentials: function(username, requestToken, accessToken) {
+      setupCredentials: function(username, requestToken, accessToken, callback) {
         
         var AuthParams = {
           username: username,
@@ -1175,12 +1232,42 @@ angular.module('qualitaCoreFrontend')
           AuthParams.permissions = response.permisos;
           AuthParams.stamp = response.stamp;
           localStorage.setItem('AUTH_PARAMS', JSON.stringify(AuthParams));
+
+          callback(AuthParams);
         });
       },
 
       cleanupCredentials: function() {        
         localStorage.removeItem('AUTH_PARAMS');
-      }
+      },
+
+      authorize: function (loginRequired, requiredPermissions) {
+          var user = AuthenticationService.getCurrentUser();
+
+          if (loginRequired === true && user === undefined) {
+            return this.enums.LOGIN_REQUIRED;
+          } else if ((loginRequired && user !== undefined) &&
+            (requiredPermissions === undefined || requiredPermissions.length === 0)) {
+            return this.enums.AUTHORIZED;
+          } else if (requiredPermissions) {
+            var isAuthorized = true;
+
+            for (var i = 0; i < requiredPermissions.length; i++) {
+              isAuthorized = this.hasPermission(requiredPermissions[i], user);
+
+              if (isAuthorized === false) {
+                break;
+              }
+            }
+            return isAuthorized ? this.enums.AUTHORIZED : this.enums.NOT_AUTHORIZED;
+          }
+        },
+
+        enums: {
+          LOGIN_REQUIRED: 'loginRequired',
+          NOT_AUTHORIZED: 'notAuthorized',
+          AUTHORIZED: 'authorized'
+        }
     };
   });
 
