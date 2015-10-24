@@ -261,20 +261,6 @@ angular.module('qualitaCoreFrontend')
                   });
           });
 
-          /*table.columns().eq(0).each(
-            function(colIdx) {
-              $('tfoot input:eq(' + colIdx.toString() + ')').on('keyup change',
-                  function(e) {
-                      if(this.value.length >= 1 || e.keyCode === 13){
-                        table.column(colIdx).search(this.value).draw();
-                      }
-                      // Ensure we clear the search if they backspace far enough
-                      if(this.value === "") {
-                          table.column(colIdx).search("").draw();
-                      }
-                  });
-          });*/
-
           _.each($scope.dtColumns, function(col, index) {
               if(col.filter) {
                 var a = $('.input-sm')[index + 1]; // data: estado
@@ -282,7 +268,7 @@ angular.module('qualitaCoreFrontend')
               }
           });
 
-          $('.input-sm').keyup();
+          //$('.input-sm').keyup();
 
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */

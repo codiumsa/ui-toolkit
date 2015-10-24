@@ -12,28 +12,6 @@ angular.module('qualitaCoreFrontend')
     var Authentication = $resource(baseurl.getBaseUrl() + '/:action', {action: '@action'});
 
     return {
-      /*login: function(username, password) {
-        var auth = new Authentication({username: username, password: password});
-        return auth.$save({action: 'login'});
-      },*/
-
-      postLogin: function(authParams) {
-        return new Authentication.save({action: 'loginApp'}, {username: authParams.username});
-      },
-
-      /*token: function(authParams) {
-        //$log.debug("en token");
-        var auth = new Authentication({username: authParams.username,
-                                       accessToken: authParams.accessToken,
-                                       requestToken: authParams.requestToken});
-        return auth.$save({action: 'token'});
-      },
-
-      logout: function(authParams) {
-        var auth = new Authentication({accessToken: authParams.accessToken,
-                                       requestToken: authParams.requestToken});
-        return auth.$save({action: 'logout'});
-      }*/
 
       login: function (username, password) {
         $rootScope.auxiliarUsername = username;
@@ -41,12 +19,11 @@ angular.module('qualitaCoreFrontend')
         return auth.$save({action: 'login'});
       },
 
+      postLogin: function(authParams) {
+        return new Authentication.save({action: 'loginApp'}, {username: authParams.username});
+      },
+
       token: function (authParams) {
-        //var auth = new Authentication({username: authParams.username,
-        //accessToken: authParams.accessToken,
-        //requestToken: authParams.requestToken});
-        // TODO: eventualmente va a cambiar cuando se tengan las aplicaciones. Ya que las mismas
-        // deberan mandar su requestToken
         var auth = new Authentication({
           username: authParams.username,
           accessToken: authParams.accessToken,
@@ -56,10 +33,6 @@ angular.module('qualitaCoreFrontend')
       },
 
       logout: function () {
-        //var auth = new Authentication({accessToken: authParams.accessToken,
-        //                               requestToken: authParams.requestToken});
-        // TODO: eventualmente va a cambiar cuando se tengan las aplicaciones. Ya que las mismas
-        // deberan mandar su requestToken
         var authParams = this.getCurrentUser();
         var auth = new Authentication({
           username: authParams.username,
