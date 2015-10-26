@@ -1240,25 +1240,29 @@ angular.module('qualitaCoreFrontend')
  * Factory in the qualita.
  */
 angular.module('qualitaCoreFrontend')
-  .factory('baseurl', function () {
+  .factory('baseurl', function (Config) {
 
     // Public API here
     return {
       getBaseUrl: function () {
         var hostname = window.location.hostname;
-        //si es 159.203.94.34 es el servidor de homologacion
-        if (hostname === '159.203.94.34')
-          return 'http://' + hostname + '/qualita-client/rest';
-        //si es localhost quiere es desarrollo local
-        else
-          return 'http://' + hostname + ':8088/qualita-client/rest';
+
+        //si es el servidor de homologacion
+        if (hostname === Config.serverIp) {
+          return 'http://' + hostname + '/' + Config.serverName + '/rest';
+        }
+        //si es localhost es desarrollo local
+        else {
+          return 'http://' + hostname + ':8088/' + Config.serverName + '/rest';
+        }
+          
       },
       getPublicBaseUrl: function () {
         var hostname = window.location.hostname;
-        //si es 159.203.94.34 es el servidor de homologacion
-        if (hostname === '159.203.94.34')
+        //si es el servidor de homologacion
+        if (hostname === Config.serverIp)
           return 'http://' + hostname + '/public/';
-        //si es localhost quiere es desarrollo local
+        //si es localhost es desarrollo local
         else
           return 'http://' + hostname + ':8088/public/';
       }
