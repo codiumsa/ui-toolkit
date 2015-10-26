@@ -809,6 +809,7 @@ angular.module('qualitaCoreFrontend')
           .withDataProp('data')
           .withOption('processing', true)
           .withOption('serverSide', true)
+          .withOption('order', [[ $scope.options.defaultOrderColumn, $scope.options.defaultOrderDir ]])
           .withOption('language', {
                   'sProcessing' : 'Procesando...',
                   'sLengthMenu' : 'Mostrar _MENU_ registros',
@@ -886,7 +887,7 @@ angular.module('qualitaCoreFrontend')
             return basicOpts;
           });
 
-        selectionColumn = DTColumnBuilder.newColumn(null).withTitle('Seleccionar').notSortable()
+        selectionColumn = DTColumnBuilder.newColumn(null).withTitle('').notSortable()
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
               var checkbox = '<label class="checkbox-inline">' +
@@ -972,8 +973,7 @@ angular.module('qualitaCoreFrontend')
             function() {
               var title = $('#' + tableId + ' thead th').eq($(this).index()).text();
               $(this).html(
-                  '<input class="column-filter form-control input-sm" type="text" placeholder="'
-                      + title + '" style="min-width:60px; width: 100%;" />');
+                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" style="min-width:60px; width: 100%;" />');
           });
 
           $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
@@ -987,7 +987,7 @@ angular.module('qualitaCoreFrontend')
                       var realIndex;
                       var that = this;
                       _.each($scope.dtColumns, function(object, index) {
-                          if (object.sTitle == that.placeholder) {
+                          if (object.sTitle == that.id) {
                               realIndex = index;
                           }
                       });
@@ -1002,19 +1002,14 @@ angular.module('qualitaCoreFrontend')
                   });
           });
 
-          /*table.columns().eq(0).each(
-            function(colIdx) {
-              $('tfoot input:eq(' + colIdx.toString() + ')').on('keyup change',
-                  function(e) {
-                      if(this.value.length >= 1 || e.keyCode === 13){
-                        table.column(colIdx).search(this.value).draw();
-                      }
-                      // Ensure we clear the search if they backspace far enough
-                      if(this.value === "") {
-                          table.column(colIdx).search("").draw();
-                      }
-                  });
-          });*/
+          _.each($scope.dtColumns, function(col, index) {
+              if(col.filter) {
+                var a = $('.input-sm')[index + 1]; // data: estado
+                a.value = col.filter;
+              }
+          });
+
+          //$('.input-sm').keyup();
 
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
@@ -1092,11 +1087,13 @@ angular.module('qualitaCoreFrontend')
  * Service in the qualita.
  */
 angular.module('qualitaCoreFrontend')
-  .service('AuthenticationService', function ($resource, baseurl) {
+  .service('AuthenticationService', function ($resource, $rootScope, $http, baseurl) {
     var Authentication = $resource(baseurl.getBaseUrl() + '/:action', {action: '@action'});
 
     return {
-      login: function(username, password) {
+
+      login: function (username, password) {
+        $rootScope.auxiliarUsername = username;
         var auth = new Authentication({username: username, password: password});
         return auth.$save({action: 'login'});
       },
@@ -1105,19 +1102,40 @@ angular.module('qualitaCoreFrontend')
         return new Authentication.save({action: 'loginApp'}, {username: authParams.username});
       },
 
-      token: function(authParams) {
-        //$log.debug("en token");
-        var auth = new Authentication({username: authParams.username,
-                                       accessToken: authParams.accessToken,
-                                       requestToken: authParams.requestToken});
+      token: function (authParams) {
+        var auth = new Authentication({
+          username: authParams.username,
+          accessToken: authParams.accessToken,
+          requestToken: authParams.requestToken
+        });
         return auth.$save({action: 'token'});
       },
 
-      logout: function(authParams) {
-        var auth = new Authentication({accessToken: authParams.accessToken,
-                                       requestToken: authParams.requestToken});
+      logout: function () {
+        var authParams = this.getCurrentUser();
+        var auth = new Authentication({
+          username: authParams.username,
+          accessToken: authParams.accessToken
+        });
+        $rootScope.AuthParams = {};
+        localStorage.removeItem('AUTH_PARAMS');
+
         return auth.$save({action: 'logout'});
+      },
+
+      getCurrentUser: function () {
+        var user = $rootScope.AuthParams;
+
+        if (!user || Object.keys(user).length === 0) {
+          user = JSON.parse(localStorage.getItem('AUTH_PARAMS')) || undefined;
+
+          if (user) {
+            $http.defaults.headers.common.Authorization = 'Bearer ' + user.accessToken;
+          }
+        }
+        return user;
       }
+
     };
   });
 
@@ -1131,7 +1149,7 @@ angular.module('qualitaCoreFrontend')
  * Service in the qualita.
  */
 angular.module('qualitaCoreFrontend')
-  .service('AuthorizationService', function ($rootScope, $resource, $http, baseurl) {
+  .service('AuthorizationService', function ($rootScope, $resource, $http, baseurl, AuthenticationService) {
     
     var Authorization = $resource(baseurl.getBaseUrl() + '/authorization/:action',
                                   {action: '@action'});
@@ -1141,8 +1159,15 @@ angular.module('qualitaCoreFrontend')
        * Retorna true si el usuario actual de la aplicación posee el permiso dado como
        * parámetro.
        **/
-      hasPermission: function(permission) {
-        var permissions = $rootScope.AuthParams.permissions || [];
+      hasPermission: function(permission, userToCheck) {
+        /*var permissions = $rootScope.AuthParams.permissions || [];
+        return permissions.indexOf(permission) >= 0;*/
+        var user = userToCheck || AuthenticationService.getCurrentUser();
+        var permissions = [];
+
+        if (user) {
+          permissions = user.permissions || [];
+        }
         return permissions.indexOf(permission) >= 0;
       },
 
@@ -1150,7 +1175,7 @@ angular.module('qualitaCoreFrontend')
         return Authorization.get({action: 'principal'}).$promise;
       },
 
-      setupCredentials: function(username, requestToken, accessToken) {
+      setupCredentials: function(username, requestToken, accessToken, callback) {
         
         var AuthParams = {
           username: username,
@@ -1166,12 +1191,42 @@ angular.module('qualitaCoreFrontend')
           AuthParams.permissions = response.permisos;
           AuthParams.stamp = response.stamp;
           localStorage.setItem('AUTH_PARAMS', JSON.stringify(AuthParams));
+
+          callback(AuthParams);
         });
       },
 
       cleanupCredentials: function() {        
         localStorage.removeItem('AUTH_PARAMS');
-      }
+      },
+
+      authorize: function (loginRequired, requiredPermissions) {
+          var user = AuthenticationService.getCurrentUser();
+
+          if (loginRequired === true && user === undefined) {
+            return this.enums.LOGIN_REQUIRED;
+          } else if ((loginRequired && user !== undefined) &&
+            (requiredPermissions === undefined || requiredPermissions.length === 0)) {
+            return this.enums.AUTHORIZED;
+          } else if (requiredPermissions) {
+            var isAuthorized = true;
+
+            for (var i = 0; i < requiredPermissions.length; i++) {
+              isAuthorized = this.hasPermission(requiredPermissions[i], user);
+
+              if (isAuthorized === false) {
+                break;
+              }
+            }
+            return isAuthorized ? this.enums.AUTHORIZED : this.enums.NOT_AUTHORIZED;
+          }
+        },
+
+        enums: {
+          LOGIN_REQUIRED: 'loginRequired',
+          NOT_AUTHORIZED: 'notAuthorized',
+          AUTHORIZED: 'authorized'
+        }
     };
   });
 
@@ -1408,18 +1463,23 @@ angular.module('qualitaCoreFrontend')
         return response;
       },
 
-      responseError: function(rejection) {
+      /*responseError: function(rejection) {
 
         var notify = $injector.get('notify');
 
         if(rejection.status === 401) {
           if(rejection.data && rejection.data.code === 403) {
             // error de autorización
+            console.log('HttpInterceptor -> error de autorizacion');
             notify({
               message: rejection.data.error,
               classes: ['alert-danger']
             });
             $location.path('/');
+            return $q.reject(rejection);
+          }
+
+          if($location.path() === "/login") {
             return $q.reject(rejection);
           }
 
@@ -1434,6 +1494,48 @@ angular.module('qualitaCoreFrontend')
           }).then(deferred.resolve, deferred.reject);
 
           return deferred.promise.then(function() {
+              rejection.config.headers.Authorization = 'Bearer ' + $rootScope.AuthParams.accessToken;
+              return $http(rejection.config);
+          });
+        }
+        return $q.reject(rejection);
+      }*/
+      responseError: function(rejection) {
+
+        var notify = $injector.get('notify');
+        if(rejection.status === 401) {
+          if(rejection.data && rejection.data.code === 403) {
+            // error de autorización
+            notify({
+              message: rejection.data.error,
+              classes: ['alert-danger']
+            });
+            $location.path('/');
+            return $q.reject(rejection);
+          }
+
+          if($location.path() === "/login") {
+            return $q.reject(rejection);
+          }
+
+
+          var deferred = $q.defer();
+          var AuthenticationService = $injector.get('AuthenticationService');
+          var $http = $injector.get('$http');
+          var auth = AuthenticationService.token($rootScope.AuthParams);
+
+          auth.then(function(response) {
+            $rootScope.AuthParams.accessToken = response.accessToken;
+            localStorage.setItem('AUTH_PARAMS', JSON.stringify($rootScope.AuthParams));
+            $http.defaults.headers.common.Authorization = 'Bearer ' + response.accessToken;
+            AuthenticationService.postLogin($rootScope.AuthParams).$promise.then(function (data){
+              $rootScope.AuthParams.accesoSistema = data;
+              $http.defaults.headers.common['X-Access'] = $rootScope.AuthParams.accesoSistema.accesosSistema[0].unidadNegocioSucursal;
+            });
+          }).then(deferred.resolve, deferred.reject);
+
+          return deferred.promise.then(function() {
+              //$http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.AuthParams.accessToken;
               rejection.config.headers.Authorization = 'Bearer ' + $rootScope.AuthParams.accessToken;
               return $http(rejection.config);
           });
