@@ -91,9 +91,9 @@ angular.module('qualitaCoreFrontend')
             $compile(angular.element(row).contents())($scope);
           })
           .withOption('headerCallback', function(header) {
-            if (!vm.headerCompiled) {
+            if (!$scope.headerCompiled) {
                 // Use this headerCompiled field to only compile header once
-                vm.headerCompiled = true;
+                scope.headerCompiled = true;
                 $compile(angular.element(header).contents())($scope);
             }
           })
