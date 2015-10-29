@@ -786,6 +786,7 @@ angular.module('qualitaCoreFrontend')
         var actionsColumn, selectionColumn, urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
 
         $scope.selectAll = false;
+        $scope.headerCompiled = false;
 
         var ajaxRequest = function(data, callback) {
           var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
@@ -829,6 +830,13 @@ angular.module('qualitaCoreFrontend')
                 })
           .withOption('createdRow', function(row, data, dataIndex) {
             $compile(angular.element(row).contents())($scope);
+          })
+          .withOption('headerCallback', function(header) {
+            if (!vm.headerCompiled) {
+                // Use this headerCompiled field to only compile header once
+                vm.headerCompiled = true;
+                $compile(angular.element(header).contents())($scope);
+            }
           })
           .withPaginationType('full_numbers')
           .withBootstrap();
@@ -887,7 +895,7 @@ angular.module('qualitaCoreFrontend')
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
               var checkbox = '<label class="checkbox-inline">' +
-                '<input type="checkbox" ng-model="$scope.options.selection[' + data.id + ']" ng-click="toggleOne($scope.options.selection)">' +
+                '<input id="' + data.id + '" type="checkbox" ng-model="$scope.options.selection[' + data.id + ']" ng-click="toggleOne($scope.options.selection)">' +
               '</label>';
               return checkbox;
           });
