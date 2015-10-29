@@ -44,13 +44,7 @@ angular.module('qualitaCoreFrontend')
       controller: function controller($scope, $element) {
         var actionsColumn, selectionColumn, urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
 
-        //$scope.selection = {};
         $scope.selectAll = false;
-        //$scope.toggleAll = toggleAll;
-        //$scope.toggleOne = toggleOne;
-        var titleHtml = '<label class="checkbox-inline">' +
-                '<input type="checkbox" ng-model="selectAll" ng-click="toggleAll(selectAll, $scope.options.selection)">' +
-              '</label>';
 
         var ajaxRequest = function(data, callback) {
           var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
@@ -146,6 +140,8 @@ angular.module('qualitaCoreFrontend')
             return basicOpts;
           });
 
+        var titleHtml = '<label class="checkbox-inline"><input type="checkbox" ng-model="selectAll" onclick=\"angular.element(this).scope().toggleAll(angular.element(this).scope().selectAll)\"></label>';
+
         selectionColumn = DTColumnBuilder.newColumn(null).withTitle('').notSortable()
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
@@ -193,20 +189,26 @@ angular.module('qualitaCoreFrontend')
           //$location.path(pathTemplate(params));
         }
 
-        $scope.tooggleAll = function (selectAll, selectedItems) {
-            console.log('tooggleAll');
-            console.log(selectedItems);
-            for (var id in selectedItems) {
-                if (selectedItems.hasOwnProperty(id)) {
-                    selectedItems[id] = selectAll;
+        $scope.toggleAll = function (selectAll) {
+            //console.log('toggleAll');
+            $scope.selectAll = !$scope.selectAll; 
+            if ($scope.selectAll) {         //If true then select visible
+                _.each(table.rows().data(), function (value, index) {
+                  if (!$scope.options.selection[value.id]) {
+                    $("#"+value.id).click();
+                  }
+                })
+            } else {
+              _.each($scope.options.selection, function (value, index) {
+                if (value) {
+                  $("#"+index).click();
                 }
+              })
             }
-            $scope.options.selection = selectedItems;
         }
 
         $scope.toggleOne = function (selectedItems) {
-            console.log('toggleOne');
-            console.log(selectedItems);
+            //console.log('toggleOne');
             for (var id in selectedItems) {
                 if (selectedItems.hasOwnProperty(id)) {
                     if(!selectedItems[id]) {
@@ -275,6 +277,18 @@ angular.module('qualitaCoreFrontend')
           $scope.dtOptions.reloadData = function(){
             $('#' + tableId).DataTable().ajax.reload();
           }
+
+          table.on('draw', function() {
+            $timeout(function() {
+              var selectAll = true;
+              _.each(table.rows().data(), function (value, index) {
+                  if (!$scope.options.selection[value.id]) {
+                    selectAll = false;
+                  }
+                });
+              $scope.selectAll = selectAll;
+            });
+          });
 
         }
 
