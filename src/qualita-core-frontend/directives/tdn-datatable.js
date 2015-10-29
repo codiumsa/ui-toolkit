@@ -142,7 +142,7 @@ angular.module('qualitaCoreFrontend')
 
         var titleHtml = '<label class="checkbox-inline"><input type="checkbox" ng-model="selectAll" onclick=\"angular.element(this).scope().toggleAll(angular.element(this).scope().selectAll)\"></label>';
 
-        selectionColumn = DTColumnBuilder.newColumn(null).withTitle('').notSortable()
+        selectionColumn = DTColumnBuilder.newColumn(null).withTitle(titleHtml).notSortable()
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
               var checkbox = '<label class="checkbox-inline">' +
