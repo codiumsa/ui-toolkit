@@ -834,7 +834,7 @@ angular.module('qualitaCoreFrontend')
           .withOption('headerCallback', function(header) {
             if (!$scope.headerCompiled) {
                 // Use this headerCompiled field to only compile header once
-                scope.headerCompiled = true;
+                $scope.headerCompiled = true;
                 $compile(angular.element(header).contents())($scope);
             }
           })
@@ -889,7 +889,7 @@ angular.module('qualitaCoreFrontend')
             return basicOpts;
           });
 
-        var titleHtml = '<label class="checkbox-inline"><input type="checkbox" ng-model="selectAll" onclick=\"angular.element(this).scope().toggleAll(angular.element(this).scope().selectAll)\"></label>';
+        var titleHtml = '<label class="checkbox-inline"><input type="checkbox" ng-model="selectAll" ng-click="toggleAll(selectAll)"></label>';
 
         selectionColumn = DTColumnBuilder.newColumn(null).withTitle(titleHtml).notSortable()
           .withOption('searchable', false)
@@ -939,6 +939,54 @@ angular.module('qualitaCoreFrontend')
         }
 
         $scope.toggleAll = function (selectAll) {
+            console.log('toggleAll');
+            //$scope.selectAll = true;
+            console.log($scope.selectAll);
+            //$scope.selectAll = !$scope.selectAll;
+            if (!$scope.selectAll)
+              $scope.selectAll = false;
+            else
+              $scope.selectAll = true;
+
+            if ($scope.selectAll) {         //If true then select visible
+                _.each(table.rows().data(), function (value, index) {
+                  if (!$scope.options.selection[value.id]) {
+                    $("#"+value.id).click();
+                  }
+                })
+            } else {
+              _.each($scope.options.selection, function (value, index) {
+                if (value) {
+                  $("#"+index).click();
+                }
+              })
+            }
+        }
+
+        $scope.toggleOne = function (selectedItems) {
+            console.log('toggleOne');
+            console.log(selectedItems);
+            for (var id in selectedItems) {
+              if (selectedItems.hasOwnProperty(id)) {
+                  if(!selectedItems[id]) {
+                      $scope.selectAll = false;
+                      return;
+                  }
+              }
+            }
+            var selectAll = true;
+            _.each(table.rows().data(), function (value, index) {
+                if (!$scope.options.selection[value.id]) {
+                  selectAll = false;
+                }
+              });
+            $scope.selectAll = selectAll;
+            //$scope.selectAll = true;
+            $scope.options.selection = selectedItems;
+        }
+
+
+        /*$scope.toggleAll = function (selectAll) {
             //console.log('toggleAll');
             $scope.selectAll = !$scope.selectAll; 
             if ($scope.selectAll) {         //If true then select visible
@@ -968,7 +1016,7 @@ angular.module('qualitaCoreFrontend')
             }
             $scope.selectAll = true;
             $scope.options.selection = selectedItems;
-        }
+        }*/
 
         $scope.dtInstanceCallback = function(dtInstance){
           $('thead+tfoot').remove();
