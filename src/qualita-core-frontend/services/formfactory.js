@@ -34,14 +34,19 @@ angular.module('qualitaCoreFrontend')
           }
         };
       },
-      defaultSubmit: function(resource, scope, form, factory) {
+      defaultSubmit: function(resource, scope, form, factory, vm) {
         // First we broadcast an event so all fields validate themselves
         scope.$broadcast('schemaFormValidate');
 
         // Then we check if the form is valid
         if (form.$valid) {
           // ... do whatever you need to do with your data.
-          var model = factory.create(scope.model);
+          if(scope.model) {
+            var model = factory.create(scope.model);
+          } else {
+            //si se usa controllerAs, se busca el modelo dentro del vm especificado
+            var model = factory.create(vm.model);
+          }
           factory.save(model).then(function(){
             $location.path('/' + resource);
           }, function(){
