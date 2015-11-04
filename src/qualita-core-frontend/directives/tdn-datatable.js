@@ -1,5 +1,4 @@
 'use strict';
-
 /**
  * @ngdoc directive
  * @name qualita.directive:tdnDatatable
@@ -243,39 +242,7 @@ angular.module('qualitaCoreFrontend')
             //$scope.selectAll = true;
             $scope.options.selection = selectedItems;
         }
-
-
-        /*$scope.toggleAll = function (selectAll) {
-            //console.log('toggleAll');
-            $scope.selectAll = !$scope.selectAll; 
-            if ($scope.selectAll) {         //If true then select visible
-                _.each(table.rows().data(), function (value, index) {
-                  if (!$scope.options.selection[value.id]) {
-                    $("#"+value.id).click();
-                  }
-                })
-            } else {
-              _.each($scope.options.selection, function (value, index) {
-                if (value) {
-                  $("#"+index).click();
-                }
-              })
-            }
-        }
-
-        $scope.toggleOne = function (selectedItems) {
-            //console.log('toggleOne');
-            for (var id in selectedItems) {
-                if (selectedItems.hasOwnProperty(id)) {
-                    if(!selectedItems[id]) {
-                        $scope.selectAll = false;
-                        return;
-                    }
-                }
-            }
-            $scope.selectAll = true;
-            $scope.options.selection = selectedItems;
-        }*/
+        var table;
 
         $scope.dtInstanceCallback = function(dtInstance){
           $('thead+tfoot').remove();
@@ -294,7 +261,7 @@ angular.module('qualitaCoreFrontend')
           });
 
           $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
-          var table = dtInstance.DataTable;
+          table = dtInstance.DataTable;
 
 
           table.columns().eq(0).each(
@@ -404,4 +371,4 @@ angular.module('qualitaCoreFrontend')
 
       }
     };
-  });
+  }); 
