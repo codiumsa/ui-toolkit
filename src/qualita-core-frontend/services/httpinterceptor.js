@@ -48,6 +48,9 @@ angular.module('qualitaCoreFrontend')
             $location.path('/');
             return $q.reject(rejection);
           }
+          if($location.path() === "/login") {
+            return;
+          }
 
           if($location.path() === "/login") {
             return $q.reject(rejection);
