@@ -39,7 +39,8 @@
           'ui.router',
           'oc.lazyLoad',
           'ngStorage',
-          'LocalForageModule'
+          'LocalForageModule',
+          'datatables.buttons'
       ]);
 
 })(angular);

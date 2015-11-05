@@ -39,7 +39,8 @@
           'ui.router',
           'oc.lazyLoad',
           'ngStorage',
-          'LocalForageModule'
+          'LocalForageModule',
+          'datatables.buttons'
       ]);
 
 })(angular);
@@ -747,7 +748,7 @@ angular.module('qualitaCoreFrontend').filter('selectFilter', [function ($filter)
  * # tdnDatatable
  */
 angular.module('qualitaCoreFrontend')
-  .directive('tdnDatatable', function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, DTInstances, baseurl) {
+  .directive('tdnDatatable', function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl) {
     
     var hasPermission = AuthorizationService.hasPermission;
     
@@ -784,6 +785,7 @@ angular.module('qualitaCoreFrontend')
       controller: function controller($scope, $element) {
         var actionsColumn, selectionColumn, urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
 
+        $scope.dtInstance = {};
         $scope.selectAll = false;
         $scope.headerCompiled = false;
 
@@ -838,6 +840,7 @@ angular.module('qualitaCoreFrontend')
             }
           })
           .withPaginationType('full_numbers')
+          .withButtons(['columnsToggle', 'colVis', 'print'])
           .withBootstrap();
 
         if($scope.options.detailRows){
