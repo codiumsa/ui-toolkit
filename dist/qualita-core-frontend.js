@@ -40,7 +40,8 @@
           'oc.lazyLoad',
           'ngStorage',
           'LocalForageModule',
-          'datatables.buttons'
+          'datatables.buttons',
+          'datatables.colreorder'
       ]);
 
 })(angular);
@@ -841,6 +842,14 @@ angular.module('qualitaCoreFrontend')
           })
           .withPaginationType('full_numbers')
           .withButtons(['colvis'])
+          .withColReorder()
+          // Set order
+          //.withColReorderOrder([1, 0, 2])
+          // Fix last right column
+          .withColReorderOption('iFixedColumnsRight', 1)
+          .withColReorderCallback(function() {
+              console.log('Columns order has been changed with: ' + this.fnOrder());
+          })
           .withBootstrap();
 
         if($scope.options.detailRows){

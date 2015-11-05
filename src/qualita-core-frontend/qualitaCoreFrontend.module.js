@@ -40,7 +40,8 @@
           'oc.lazyLoad',
           'ngStorage',
           'LocalForageModule',
-          'datatables.buttons'
+          'datatables.buttons',
+          'datatables.colreorder'
       ]);
 
 })(angular);
