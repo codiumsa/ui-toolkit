@@ -98,7 +98,7 @@ angular.module('qualitaCoreFrontend')
             }
           })
           .withPaginationType('full_numbers')
-          .withButtons(['columnsToggle', 'colVis', 'print'])
+          .withButtons(['colvis'])
           .withBootstrap();
 
         if($scope.options.detailRows){
