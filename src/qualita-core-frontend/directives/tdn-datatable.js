@@ -7,9 +7,9 @@
  */
 angular.module('qualitaCoreFrontend')
   .directive('tdnDatatable', function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl) {
-    
+
     var hasPermission = AuthorizationService.hasPermission;
-    
+
     return {
       template: '<div>' +
           '<h2>{{options.title}}<button type="button" ng-show="canCreate()" style="margin-left:10px;" class="btn btn-default glyphicon glyphicon-plus-sign" ng-click="new()"></button></h2>' +
@@ -21,7 +21,7 @@ angular.module('qualitaCoreFrontend')
                     '</tr>' +
                 '</tfoot>' +
             '</table>' +
-          '</div>' + 
+          '</div>' +
           '<div ng-if="selected">' +
               '<h3>Detalles</h3>' +
               '<table class="table table-striped table-bordered table-detail">' +
@@ -33,7 +33,7 @@ angular.module('qualitaCoreFrontend')
                       '</tr>' +
                   '</tbody>' +
               '</table>' +
-          '</div>' + 
+          '</div>' +
       '</div>',
       restrict: 'AE',
       replace: true,
@@ -169,19 +169,19 @@ angular.module('qualitaCoreFrontend')
           });
 
         $scope.canEdit = function() {
-          return hasPermission('update_' + $scope.options.resource);        
+          return hasPermission('update_' + $scope.options.resource);
         };
-        
+
         $scope.canRemove = function() {
-          return hasPermission('delete_' + $scope.options.resource);        
+          return hasPermission('delete_' + $scope.options.resource);
         };
-        
+
         $scope.canCreate = function() {
-          return hasPermission('create_' + $scope.options.resource);        
+          return hasPermission('create_' + $scope.options.resource);
         };
 
         $scope.canDownload = function() {
-          return hasPermission('upload_' + $scope.options.resource);        
+          return hasPermission('upload_' + $scope.options.resource);
         };
 
         if($scope.options.hasOptions) {
@@ -381,4 +381,4 @@ angular.module('qualitaCoreFrontend')
 
       }
     };
-  }); 
+  });

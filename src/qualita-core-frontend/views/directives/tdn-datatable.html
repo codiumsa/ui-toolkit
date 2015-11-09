@@ -6,11 +6,8 @@
           <a href="#" ng-show="canCreate()" ng-click="new()" title="Nuevo">
             <i class="glyphicon glyphicon-plus"></i>
           </a>
-          <a href="#" title="Reporte">
-            <i class="glyphicon glyphicon-book"></i>
-          </a>
-          <a href="#" title="Bitácora">
-            <i class="glyphicon glyphicon-time"></i>
+          <a ng-repeat="menuOption in options.extraMenuOptions" href="#" ng-show="menuOption.showCondition()" ng-click="menuOption.action()" title="{{menuOption.title}}">
+            <i class="{{menuOption.icon}}"></i>
           </a>
         </div>
       </div>
