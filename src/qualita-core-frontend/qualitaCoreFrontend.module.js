@@ -41,7 +41,8 @@
           'ngStorage',
           'LocalForageModule',
           'datatables.buttons',
-          'datatables.colreorder'
+          'datatables.colreorder',
+          'daterangepicker'
       ]);
 
 })(angular);
