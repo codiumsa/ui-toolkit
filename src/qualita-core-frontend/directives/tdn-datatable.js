@@ -175,8 +175,8 @@ angular.module('qualitaCoreFrontend')
                   '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-show="canDownload()" ng-click="download(' + data.id + ',\'' + data.file + '\')">' +
                   '   <span class="glyphicon glyphicon-download-alt"></span>' +
                   '</button>';
-            if($scope.options.extraMenuOptions) {
-              _.forEach($scope.options.extraMenuOptions, function(menuOpt) {
+            if($scope.options.extraRowOptions) {
+              _.forEach($scope.options.extraRowOptions, function(menuOpt) {
                 var compilado = _.template(menuOpt.templateToRender);
                 $scope[menuOpt.functionName] = menuOpt.functionDef;
                 basicOpts = basicOpts + compilado({'dataId': data.id, '$state': $state, '$scope': $scope});
@@ -184,7 +184,7 @@ angular.module('qualitaCoreFrontend')
             }
             return basicOpts;
           });
-        
+
 
         $scope.canEdit = function() {
           return hasPermission('update_' + $scope.options.resource);
