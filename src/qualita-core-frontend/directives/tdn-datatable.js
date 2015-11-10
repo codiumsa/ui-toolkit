@@ -46,6 +46,7 @@ angular.module('qualitaCoreFrontend')
         $scope.dtInstance = {};
         $scope.selectAll = false;
         $scope.headerCompiled = false;
+        $scope.realOrder = {};
 
         var ajaxRequest = function(data, callback) {
           var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
@@ -98,14 +99,24 @@ angular.module('qualitaCoreFrontend')
             }
           })
           .withPaginationType('full_numbers')
-          .withButtons(['colvis'])
+          .withButtons(['colvis', {
+                text: 'Some button',
+                key: 'colvis',
+                action: function (e, dt, node, config) {
+                    alert('Button activated');
+                }
+            }])
           .withColReorder()
           // Set order
           //.withColReorderOrder([1, 0, 2])
           // Fix last right column
-          .withColReorderOption('iFixedColumnsRight', 1)
+          .withColReorderOption('iFixedColumnsLeft', 1)
           .withColReorderCallback(function() {
-              console.log('Columns order has been changed with: ' + this.fnOrder());
+              var order = this.fnOrder();
+              console.log('Columns order has been changed with: ' + order)
+              _.each($scope.dtColumns, function (value, index) {
+                $scope.realOrder[value.sTitle] = order[index];
+              });
           })
           .withBootstrap();
 
@@ -116,7 +127,24 @@ angular.module('qualitaCoreFrontend')
 
         $scope.visibleColumns = $scope.options.columns.length;
 
-        $scope.dtColumns = _.map($scope.options.columns, function(c){
+        $scope.dtColumns = [];
+        var titleHtml = '<label><input type="checkbox" ng-model="selectAll" ng-click="toggleAll(selectAll)"><span class="text"></span></label>';
+
+        selectionColumn = DTColumnBuilder.newColumn(null).withTitle(titleHtml).notSortable()
+          .withOption('searchable', false)
+          .renderWith(function(data, type, full, meta) {
+              var checkbox = '<label>' +
+                '<input id="' + data.id + '" type="checkbox" ng-model="$scope.options.selection[' + data.id + ']" ng-click="toggleOne($scope.options.selection)">' +
+              '<span class="text"></span></label>';
+              return checkbox;
+          });
+
+        if($scope.options.isSelectable) {
+          $scope.dtColumns.push(selectionColumn);
+          $scope.visibleColumns += 1;
+        }
+
+        _.map($scope.options.columns, function(c){
           var column = DTColumnBuilder.newColumn(c.data);
           var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable']
           if(c.title) column = column.withTitle(c.title);
@@ -132,7 +160,7 @@ angular.module('qualitaCoreFrontend')
               column = column.withOption(key, value);
             }
           });
-          return column;
+          $scope.dtColumns.push(column);
         });
 
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
@@ -156,17 +184,7 @@ angular.module('qualitaCoreFrontend')
             }
             return basicOpts;
           });
-
-        var titleHtml = '<label class="checkbox-inline"><input type="checkbox" ng-model="selectAll" ng-click="toggleAll(selectAll)"></label>';
-
-        selectionColumn = DTColumnBuilder.newColumn(null).withTitle(titleHtml).notSortable()
-          .withOption('searchable', false)
-          .renderWith(function(data, type, full, meta) {
-              var checkbox = '<label class="checkbox-inline">' +
-                '<input id="' + data.id + '" type="checkbox" ng-model="$scope.options.selection[' + data.id + ']" ng-click="toggleOne($scope.options.selection)">' +
-              '</label>';
-              return checkbox;
-          });
+        
 
         $scope.canEdit = function() {
           return hasPermission('update_' + $scope.options.resource);        
@@ -189,11 +207,6 @@ angular.module('qualitaCoreFrontend')
           $scope.visibleColumns += 1;
         }
 
-        if($scope.options.isSelectable) {
-          $scope.dtColumns.push(selectionColumn);
-          $scope.visibleColumns += 1;
-        }
-
         $scope.new = function(){
           var pathTemplate = _.template('app.<%= resource %>.new');
           $state.go(pathTemplate($scope.options));
@@ -207,9 +220,9 @@ angular.module('qualitaCoreFrontend')
         }
 
         $scope.toggleAll = function (selectAll) {
-            console.log('toggleAll');
+            //console.log('toggleAll');
             //$scope.selectAll = true;
-            console.log($scope.selectAll);
+            //console.log($scope.selectAll);
             //$scope.selectAll = !$scope.selectAll;
             if (!$scope.selectAll)
               $scope.selectAll = false;
@@ -232,8 +245,8 @@ angular.module('qualitaCoreFrontend')
         }
 
         $scope.toggleOne = function (selectedItems) {
-            console.log('toggleOne');
-            console.log(selectedItems);
+            //console.log('toggleOne');
+            //console.log(selectedItems);
             for (var id in selectedItems) {
               if (selectedItems.hasOwnProperty(id)) {
                   if(!selectedItems[id]) {
@@ -257,22 +270,28 @@ angular.module('qualitaCoreFrontend')
         $scope.dtInstanceCallback = function(dtInstance){
           $('thead+tfoot').remove();
           var tableId = dtInstance.id;
-          //console.log($scope.visibleColumns)
           for (var i = 0; i < $scope.visibleColumns; i++) {
             $('#' + tableId + ' tfoot tr').append('<th></th>');
           }
-
           // Setup - add a text input to each footer cell
-          $('#' + tableId + ' tfoot th').not(':last').each(
+          var exceptFirst;
+          var exceptLast;
+          if ($scope.options.isSelectable) {
+            exceptFirst = ":first"
+          }
+          else if ($scope.options.hasOptions) {
+            exceptLast = ":last"
+          }
+
+          $('#' + tableId + ' tfoot th').not(exceptFirst).not(exceptLast).each(
             function() {
               var title = $('#' + tableId + ' thead th').eq($(this).index()).text();
               $(this).html(
-                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" style="min-width:60px; width: 100%;" />');
+                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');
           });
 
           $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
           table = dtInstance.DataTable;
-
 
           table.columns().eq(0).each(
             function(colIdx) {
@@ -281,7 +300,10 @@ angular.module('qualitaCoreFrontend')
                       var realIndex;
                       var that = this;
                       _.each($scope.dtColumns, function(object, index) {
-                          if (object.sTitle == that.id) {
+                          if ($scope.realOrder[that.id]) {
+                            realIndex = $scope.realOrder[that.id];
+                          }
+                          else if (object.sTitle == that.id) {
                               realIndex = index;
                           }
                       });
@@ -323,6 +345,7 @@ angular.module('qualitaCoreFrontend')
             });
           });
 
+          $scope.dtInstance = dtInstance;
         }
 
         $scope.remove = function(itemId) {
