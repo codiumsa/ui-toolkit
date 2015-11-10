@@ -99,13 +99,7 @@ angular.module('qualitaCoreFrontend')
             }
           })
           .withPaginationType('full_numbers')
-          .withButtons(['colvis', {
-                text: 'Some button',
-                key: 'colvis',
-                action: function (e, dt, node, config) {
-                    alert('Button activated');
-                }
-            }])
+          .withButtons(['colvis'])
           .withColReorder()
           // Set order
           //.withColReorderOrder([1, 0, 2])
