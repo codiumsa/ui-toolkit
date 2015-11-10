@@ -12,8 +12,19 @@ angular.module('qualitaCoreFrontend')
 
     return {
       template: '<div>' +
-          '<h2>{{options.title}}<button type="button" ng-show="canCreate()" style="margin-left:10px;" class="btn btn-default glyphicon glyphicon-plus-sign" ng-click="new()"></button></h2>' +
-          '<hr>' +
+    '<div class="widget">' +
+      '<div class="widget-header">' +
+        '<span class="widget-caption">{{options.title}}</span>' +
+        '<div class="widget-buttons">' +
+          '<a href="#" ng-show="canCreate()" ng-click="new()" title="Nuevo">' +
+            '<i class="glyphicon glyphicon-plus"></i>' +
+          '</a>' +
+          '<a ng-repeat="menuOption in options.extraMenuOptions" href="#" ng-show="menuOption.showCondition()" ng-click="menuOption.action()" title="{{menuOption.title}}">' +
+            '<i class="{{menuOption.icon}}"></i>' +
+          '</a>' +
+        '</div>' +
+      '</div>' +
+      '<div class="widget-body">' +
           '<div class="table-responsive">' +
             '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-striped no-footer">' +
                 '<tfoot>' +
@@ -34,6 +45,7 @@ angular.module('qualitaCoreFrontend')
                   '</tbody>' +
               '</table>' +
           '</div>' +
+        '</div>' +
       '</div>',
       restrict: 'AE',
       replace: true,
