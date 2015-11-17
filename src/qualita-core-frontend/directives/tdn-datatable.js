@@ -20,7 +20,8 @@ angular.module('qualitaCoreFrontend')
             '<i class="glyphicon glyphicon-plus"></i>' +
           '</a>' +
           '<a ng-repeat="menuOption in options.extraMenuOptions" href="#" ng-show="menuOption.showCondition()" ng-click="menuOption.action()" title="{{menuOption.title}}">' +
-            '<i class="{{menuOption.icon}}"></i>' +
+            '<p><i class="{{menuOption.icon}}"></i>' +
+            '  {{menuOption.data}}&nbsp;&nbsp;&nbsp;</p>' +
           '</a>' +
         '</div>' +
       '</div>' +
@@ -116,10 +117,11 @@ angular.module('qualitaCoreFrontend')
           // Set order
           //.withColReorderOrder([1, 0, 2])
           // Fix last right column
-          .withColReorderOption('iFixedColumnsLeft', 1)
+          //.withColReorderOption('iFixedColumnsLeft', 1)
           .withColReorderCallback(function() {
               var order = this.fnOrder();
               console.log('Columns order has been changed with: ' + order)
+              $scope.realOrder = {};
               _.each($scope.dtColumns, function (value, index) {
                 $scope.realOrder[value.sTitle] = order[index];
               });
@@ -128,7 +130,6 @@ angular.module('qualitaCoreFrontend')
 
         if($scope.options.detailRows){
           $scope.dtOptions = $scope.dtOptions.withOption('rowCallback', rowCallback);
-
         }
 
         $scope.visibleColumns = $scope.options.columns.length;
@@ -148,6 +149,11 @@ angular.module('qualitaCoreFrontend')
         if($scope.options.isSelectable) {
           $scope.dtColumns.push(selectionColumn);
           $scope.visibleColumns += 1;
+          $scope.dtOptions.withColReorderOption('iFixedColumnsLeft', 1);
+        }
+
+        if($scope.options.hasOptions) {
+          $scope.dtOptions.withColReorderOption('iFixedColumnsRight', 1);
         }
 
         _.map($scope.options.columns, function(c){
@@ -271,11 +277,14 @@ angular.module('qualitaCoreFrontend')
             //$scope.selectAll = true;
             $scope.options.selection = selectedItems;
         }
+
         var table;
+        var tableId;
 
         $scope.dtInstanceCallback = function(dtInstance){
           $('thead+tfoot').remove();
-          var tableId = dtInstance.id;
+          console.log('csdfsd');
+          tableId = dtInstance.id;
           for (var i = 0; i < $scope.visibleColumns; i++) {
             $('#' + tableId + ' tfoot tr').append('<th></th>');
           }
@@ -350,6 +359,63 @@ angular.module('qualitaCoreFrontend')
               $scope.selectAll = selectAll;
             });
           });
+
+          table.on('column-visibility', function (e, settings, column, state ) {
+            console.log('change column visibility %o', state);
+            $('tfoot tr').empty();
+            tableId = dtInstance.id;
+            if (state === false)
+              $scope.visibleColumns -= 1;
+            else
+              $scope.visibleColumns += 1;
+            for (var i = 0; i < $scope.visibleColumns; i++) {
+              $('#' + tableId + ' tfoot tr').append('<th></th>');
+            }
+            // Setup - add a text input to each footer cell
+            var exceptFirst;
+            var exceptLast;
+            if ($scope.options.isSelectable) {
+              exceptFirst = ":first"
+            }
+            else if ($scope.options.hasOptions) {
+              exceptLast = ":last"
+            }
+
+            $('#' + tableId + ' tfoot th').not(exceptFirst).not(exceptLast).each(
+              function() {
+                var title = $('#' + tableId + ' thead th').eq($(this).index()).text();
+                $(this).html(
+                    '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');
+            });
+
+            $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
+
+            table.columns().eq(0).each(
+            function(colIdx) {
+              $('tfoot input:eq(' + colIdx.toString() + ')').on('keyup change',
+                  function(e) {
+                      var realIndex;
+                      var that = this;
+                      _.each($scope.dtColumns, function(object, index) {
+                          if ($scope.realOrder[that.id]) {
+                            realIndex = $scope.realOrder[that.id];
+                          }
+                          else if (object.sTitle == that.id) {
+                              realIndex = index;
+                          }
+                      });
+                      var index = realIndex || colIdx;
+                      if(this.value.length >= 1 || e.keyCode == 13){
+                        table.column(index).search(this.value).draw();
+                      }
+                      // Ensure we clear the search if they backspace far enough
+                      if(this.value == "") {
+                          table.column(index).search("").draw();
+                      }
+                  });
+              });
+
+          })
 
           $scope.dtInstance = dtInstance;
         }
