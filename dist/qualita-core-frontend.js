@@ -804,6 +804,7 @@ angular.module('qualitaCoreFrontend')
         $scope.selectAll = false;
         $scope.headerCompiled = false;
         $scope.realOrder = {};
+        $scope.customFilters = {};
 
         var ajaxRequest = function(data, callback) {
           var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
@@ -916,8 +917,15 @@ angular.module('qualitaCoreFrontend')
               column = column.withOption(key, value);
             }
           });
+          if(c.type) {
+            //var customFilter = { 'data': c.data, 'title' : c.title, 'type': c.type, 'filterData' : c.typeData };
+            var customFilter = { 'filterType': c.type, 'filterUrl' : c.filterUrl };
+            $scope.customFilters[c.title] = customFilter;
+          }
           $scope.dtColumns.push(column);
         });
+
+        
 
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
@@ -927,9 +935,6 @@ angular.module('qualitaCoreFrontend')
                   '</button>' +
                   '<button class="btn btn-danger btn-dt" style="margin-right: 5px;" ng-show="canRemove()" ng-click="remove(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-trash"></span>' +
-                  '</button>' +
-                  '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-show="canDownload()" ng-click="download(' + data.id + ',\'' + data.file + '\')">' +
-                  '   <span class="glyphicon glyphicon-download-alt"></span>' +
                   '</button>';
             if($scope.options.extraRowOptions) {
               _.forEach($scope.options.extraRowOptions, function(menuOpt) {
@@ -954,10 +959,6 @@ angular.module('qualitaCoreFrontend')
           return hasPermission('create_' + $scope.options.resource);
         };
 
-        $scope.canDownload = function() {
-          return hasPermission('upload_' + $scope.options.resource);
-        };
-
         if($scope.options.hasOptions) {
           $scope.dtColumns.push(actionsColumn);
           $scope.visibleColumns += 1;
@@ -976,10 +977,6 @@ angular.module('qualitaCoreFrontend')
         }
 
         $scope.toggleAll = function (selectAll) {
-            //console.log('toggleAll');
-            //$scope.selectAll = true;
-            //console.log($scope.selectAll);
-            //$scope.selectAll = !$scope.selectAll;
             if (!$scope.selectAll)
               $scope.selectAll = false;
             else
@@ -1001,8 +998,6 @@ angular.module('qualitaCoreFrontend')
         }
 
         $scope.toggleOne = function (selectedItems) {
-            //console.log('toggleOne');
-            //console.log(selectedItems);
             for (var id in selectedItems) {
               if (selectedItems.hasOwnProperty(id)) {
                   if(!selectedItems[id]) {
@@ -1018,7 +1013,6 @@ angular.module('qualitaCoreFrontend')
                 }
               });
             $scope.selectAll = selectAll;
-            //$scope.selectAll = true;
             $scope.options.selection = selectedItems;
         }
 
@@ -1027,7 +1021,6 @@ angular.module('qualitaCoreFrontend')
 
         $scope.dtInstanceCallback = function(dtInstance){
           $('thead+tfoot').remove();
-          console.log('csdfsd');
           tableId = dtInstance.id;
           for (var i = 0; i < $scope.visibleColumns; i++) {
             $('#' + tableId + ' tfoot tr').append('<th></th>');
@@ -1042,40 +1035,105 @@ angular.module('qualitaCoreFrontend')
             exceptLast = ":last"
           }
 
-          $('#' + tableId + ' tfoot th').not(exceptFirst).not(exceptLast).each(
+          var createCustomFilters = function (tableId, exceptFirst, exceptLast) {
+            $('#' + tableId + ' tfoot th').not(exceptFirst).not(exceptLast).each(
             function() {
               var title = $('#' + tableId + ' thead th').eq($(this).index()).text();
-              $(this).html(
-                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');
-          });
+              var customFilter = $scope.customFilters[title];
+              if (customFilter) {
+                if (customFilter.filterType === 'combo') {
 
-          $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
-          table = dtInstance.DataTable;
+                  $(this).html('<div id="' + title + '" name="' + title + '" class="filtro-ancho"></div>');
 
-          table.columns().eq(0).each(
-            function(colIdx) {
-              $('tfoot input:eq(' + colIdx.toString() + ')').on('keyup change',
-                  function(e) {
-                      var realIndex;
-                      var that = this;
-                      _.each($scope.dtColumns, function(object, index) {
-                          if ($scope.realOrder[that.id]) {
-                            realIndex = $scope.realOrder[that.id];
+                  var formatSelection = function(text) {
+                    return text.descripcion;
+                  };
+
+                  var formatResult = function(text) {
+                    return '<div class="select2-user-result">' + text.descripcion + '</div>';
+                  };
+
+                  $('#' + title).select2({
+                    minimumResultsForSearch: -1,
+                    id: function(text){ return text.codigo; },
+                    data: function () {
+                      return $http({
+                          url: baseurl.getBaseUrl() + customFilter.filterUrl,
+                          method: "GET"
+                       });
+                    },
+                    ajax: {
+                        url: baseurl.getBaseUrl() + "/" + customFilter.filterUrl,
+                        dataType: 'json',
+                        quietMillis: 250,
+                        data: function (term, page) { // page is the one-based page number tracked by Select2
+                            return {
+                                q: term
+                            };
+                        },
+                        results: function (data, page) { // parse the results into the format expected by Select2.
+                            // since we are using custom formatting functions we do not need to alter the remote JSON data
+                            return { results: data };
+                        },
+                        cache: true
+                    },
+                    initSelection: function(element, callback) {
+                        var id = $(element).val();
+                        $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
+                                dataType: "json"
+                            }).done(function(data) { 
+                              callback(data); 
+                            });
+                    },
+                    formatResult: formatResult, // omitted for brevity, see the source of this page
+                    formatSelection: formatSelection,  // omitted for brevity, see the source of this page
+                    //dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
+                    escapeMarkup: function (m) { return m; }
+                  })              
+                  .on('change', function(e) {
+                    var value = $('#' + title).select2('val');
+                    if (value.length > 0) {
+                      table.column(':contains('+title+')').search(value).draw();
+                    } else {
+                      table.column(':contains('+title+')').search('').draw();
+                    }
+                  });
+                }
+              } else {
+                $(this).html(
+                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');  
+              }
+            });
+            $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
+              table = dtInstance.DataTable;
+
+              table.columns().eq(0).each(
+                function(colIdx) {
+                  $('tfoot input:eq(' + colIdx.toString() + ')').on('keyup change',
+                      function(e) {
+                          var realIndex;
+                          var that = this;
+                          _.each($scope.dtColumns, function(object, index) {
+                              if ($scope.realOrder[that.id]) {
+                                realIndex = $scope.realOrder[that.id];
+                              }
+                              else if (object.sTitle == that.id) {
+                                  realIndex = index;
+                              }
+                          });
+                          var index = realIndex || colIdx;
+                          if(this.value.length >= 1 || e.keyCode == 13){
+                            table.column(index).search(this.value).draw();
                           }
-                          else if (object.sTitle == that.id) {
-                              realIndex = index;
+                          // Ensure we clear the search if they backspace far enough
+                          if(this.value == "") {
+                              table.column(index).search("").draw();
                           }
                       });
-                      var index = realIndex || colIdx;
-                      if(this.value.length >= 1 || e.keyCode == 13){
-                        table.column(index).search(this.value).draw();
-                      }
-                      // Ensure we clear the search if they backspace far enough
-                      if(this.value == "") {
-                          table.column(index).search("").draw();
-                      }
-                  });
-          });
+              });
+          }
+
+          createCustomFilters(tableId, exceptFirst, exceptLast);
 
           _.each($scope.dtColumns, function(col, index) {
               if(col.filter) {
@@ -1105,7 +1163,7 @@ angular.module('qualitaCoreFrontend')
           });
 
           table.on('column-visibility', function (e, settings, column, state ) {
-            console.log('change column visibility %o', state);
+            //console.log('change column visibility %o', state);
             $('tfoot tr').empty();
             tableId = dtInstance.id;
             if (state === false)
@@ -1125,39 +1183,8 @@ angular.module('qualitaCoreFrontend')
               exceptLast = ":last"
             }
 
-            $('#' + tableId + ' tfoot th').not(exceptFirst).not(exceptLast).each(
-              function() {
-                var title = $('#' + tableId + ' thead th').eq($(this).index()).text();
-                $(this).html(
-                    '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');
-            });
-
-            $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
-
-            table.columns().eq(0).each(
-            function(colIdx) {
-              $('tfoot input:eq(' + colIdx.toString() + ')').on('keyup change',
-                  function(e) {
-                      var realIndex;
-                      var that = this;
-                      _.each($scope.dtColumns, function(object, index) {
-                          if ($scope.realOrder[that.id]) {
-                            realIndex = $scope.realOrder[that.id];
-                          }
-                          else if (object.sTitle == that.id) {
-                              realIndex = index;
-                          }
-                      });
-                      var index = realIndex || colIdx;
-                      if(this.value.length >= 1 || e.keyCode == 13){
-                        table.column(index).search(this.value).draw();
-                      }
-                      // Ensure we clear the search if they backspace far enough
-                      if(this.value == "") {
-                          table.column(index).search("").draw();
-                      }
-                  });
-              });
+            //llamada a la funcion general de creacion de filtros
+            createCustomFilters(tableId, exceptFirst, exceptLast);
 
           })
 
@@ -1191,10 +1218,6 @@ angular.module('qualitaCoreFrontend')
               modalInstance.close(itemId);
             });
           }
-        };
-
-        $scope.download = function(itemId, filename){
-          $scope.options.factory.download({id: itemId, file : filename});
         };
 
         function rowCallback(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
