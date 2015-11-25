@@ -399,7 +399,8 @@ angular.module('qualitaCoreFrontend')
           });
 
           //$('.input-sm').keyup();
-
+          $(".dt-button.buttons-collection.buttons-colvis").text('Columnas');
+          
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
           $scope.dtOptions.reloadData = function(){
