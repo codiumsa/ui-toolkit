@@ -121,10 +121,15 @@ angular.module('qualitaCoreFrontend')
           //.withColReorderOption('iFixedColumnsLeft', 1)
           .withColReorderCallback(function() {
               var order = this.fnOrder();
-              console.log('Columns order has been changed with: ' + order)
+              console.log('Columns order has been changed with: ' + order);
               $scope.realOrder = {};
               _.each($scope.dtColumns, function (value, index) {
-                $scope.realOrder[value.sTitle] = order[index];
+                var realIndex;
+                _.each(order, function (value, indexCol) {
+                  if (value === index)
+                    realIndex = indexCol;
+                });
+                $scope.realOrder[value.sTitle] = realIndex;
               });
           })
           .withBootstrap();
@@ -306,11 +311,14 @@ angular.module('qualitaCoreFrontend')
                   };
 
                   var formatResult = function(text) {
+                    if (text.descripcion === "")
+                      return '<div class="select2-user-result">Todos</div>';
                     return '<div class="select2-user-result">' + text.descripcion + '</div>';
                   };
 
                   $('#' + title).select2({
                     minimumResultsForSearch: -1,
+                    //allowClear: true,
                     id: function(text){ return text.codigo; },
                     data: function () {
                       return $http({
@@ -329,6 +337,7 @@ angular.module('qualitaCoreFrontend')
                         },
                         results: function (data, page) { // parse the results into the format expected by Select2.
                             // since we are using custom formatting functions we do not need to alter the remote JSON data
+                            //data.push({"descripcion" : "Todos", "value": ""});
                             return { results: data };
                         },
                         cache: true
@@ -338,6 +347,7 @@ angular.module('qualitaCoreFrontend')
                         $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
                                 dataType: "json"
                             }).done(function(data) { 
+                              //data.push({"descripcion" : "Todos", "value": ""});
                               callback(data); 
                             });
                     },
@@ -370,10 +380,14 @@ angular.module('qualitaCoreFrontend')
                           var realIndex;
                           var that = this;
                           _.each($scope.dtColumns, function(object, index) {
+                            console.log('id');
+                            console.log(that.id);
                               if ($scope.realOrder[that.id]) {
+                                console.log($scope.realOrder[that.id]);
                                 realIndex = $scope.realOrder[that.id];
                               }
                               else if (object.sTitle == that.id) {
+                                  console.log(index);
                                   realIndex = index;
                               }
                           });
@@ -399,8 +413,8 @@ angular.module('qualitaCoreFrontend')
           });
 
           //$('.input-sm').keyup();
-          $(".dt-button.buttons-collection.buttons-colvis").text('Columnas');
-          
+          $(".dt-button.buttons-collection.buttons-colvis").text('Columnas'); 
+
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
           $scope.dtOptions.reloadData = function(){
@@ -420,7 +434,7 @@ angular.module('qualitaCoreFrontend')
           });
 
           table.on('column-visibility', function (e, settings, column, state ) {
-            //console.log('change column visibility %o', state);
+            console.log('change column visibility %o', state);
             $('tfoot tr').empty();
             tableId = dtInstance.id;
             if (state === false)
