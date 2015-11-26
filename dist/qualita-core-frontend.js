@@ -1124,14 +1124,10 @@ angular.module('qualitaCoreFrontend')
                           var realIndex;
                           var that = this;
                           _.each($scope.dtColumns, function(object, index) {
-                            console.log('id');
-                            console.log(that.id);
                               if ($scope.realOrder[that.id]) {
-                                console.log($scope.realOrder[that.id]);
                                 realIndex = $scope.realOrder[that.id];
                               }
                               else if (object.sTitle == that.id) {
-                                  console.log(index);
                                   realIndex = index;
                               }
                           });
