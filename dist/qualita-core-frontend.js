@@ -750,7 +750,7 @@ angular.module('qualitaCoreFrontend').filter('selectFilter', [function ($filter)
  * # tdnDatatable
  */
 angular.module('qualitaCoreFrontend')
-  .directive('tdnDatatable', function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl) {
+  .directive('tdnDatatable', function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
 
     var hasPermission = AuthorizationService.hasPermission;
 
@@ -923,7 +923,6 @@ angular.module('qualitaCoreFrontend')
             }
           });
           if(c.type) {
-            //var customFilter = { 'data': c.data, 'title' : c.title, 'type': c.type, 'filterData' : c.typeData };
             var customFilter = { 'filterType': c.type, 'filterUrl' : c.filterUrl };
             $scope.customFilters[c.title] = customFilter;
           }
@@ -1074,6 +1073,7 @@ angular.module('qualitaCoreFrontend')
                         url: baseurl.getBaseUrl() + "/" + customFilter.filterUrl,
                         dataType: 'json',
                         quietMillis: 250,
+                        params: { headers: { "Authorization": $rootScope.AuthParams.accessToken } },
                         data: function (term, page) { // page is the one-based page number tracked by Select2
                             return {
                                 q: term
@@ -1081,17 +1081,19 @@ angular.module('qualitaCoreFrontend')
                         },
                         results: function (data, page) { // parse the results into the format expected by Select2.
                             // since we are using custom formatting functions we do not need to alter the remote JSON data
-                            //data.push({"descripcion" : "Todos", "value": ""});
                             return { results: data };
                         },
                         cache: true
                     },
+                    
                     initSelection: function(element, callback) {
                         var id = $(element).val();
                         $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
-                                dataType: "json"
+                                dataType: "json",
+                                beforeSend: function(xhr){
+                                  xhr.setRequestHeader("Authorization", $rootScope.AuthParams.accessToken);
+                                }
                             }).done(function(data) { 
-                              //data.push({"descripcion" : "Todos", "value": ""});
                               callback(data); 
                             });
                     },
