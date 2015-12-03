@@ -944,7 +944,7 @@ angular.module('qualitaCoreFrontend')
               _.forEach($scope.options.extraRowOptions, function(menuOpt) {
                 var compilado = _.template(menuOpt.templateToRender);
                 $scope[menuOpt.functionName] = menuOpt.functionDef;
-                basicOpts = basicOpts + compilado({'dataId': data.id, '$state': $state, '$scope': $scope});
+                basicOpts = basicOpts + compilado({'dataCustom': data[menuOpt.customAttribute] ,'dataId': data.id, '$state': $state, '$scope': $scope});
               });
             }
             return basicOpts;
@@ -1202,6 +1202,25 @@ angular.module('qualitaCoreFrontend')
           })
 
           $scope.dtInstance = dtInstance;
+
+          // obtiene los filtros actuales
+          $scope.options.getFilters = function getFilters () {
+            var oTable = $('#' + tableId).dataTable();
+            var oParams = oTable.oApi._fnAjaxParameters(oTable.fnSettings());
+            var res = $.param(oParams).split('data');
+            var filters = {};
+            _.each(res, function(value, index) {
+              if (value.indexOf("draw") === -1) {
+                var column = value.substring(value.indexOf("=") + 1, value.indexOf("&"));
+                var search = value.substring(value.indexOf("=", value.indexOf("value")) + 1, value.indexOf("&", value.indexOf("value")));
+                if (column !== undefined && search !== undefined && column != "" && search !== "") {
+                  filters[column] = search;
+                }
+              }
+              
+            });
+            return filters;
+          }
         }
 
         $scope.remove = function(itemId) {
