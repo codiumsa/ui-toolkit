@@ -44,5 +44,4 @@
           'datatables.colreorder',
           'daterangepicker'
       ]);
-
 })(angular);
