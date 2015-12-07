@@ -21,7 +21,6 @@ angular.module('qualitaCoreFrontend')
         }
         //si es localhost es desarrollo local
         else {
-          console.log("hola");
           return 'http://' + hostname + ':' + Config.serverPort 
                 + '/' + Config.serverName + '/' + Config.serverAPI;
         }
