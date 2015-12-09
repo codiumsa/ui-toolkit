@@ -750,7 +750,7 @@ angular.module('qualitaCoreFrontend').filter('selectFilter', [function ($filter)
  * # tdnDatatable
  */
 angular.module('qualitaCoreFrontend')
-  .directive('tdnDatatable', function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl) {
+  .directive('tdnDatatable', function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
 
     var hasPermission = AuthorizationService.hasPermission;
 
@@ -804,6 +804,7 @@ angular.module('qualitaCoreFrontend')
         $scope.selectAll = false;
         $scope.headerCompiled = false;
         $scope.realOrder = {};
+        $scope.customFilters = {};
 
         var ajaxRequest = function(data, callback) {
           var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
@@ -864,10 +865,15 @@ angular.module('qualitaCoreFrontend')
           //.withColReorderOption('iFixedColumnsLeft', 1)
           .withColReorderCallback(function() {
               var order = this.fnOrder();
-              console.log('Columns order has been changed with: ' + order)
+              console.log('Columns order has been changed with: ' + order);
               $scope.realOrder = {};
               _.each($scope.dtColumns, function (value, index) {
-                $scope.realOrder[value.sTitle] = order[index];
+                var realIndex;
+                _.each(order, function (value, indexCol) {
+                  if (value === index)
+                    realIndex = indexCol;
+                });
+                $scope.realOrder[value.sTitle] = realIndex;
               });
           })
           .withBootstrap();
@@ -916,8 +922,14 @@ angular.module('qualitaCoreFrontend')
               column = column.withOption(key, value);
             }
           });
+          if(c.type) {
+            var customFilter = { 'filterType': c.type, 'filterUrl' : c.filterUrl };
+            $scope.customFilters[c.title] = customFilter;
+          }
           $scope.dtColumns.push(column);
         });
+
+        
 
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
@@ -927,15 +939,12 @@ angular.module('qualitaCoreFrontend')
                   '</button>' +
                   '<button class="btn btn-danger btn-dt" style="margin-right: 5px;" ng-show="canRemove()" ng-click="remove(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-trash"></span>' +
-                  '</button>' +
-                  '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-show="canDownload()" ng-click="download(' + data.id + ',\'' + data.file + '\')">' +
-                  '   <span class="glyphicon glyphicon-download-alt"></span>' +
                   '</button>';
             if($scope.options.extraRowOptions) {
               _.forEach($scope.options.extraRowOptions, function(menuOpt) {
                 var compilado = _.template(menuOpt.templateToRender);
                 $scope[menuOpt.functionName] = menuOpt.functionDef;
-                basicOpts = basicOpts + compilado({'dataId': data.id, '$state': $state, '$scope': $scope});
+                basicOpts = basicOpts + compilado({'dataCustom': data[menuOpt.customAttribute] ,'dataId': data.id, '$state': $state, '$scope': $scope});
               });
             }
             return basicOpts;
@@ -952,10 +961,6 @@ angular.module('qualitaCoreFrontend')
 
         $scope.canCreate = function() {
           return hasPermission('create_' + $scope.options.resource);
-        };
-
-        $scope.canDownload = function() {
-          return hasPermission('upload_' + $scope.options.resource);
         };
 
         if($scope.options.hasOptions) {
@@ -976,10 +981,6 @@ angular.module('qualitaCoreFrontend')
         }
 
         $scope.toggleAll = function (selectAll) {
-            //console.log('toggleAll');
-            //$scope.selectAll = true;
-            //console.log($scope.selectAll);
-            //$scope.selectAll = !$scope.selectAll;
             if (!$scope.selectAll)
               $scope.selectAll = false;
             else
@@ -1001,8 +1002,6 @@ angular.module('qualitaCoreFrontend')
         }
 
         $scope.toggleOne = function (selectedItems) {
-            //console.log('toggleOne');
-            //console.log(selectedItems);
             for (var id in selectedItems) {
               if (selectedItems.hasOwnProperty(id)) {
                   if(!selectedItems[id]) {
@@ -1018,7 +1017,6 @@ angular.module('qualitaCoreFrontend')
                 }
               });
             $scope.selectAll = selectAll;
-            //$scope.selectAll = true;
             $scope.options.selection = selectedItems;
         }
 
@@ -1027,7 +1025,6 @@ angular.module('qualitaCoreFrontend')
 
         $scope.dtInstanceCallback = function(dtInstance){
           $('thead+tfoot').remove();
-          console.log('csdfsd');
           tableId = dtInstance.id;
           for (var i = 0; i < $scope.visibleColumns; i++) {
             $('#' + tableId + ' tfoot tr').append('<th></th>');
@@ -1042,40 +1039,113 @@ angular.module('qualitaCoreFrontend')
             exceptLast = ":last"
           }
 
-          $('#' + tableId + ' tfoot th').not(exceptFirst).not(exceptLast).each(
+          var createCustomFilters = function (tableId, exceptFirst, exceptLast) {
+            $('#' + tableId + ' tfoot th').not(exceptFirst).not(exceptLast).each(
             function() {
               var title = $('#' + tableId + ' thead th').eq($(this).index()).text();
-              $(this).html(
-                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');
-          });
+              var customFilter = $scope.customFilters[title];
+              if (customFilter) {
+                if (customFilter.filterType === 'combo') {
 
-          $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
-          table = dtInstance.DataTable;
+                  $(this).html('<div id="' + title + '" name="' + title + '" class="filtro-ancho"></div>');
 
-          table.columns().eq(0).each(
-            function(colIdx) {
-              $('tfoot input:eq(' + colIdx.toString() + ')').on('keyup change',
-                  function(e) {
-                      var realIndex;
-                      var that = this;
-                      _.each($scope.dtColumns, function(object, index) {
-                          if ($scope.realOrder[that.id]) {
-                            realIndex = $scope.realOrder[that.id];
+                  var formatSelection = function(text) {
+                    return text.descripcion;
+                  };
+
+                  var formatResult = function(text) {
+                    if (text.descripcion === "")
+                      return '<div class="select2-user-result">Todos</div>';
+                    return '<div class="select2-user-result">' + text.descripcion + '</div>';
+                  };
+
+                  $('#' + title).select2({
+                    minimumResultsForSearch: -1,
+                    //allowClear: true,
+                    id: function(text){ return text.codigo; },
+                    data: function () {
+                      return $http({
+                          url: baseurl.getBaseUrl() + customFilter.filterUrl,
+                          method: "GET"
+                       });
+                    },
+                    ajax: {
+                        url: baseurl.getBaseUrl() + "/" + customFilter.filterUrl,
+                        dataType: 'json',
+                        quietMillis: 250,
+                        params: { headers: { "Authorization": $rootScope.AuthParams.accessToken } },
+                        data: function (term, page) { // page is the one-based page number tracked by Select2
+                            return {
+                                q: term
+                            };
+                        },
+                        results: function (data, page) { // parse the results into the format expected by Select2.
+                            // since we are using custom formatting functions we do not need to alter the remote JSON data
+                            return { results: data };
+                        },
+                        cache: true
+                    },
+                    
+                    initSelection: function(element, callback) {
+                        var id = $(element).val();
+                        $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
+                                dataType: "json",
+                                beforeSend: function(xhr){
+                                  xhr.setRequestHeader("Authorization", $rootScope.AuthParams.accessToken);
+                                }
+                            }).done(function(data) { 
+                              callback(data); 
+                            });
+                    },
+                    formatResult: formatResult, // omitted for brevity, see the source of this page
+                    formatSelection: formatSelection,  // omitted for brevity, see the source of this page
+                    //dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
+                    escapeMarkup: function (m) { return m; }
+                  })              
+                  .on('change', function(e) {
+                    var value = $('#' + title).select2('val');
+                    if (value.length > 0) {
+                      table.column(':contains('+title+')').search(value).draw();
+                    } else {
+                      table.column(':contains('+title+')').search('').draw();
+                    }
+                  });
+                }
+              } else {
+                $(this).html(
+                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');  
+              }
+            });
+            $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
+              table = dtInstance.DataTable;
+
+              table.columns().eq(0).each(
+                function(colIdx) {
+                  $('tfoot input:eq(' + colIdx.toString() + ')').on('keyup change',
+                      function(e) {
+                          var realIndex;
+                          var that = this;
+                          _.each($scope.dtColumns, function(object, index) {
+                              if ($scope.realOrder[that.id]) {
+                                realIndex = $scope.realOrder[that.id];
+                              }
+                              else if (object.sTitle == that.id) {
+                                  realIndex = index;
+                              }
+                          });
+                          var index = realIndex || colIdx;
+                          if(this.value.length >= 1 || e.keyCode == 13){
+                            table.column(index).search(this.value).draw();
                           }
-                          else if (object.sTitle == that.id) {
-                              realIndex = index;
+                          // Ensure we clear the search if they backspace far enough
+                          if(this.value == "") {
+                              table.column(index).search("").draw();
                           }
                       });
-                      var index = realIndex || colIdx;
-                      if(this.value.length >= 1 || e.keyCode == 13){
-                        table.column(index).search(this.value).draw();
-                      }
-                      // Ensure we clear the search if they backspace far enough
-                      if(this.value == "") {
-                          table.column(index).search("").draw();
-                      }
-                  });
-          });
+              });
+          }
+
+          createCustomFilters(tableId, exceptFirst, exceptLast);
 
           _.each($scope.dtColumns, function(col, index) {
               if(col.filter) {
@@ -1085,6 +1155,7 @@ angular.module('qualitaCoreFrontend')
           });
 
           //$('.input-sm').keyup();
+          $(".dt-button.buttons-collection.buttons-colvis").text('Columnas'); 
 
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
@@ -1125,43 +1196,31 @@ angular.module('qualitaCoreFrontend')
               exceptLast = ":last"
             }
 
-            $('#' + tableId + ' tfoot th').not(exceptFirst).not(exceptLast).each(
-              function() {
-                var title = $('#' + tableId + ' thead th').eq($(this).index()).text();
-                $(this).html(
-                    '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');
-            });
-
-            $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
-
-            table.columns().eq(0).each(
-            function(colIdx) {
-              $('tfoot input:eq(' + colIdx.toString() + ')').on('keyup change',
-                  function(e) {
-                      var realIndex;
-                      var that = this;
-                      _.each($scope.dtColumns, function(object, index) {
-                          if ($scope.realOrder[that.id]) {
-                            realIndex = $scope.realOrder[that.id];
-                          }
-                          else if (object.sTitle == that.id) {
-                              realIndex = index;
-                          }
-                      });
-                      var index = realIndex || colIdx;
-                      if(this.value.length >= 1 || e.keyCode == 13){
-                        table.column(index).search(this.value).draw();
-                      }
-                      // Ensure we clear the search if they backspace far enough
-                      if(this.value == "") {
-                          table.column(index).search("").draw();
-                      }
-                  });
-              });
+            //llamada a la funcion general de creacion de filtros
+            createCustomFilters(tableId, exceptFirst, exceptLast);
 
           })
 
           $scope.dtInstance = dtInstance;
+
+          // obtiene los filtros actuales
+          $scope.options.getFilters = function getFilters () {
+            var oTable = $('#' + tableId).dataTable();
+            var oParams = oTable.oApi._fnAjaxParameters(oTable.fnSettings());
+            var res = $.param(oParams).split('data');
+            var filters = {};
+            _.each(res, function(value, index) {
+              if (value.indexOf("draw") === -1) {
+                var column = value.substring(value.indexOf("=") + 1, value.indexOf("&"));
+                var search = value.substring(value.indexOf("=", value.indexOf("value")) + 1, value.indexOf("&", value.indexOf("value")));
+                if (column !== undefined && search !== undefined && column != "" && search !== "") {
+                  filters[column] = search;
+                }
+              }
+              
+            });
+            return filters;
+          }
         }
 
         $scope.remove = function(itemId) {
@@ -1191,10 +1250,6 @@ angular.module('qualitaCoreFrontend')
               modalInstance.close(itemId);
             });
           }
-        };
-
-        $scope.download = function(itemId, filename){
-          $scope.options.factory.download({id: itemId, file : filename});
         };
 
         function rowCallback(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
@@ -1686,7 +1741,7 @@ angular.module('qualitaCoreFrontend')
             $http.defaults.headers.common.Authorization = 'Bearer ' + response.accessToken;
             AuthenticationService.postLogin($rootScope.AuthParams).$promise.then(function (data){
               $rootScope.AuthParams.accesoSistema = data;
-              $http.defaults.headers.common['X-Access'] = $rootScope.AuthParams.accesoSistema.accesosSistema[0].unidadNegocioSucursal;
+              $http.defaults.headers.common['X-Access'] = $rootScope.AuthParams.accesoSistema.accesosSistema[0].locacion.id;
             });
           }).then(deferred.resolve, deferred.reject);
 

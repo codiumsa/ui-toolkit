@@ -103,7 +103,7 @@ angular.module('qualitaCoreFrontend')
             $http.defaults.headers.common.Authorization = 'Bearer ' + response.accessToken;
             AuthenticationService.postLogin($rootScope.AuthParams).$promise.then(function (data){
               $rootScope.AuthParams.accesoSistema = data;
-              $http.defaults.headers.common['X-Access'] = $rootScope.AuthParams.accesoSistema.accesosSistema[0].unidadNegocioSucursal;
+              $http.defaults.headers.common['X-Access'] = $rootScope.AuthParams.accesoSistema.accesosSistema[0].locacion.id;
             });
           }).then(deferred.resolve, deferred.reject);
 
