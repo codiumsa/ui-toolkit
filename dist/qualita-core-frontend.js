@@ -1303,9 +1303,18 @@ angular.module('qualitaCoreFrontend')
               }
           });
 
+<<<<<<< HEAD
 
           //Texto del boton de visibilidad de columnas
           $(".dt-button.buttons-collection.buttons-colvis").text('Columnas'); 
+||||||| merged common ancestors
+          //$('.input-sm').keyup();
+          $(".dt-button.buttons-collection.buttons-colvis").text('Columnas'); 
+=======
+          //$('.input-sm').keyup();
+          $(".dt-buttons").append("<label class='view-columns'>Vistas&nbsp;</label>");
+          $(".dt-button").addClass("form-control input-sm").text('Columnas');
+>>>>>>> 4be03f21c0309ce6d3e8138efd86c8e9d7f9c918
 
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
@@ -1718,7 +1727,7 @@ angular.module('qualitaCoreFrontend')
  * Factory in the qualita.
  */
 angular.module('qualitaCoreFrontend')
-  .factory('formFactory', function ($location, $localForage, notify) {
+  .factory('formFactory', function ($location, $localForage, notify, $rootScope) {
 
     // Public API here
     return {
@@ -1747,7 +1756,7 @@ angular.module('qualitaCoreFrontend')
       defaultSubmit: function(resource, scope, form, factory, vm) {
         // First we broadcast an event so all fields validate themselves
         scope.$broadcast('schemaFormValidate');
-
+        $rootScope.isProcessing = true;
         // Then we check if the form is valid
         if (form.$valid) {
           // ... do whatever you need to do with your data.
@@ -1758,6 +1767,7 @@ angular.module('qualitaCoreFrontend')
             var model = factory.create(vm.model);
           }
           factory.save(model).then(function(){
+            $rootScope.isProcessing = false;
             $location.path('/' + resource);
           }, function(){
             var msg = 'Error al persistir la operación.';
