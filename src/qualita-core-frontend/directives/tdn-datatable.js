@@ -472,10 +472,16 @@ angular.module('qualitaCoreFrontend')
                   })              
                   .on('change', function(e) {
                     var value = $('#' + id).select2('val');
-                    if (value.length > 0) { //VERIFICAR!
-                      table.column(':contains('+title+')').search(value).draw();
+
+                    //los ids de los inputs tiene la forma "combo_[realIndex]"
+                    var realIndex = parseInt(id.substring(6));
+                    var index = table.colReorder.order().indexOf(realIndex);
+
+                    console.log(this.value);
+                    if(this.value.length >= 1){
+                      table.column(index).search(this.value).draw();
                     } else {
-                      table.column(':contains('+title+')').search('').draw();
+                      table.column(index).search("").draw();
                     }
                   });
                 } else if (customFilter.filterType === 'date-range') {
@@ -554,7 +560,6 @@ angular.module('qualitaCoreFrontend')
               }
           });
 
-          $('.input-sm').keyup();
 
           //Texto del boton de visibilidad de columnas
           $(".dt-button.buttons-collection.buttons-colvis").text('Columnas'); 
@@ -590,15 +595,13 @@ angular.module('qualitaCoreFrontend')
             var oParams = oTable.oApi._fnAjaxParameters(oTable.fnSettings());
             var res = $.param(oParams).split('data');
             var filters = {};
-            console.log("hola");
+
             _.each(res, function(value, index) {
               if (value.indexOf("draw") === -1) {
                 var column = value.substring(value.indexOf("=") + 1, value.indexOf("&"));
                 var search = value.substring(value.indexOf("=", value.indexOf("value")) + 1, value.indexOf("&", value.indexOf("value")));
                 if (column !== undefined && search !== undefined && column != "" && search !== "") {
                   filters[column] = search;
-                  console.log("colum %o", column);
-                  console.log("search %o", search);
                 }
               }
               

@@ -17,6 +17,10 @@ var rootDirectory = path.resolve('./');
 
 // Source directory for build process
 var sourceDirectory = path.join(rootDirectory, './src');
+  
+// Bower directory for build process
+var bowerDirectory = path.join(rootDirectory, './bower');
+
 
 var sourceFiles = [
 
