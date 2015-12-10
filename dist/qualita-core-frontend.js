@@ -44,7 +44,6 @@
           'datatables.colreorder',
           'daterangepicker'
       ]);
-
 })(angular);
 
 'use strict';
@@ -772,10 +771,6 @@ angular.module('qualitaCoreFrontend')
       '<div class="widget-body">' +
           '<div class="table-responsive">' +
             '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-striped no-footer">' +
-                '<tfoot>' +
-                    '<tr>' +
-                    '</tr>' +
-                '</tfoot>' +
             '</table>' +
           '</div>' +
           '<div ng-if="selected">' +
@@ -803,20 +798,117 @@ angular.module('qualitaCoreFrontend')
         $scope.dtInstance = {};
         $scope.selectAll = false;
         $scope.headerCompiled = false;
-        $scope.realOrder = {};
         $scope.customFilters = {};
 
+        var rangeSeparator = "~";
+        var dateFormat = "DD/MM/YYYY";
+        var defaultFilterType = 'string';
+        var table;
+        var tableId;
+
+
         var ajaxRequest = function(data, callback) {
+          
+          if (table) {
+            _.forEach(table.colReorder.order(), function(columnIndex, index) {
+              if ($scope.customFilters[columnIndex]) {
+                data.columns[index]['type'] = $scope.customFilters[columnIndex].filterType;
+              } else {
+                data.columns[index]['type'] = defaultFilterType;
+              }
+            });
+          }
+          data.rangeSeparator = rangeSeparator;
+          //console.log(data);
+
           var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
             query: {
               isArray: false
             }
           });
+
           xhr.query().$promise.then(function(response) {
             callback(response);
+          }).catch(function(response) {
+            console.log(response);
+            console.log("error");
           });
         };
         var ajaxConfig = ($scope.options.ajax) ? $scope.options.ajax : ajaxRequest;
+
+        //modelos de los filtros de rangos de fechas
+        $scope.dateRangeFilters = {
+          'i': {
+            startDate: null,
+            endDate: null
+          }
+        };
+
+        //callback para el boton apply en el widget de rango de fechas
+        var dataPickerApplyEvent = function(ev, picker) {
+          var ini = ev.model.startDate.format(dateFormat);
+          var end = ev.model.endDate.format(dateFormat);
+
+          var index = table.colReorder.order().indexOf(ev.opts.index);
+          table.column(index).search(ini + rangeSeparator + end).draw();
+        }
+
+        //callback para el boton cancel en el widget de rango de fechas, que borra el filtro
+        var dataPickerCancelEvent = function(ev, picker) {
+
+
+          var index = table.colReorder.order().indexOf(ev.opts.index);
+          table.column(index).search("").draw();
+          $("#daterange_" + ev.opts.index ).val("");
+          $scope.dateRangeFilters[ev.opts.index].startDate = null;
+          $scope.dateRangeFilters[ev.opts.index].endDate = null;
+        }
+
+         //callback para borrar el rango previamente seleccionado 
+        var dataPickerShowEvent = function(ev, picker) {
+
+          if ($scope.dateRangeFilters[ev.opts.index].startDate === null) {
+            var widgetIndex = $scope.dateRangePickerWidgetsOrder.indexOf(ev.opts.index);
+            var widget = $($(".daterangepicker").get(widgetIndex));
+            widget.parent().find('.in-range').removeClass("in-range");
+            widget.parent().find('.active').removeClass("active");
+            widget.parent().find('.input-mini').removeClass("active").val("");
+          }
+
+        }
+
+        moment.locale('es');
+        var dateRangeLocaleOptions = {
+          cancelLabel: 'Limpiar',
+          applyLabel: 'Aplicar',
+          format: dateFormat,
+          separator: ' a ',
+          weekLabel: 'S',
+          daysOfWeek: moment.weekdaysMin(),
+          monthNames: moment.monthsShort(),
+          firstDay: moment.localeData().firstDayOfWeek()
+        };
+
+        $scope.dateRangeOptions = {};
+        
+        var dateRangeDefaultOptions = {
+          eventHandlers: { 
+            'apply.daterangepicker' : dataPickerApplyEvent,
+            'cancel.daterangepicker' : dataPickerCancelEvent,
+            'show.daterangepicker' : dataPickerShowEvent
+          },
+          opens: "right",
+          index: 0,
+          showDropdowns: true,
+          locale: dateRangeLocaleOptions
+        };
+
+        $scope.dateRangePickerWidgetsOrder = [];
+
+        //modelos del filtro de rango numericos
+        $scope.numberRangeFilters = {};
+        
+
         $scope.dtOptions = DTOptionsBuilder.newOptions()
           .withOption('ajax', ajaxConfig)
           .withDataProp('data')
@@ -858,77 +950,94 @@ angular.module('qualitaCoreFrontend')
           })
           .withPaginationType('full_numbers')
           .withButtons(['colvis'])
-          .withColReorder()
-          // Set order
-          //.withColReorderOrder([1, 0, 2])
-          // Fix last right column
-          //.withColReorderOption('iFixedColumnsLeft', 1)
-          .withColReorderCallback(function() {
-              var order = this.fnOrder();
-              console.log('Columns order has been changed with: ' + order);
-              $scope.realOrder = {};
-              _.each($scope.dtColumns, function (value, index) {
-                var realIndex;
-                _.each(order, function (value, indexCol) {
-                  if (value === index)
-                    realIndex = indexCol;
-                });
-                $scope.realOrder[value.sTitle] = realIndex;
-              });
-          })
           .withBootstrap();
 
         if($scope.options.detailRows){
           $scope.dtOptions = $scope.dtOptions.withOption('rowCallback', rowCallback);
         }
 
-        $scope.visibleColumns = $scope.options.columns.length;
+        //inicializan la cantidad de columnas visibles
+        $scope.visibleColumns = 0;//$scope.options.columns.length;
 
         $scope.dtColumns = [];
-        var titleHtml = '<label><input type="checkbox" ng-model="selectAll" ng-click="toggleAll(selectAll)"><span class="text"></span></label>';
+        //indices
+        $scope.defaultColumnOrderIndices = [];
+        $scope.originalIndexKey = {};
 
-        selectionColumn = DTColumnBuilder.newColumn(null).withTitle(titleHtml).notSortable()
+        //si tiene checkboxes para seleccion
+        var indexPadding = 0;
+        if($scope.options.isSelectable) {
+
+          var titleHtml = '<label><input type="checkbox" ng-model="selectAll" ng-click="toggleAll(selectAll)"><span class="text"></span></label>';
+
+          selectionColumn = DTColumnBuilder.newColumn(null).withTitle(titleHtml).notSortable()
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
               var checkbox = '<label>' +
                 '<input id="' + data.id + '" type="checkbox" ng-model="$scope.options.selection[' + data.id + ']" ng-click="toggleOne($scope.options.selection)">' +
               '<span class="text"></span></label>';
               return checkbox;
-          });
+          })
+          .withOption('name', 'checkbox');
 
-        if($scope.options.isSelectable) {
           $scope.dtColumns.push(selectionColumn);
           $scope.visibleColumns += 1;
+          indexPadding = 1;
+          $scope.originalIndexKey[0] = null;//'checkbox';
+          $scope.defaultColumnOrderIndices.push(0);
           $scope.dtOptions.withColReorderOption('iFixedColumnsLeft', 1);
         }
 
-        if($scope.options.hasOptions) {
-          $scope.dtOptions.withColReorderOption('iFixedColumnsRight', 1);
-        }
-
-        _.map($scope.options.columns, function(c){
+        var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable'];
+        _.map($scope.options.columns, function(c, index){
+          
           var column = DTColumnBuilder.newColumn(c.data);
-          var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable']
+          //el indice original para la columna
+          var originalIndex = indexPadding + index
+          $scope.originalIndexKey[originalIndex] = c.data;
+                    
           if(c.title) column = column.withTitle(c.title);
           if(c.class) column = column.withClass(c.class);
           if(c.renderWith) column = column.renderWith(c.renderWith);
-          if(c.visible === false) {
-            column = column.notVisible();
-            $scope.visibleColumns -= 1;
-          }
           if(c.sortable === false) column = column.notSortable();
+
+          //si hay un orden definido y no está dentro de ese orden o si especifica que no es visible
+          if(!_.contains($scope.options.defaultColumnOrder, c.data) || c.visible === false) column = column.notVisible();
+          else $scope.visibleColumns += 1;
+            
           _.forOwn(c, function(value, key){
-            if(!_.contains(commonAttrs, key)){
-              column = column.withOption(key, value);
-            }
+            if(!_.contains(commonAttrs, key)) column = column.withOption(key, value);
           });
+
           if(c.type) {
-            var customFilter = { 'filterType': c.type, 'filterUrl' : c.filterUrl };
-            $scope.customFilters[c.title] = customFilter;
+            var customFilter = {'filterType': c.type, 'filterUrl' : c.filterUrl};
+            
+            if (c.type === 'date-range') {
+              $scope.dateRangeFilters[originalIndex] = {startDate: null, endDate: null};
+            } else if (c.type === 'number-range') {
+              $scope.numberRangeFilters[originalIndex] = {start: null, end: null};
+            }
+
+            $scope.customFilters[originalIndex] = customFilter;
           }
           $scope.dtColumns.push(column);
         });
 
+
+        if($scope.options.hasOptions) {
+          $scope.originalIndexKey[$scope.visibleColumns] = null;//'actions';
+          // Fix last right column
+          $scope.dtOptions.withColReorderOption('iFixedColumnsRight', 1);
+          $scope.visibleColumns += 1;
+        }
+
+        //columnas reordenables, por defecto habilitado
+        if ($scope.options.colReorder === true || $scope.options.colReorder === undefined) {
+          $scope.dtOptions.withColReorder();
+        }
+
+        // Se establece el orden por defecto
+        //$scope.dtOptions.withColReorderOrder($scope.defaultColumnOrderIndices);
         
 
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
@@ -1020,46 +1129,48 @@ angular.module('qualitaCoreFrontend')
             $scope.options.selection = selectedItems;
         }
 
-        var table;
-        var tableId;
+        //funciones para el select2          
+        var formatSelection = function(text) {
+          return text.descripcion;
+        };
 
-        $scope.dtInstanceCallback = function(dtInstance){
-          $('thead+tfoot').remove();
-          tableId = dtInstance.id;
-          for (var i = 0; i < $scope.visibleColumns; i++) {
-            $('#' + tableId + ' tfoot tr').append('<th></th>');
-          }
-          // Setup - add a text input to each footer cell
-          var exceptFirst;
-          var exceptLast;
-          if ($scope.options.isSelectable) {
-            exceptFirst = ":first"
-          }
-          else if ($scope.options.hasOptions) {
-            exceptLast = ":last"
-          }
+        var formatResult = function(text) {
+          if (text.descripcion === "")
+            return '<div class="select2-user-result">Todos</div>';
+          return '<div class="select2-user-result">' + text.descripcion + '</div>';
+        };
 
-          var createCustomFilters = function (tableId, exceptFirst, exceptLast) {
-            $('#' + tableId + ' tfoot th').not(exceptFirst).not(exceptLast).each(
-            function() {
-              var title = $('#' + tableId + ' thead th').eq($(this).index()).text();
-              var customFilter = $scope.customFilters[title];
+
+
+
+        //funcion para crear los filtros
+        var createFilters = function() {
+          $('#' + tableId + ' tfoot tr').empty();
+          $scope.dateRangePickerWidgetsOrder = [];
+          $(".daterangepicker").remove();
+          
+          _.forEach(table.context[0].aoColumns, function (column) {
+            var realIndex = column._ColReorder_iOrigCol;
+            var data = column.mData;
+            var html = '<th></th>';
+
+            if (column.bVisible) {
+              var title = column.name;
+              if (!name) {
+                title = column.sTitle;
+              }
+
+              var customFilter = $scope.customFilters[realIndex];
+
               if (customFilter) {
                 if (customFilter.filterType === 'combo') {
+                  var id = 'combo_' + realIndex;
 
-                  $(this).html('<div id="' + title + '" name="' + title + '" class="filtro-ancho"></div>');
+                  html = '<th><div id="' + id + '" name="' + title + '" class="filtro-ancho"></div></th>';
+                  $('#' + tableId + ' tfoot tr').append(html);
+                  html = '';
 
-                  var formatSelection = function(text) {
-                    return text.descripcion;
-                  };
-
-                  var formatResult = function(text) {
-                    if (text.descripcion === "")
-                      return '<div class="select2-user-result">Todos</div>';
-                    return '<div class="select2-user-result">' + text.descripcion + '</div>';
-                  };
-
-                  $('#' + title).select2({
+                  $('#' + id).select2({
                     minimumResultsForSearch: -1,
                     //allowClear: true,
                     id: function(text){ return text.codigo; },
@@ -1087,7 +1198,7 @@ angular.module('qualitaCoreFrontend')
                     },
                     
                     initSelection: function(element, callback) {
-                        var id = $(element).val();
+                        //var id = $(element).val();
                         $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
                                 dataType: "json",
                                 beforeSend: function(xhr){
@@ -1103,49 +1214,81 @@ angular.module('qualitaCoreFrontend')
                     escapeMarkup: function (m) { return m; }
                   })              
                   .on('change', function(e) {
-                    var value = $('#' + title).select2('val');
-                    if (value.length > 0) {
+                    var value = $('#' + id).select2('val');
+                    if (value.length > 0) { //VERIFICAR!
                       table.column(':contains('+title+')').search(value).draw();
                     } else {
                       table.column(':contains('+title+')').search('').draw();
                     }
                   });
+                } else if (customFilter.filterType === 'date-range') {
+                  $scope.dateRangeOptions[realIndex] = _.clone(dateRangeDefaultOptions, true);
+                  $scope.dateRangeOptions[realIndex].index = realIndex;
+
+                  //si esta despues de la mitad abrir a la izquierda
+                  if (realIndex > ($scope.options.columns.length / 2)) {
+                     $scope.dateRangeOptions[realIndex].opens = 'left';
+                  }
+
+                  //$('body').append('<div id="container-daterange_' + realIndex +'"></div>');
+                  //$scope.dateRangeOptions[realIndex]['parentEl'] = "#container-daterange_" + realIndex;
+                  $scope.dateRangePickerWidgetsOrder.push[realIndex];
+                  var input = '<th><input readonly="true" id="daterange_' + realIndex +
+                   '" date-range-picker placeholder="' + title +
+                    '" class="column-filter form-control input-sm date-picker" options="dateRangeOptions[' + realIndex +
+                    ']" type="text" ng-model="dateRangeFilters[' + realIndex + ']" /></th>';
+  
+                  html = $compile(input)($scope);
                 }
-              } else {
-                $(this).html(
-                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');  
+              } else if (column.mData) {
+                var value = table.column(column.idx).search();
+
+                html = '<th><input id="filtro_' + realIndex 
+                + '" class="column-filter form-control input-sm" type="text" placeholder="' + title 
+                + '" style="min-width:60px; width: 100%;" value="' + value 
+                +'"/></th>';  
               }
+
+              $('#' + tableId + ' tfoot tr').append(html);
+              //$('[id="filtro_' + table.colReorder.order()[column] + '"]').val(settings.oAjaxData.columns[column].search.value);
+            }
+          });
+
+          //bind de eventos para filtros
+          _.forEach($("[id^='filtro']"), function (el) {
+            $(el).on('keyup change',
+              function(e) {
+                //los ids de los inputs tiene la forma "filtro_[realIndex]"
+                var realIndex = parseInt(el.id.substring(7));
+                var index = table.colReorder.order().indexOf(realIndex);
+
+                if(this.value.length >= 1 || e.keyCode == 13){
+                  table.column(index).search(this.value).draw();
+                }
+
+                // Ensure we clear the search if they backspace far enough
+                if(this.value == "") {
+                  table.column(index).search("").draw();
+                }
             });
-            $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
-              table = dtInstance.DataTable;
+          });
+        };
 
-              table.columns().eq(0).each(
-                function(colIdx) {
-                  $('tfoot input:eq(' + colIdx.toString() + ')').on('keyup change',
-                      function(e) {
-                          var realIndex;
-                          var that = this;
-                          _.each($scope.dtColumns, function(object, index) {
-                              if ($scope.realOrder[that.id]) {
-                                realIndex = $scope.realOrder[that.id];
-                              }
-                              else if (object.sTitle == that.id) {
-                                  realIndex = index;
-                              }
-                          });
-                          var index = realIndex || colIdx;
-                          if(this.value.length >= 1 || e.keyCode == 13){
-                            table.column(index).search(this.value).draw();
-                          }
-                          // Ensure we clear the search if they backspace far enough
-                          if(this.value == "") {
-                              table.column(index).search("").draw();
-                          }
-                      });
-              });
-          }
+        $scope.dtOptions.withColReorderCallback(function() {
+            var order = this.fnOrder();
+            console.log('Columns order has been changed with: ' + order);
+            createFilters();
+        });
 
-          createCustomFilters(tableId, exceptFirst, exceptLast);
+        $scope.dtInstanceCallback = function(dtInstance){
+          $('thead+tfoot').remove();
+          tableId = dtInstance.id;
+          table = dtInstance.DataTable;
+
+          //creacion de filtros
+          $('#' + tableId).append('<tfoot><tr></tr></tfoot>');
+          createFilters();
+          $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
 
           _.each($scope.dtColumns, function(col, index) {
               if(col.filter) {
@@ -1154,7 +1297,9 @@ angular.module('qualitaCoreFrontend')
               }
           });
 
-          //$('.input-sm').keyup();
+          $('.input-sm').keyup();
+
+          //Texto del boton de visibilidad de columnas
           $(".dt-button.buttons-collection.buttons-colvis").text('Columnas'); 
 
           /* Esto se hace por un bug en Angular Datatables,
@@ -1177,29 +1322,8 @@ angular.module('qualitaCoreFrontend')
 
           table.on('column-visibility', function (e, settings, column, state ) {
             console.log('change column visibility %o', state);
-            $('tfoot tr').empty();
-            tableId = dtInstance.id;
-            if (state === false)
-              $scope.visibleColumns -= 1;
-            else
-              $scope.visibleColumns += 1;
-            for (var i = 0; i < $scope.visibleColumns; i++) {
-              $('#' + tableId + ' tfoot tr').append('<th></th>');
-            }
-            // Setup - add a text input to each footer cell
-            var exceptFirst;
-            var exceptLast;
-            if ($scope.options.isSelectable) {
-              exceptFirst = ":first"
-            }
-            else if ($scope.options.hasOptions) {
-              exceptLast = ":last"
-            }
-
-            //llamada a la funcion general de creacion de filtros
-            createCustomFilters(tableId, exceptFirst, exceptLast);
-
-          })
+            createFilters();
+          });
 
           $scope.dtInstance = dtInstance;
 
@@ -1209,12 +1333,15 @@ angular.module('qualitaCoreFrontend')
             var oParams = oTable.oApi._fnAjaxParameters(oTable.fnSettings());
             var res = $.param(oParams).split('data');
             var filters = {};
+            console.log("hola");
             _.each(res, function(value, index) {
               if (value.indexOf("draw") === -1) {
                 var column = value.substring(value.indexOf("=") + 1, value.indexOf("&"));
                 var search = value.substring(value.indexOf("=", value.indexOf("value")) + 1, value.indexOf("&", value.indexOf("value")));
                 if (column !== undefined && search !== undefined && column != "" && search !== "") {
                   filters[column] = search;
+                  console.log("colum %o", column);
+                  console.log("search %o", search);
                 }
               }
               
@@ -1448,11 +1575,12 @@ angular.module('qualitaCoreFrontend')
 
         //si es el servidor de homologacion
         if (hostname === Config.serverIp) {
-          return 'http://' + hostname + '/' + Config.serverName + '/rest';
+          return 'http://' + hostname + '/' + Config.serverName + '/' + Config.serverAPI;
         }
         //si es localhost es desarrollo local
         else {
-          return 'http://' + hostname + ':8088/' + Config.serverName + '/rest';
+          return 'http://' + hostname + ':' + Config.serverPort 
+                + '/' + Config.serverName + '/' + Config.serverAPI;
         }
           
       },
@@ -1463,7 +1591,7 @@ angular.module('qualitaCoreFrontend')
           return 'http://' + hostname + '/public/';
         //si es localhost es desarrollo local
         else
-          return 'http://' + hostname + ':8088/public/';
+          return 'http://' + hostname + ':' + Config.serverPort  + '/public/';
       }
     };
   });
@@ -1518,46 +1646,51 @@ angular.module('qualitaCoreFrontend')
     // Service logic
     // ...
 
-    var logicalOp = function(type, filters) {
+    var logicalOp = function (type, filters) {
       var result = {
         _inner: {
           type: type
         }
       };
+
+      if (filters.constructor !== Array) {
+        filters = [filters];
+      }
+
       result._inner.filters = (this && this._inner) ? [this._inner, filters] : filters;
-      if(!result.or && type === 'and') result.or = or;
-      if(!result.value) result.value = value;
-      if(!result.add) result.add = add;
+      if (!result.or && type === 'and') result.or = or;
+      if (!result.value) result.value = value;
+      if (!result.add) result.add = add;
       result.paginate = paginate;
       return result;
-    }
+    };
 
-    var and = function(filters) {
+    var and = function (filters) {
       return logicalOp.call(this, 'and', filters);
-    }
+    };
 
-    var or = function(filters) {
+    var or = function (filters) {
       return logicalOp.call(this, 'or', filters);
-    }
+    };
 
-    var add = function(filter) {
-      this.filters.push(filter);
+    var add = function (filter) {
+      this._inner.filters.push(filter);
       return this;
-    }
+    };
 
-    var single = function(filter) {
+    var single = function (filter) {
       return and([filter]);
-    }
+    };
 
-    var value = function() {
+    var value = function () {
       return this._inner;
-    }
+    };
 
-    var paginate = function(limit, offset) {
+    var paginate = function (limit, offset) {
       this._inner.limit = limit;
       this._inner.offset = offset;
       return this;
-    }
+    };
 
 
     // Public API here
@@ -1566,7 +1699,7 @@ angular.module('qualitaCoreFrontend')
       or: or,
       add: add,
       single: single,
-      value : value
+      value: value
     };
   });
 
