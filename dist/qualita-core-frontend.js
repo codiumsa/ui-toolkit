@@ -1303,18 +1303,11 @@ angular.module('qualitaCoreFrontend')
               }
           });
 
-<<<<<<< HEAD
 
           //Texto del boton de visibilidad de columnas
-          $(".dt-button.buttons-collection.buttons-colvis").text('Columnas'); 
-||||||| merged common ancestors
-          //$('.input-sm').keyup();
-          $(".dt-button.buttons-collection.buttons-colvis").text('Columnas'); 
-=======
-          //$('.input-sm').keyup();
           $(".dt-buttons").append("<label class='view-columns'>Vistas&nbsp;</label>");
           $(".dt-button").addClass("form-control input-sm").text('Columnas');
->>>>>>> 4be03f21c0309ce6d3e8138efd86c8e9d7f9c918
+
 
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
@@ -1354,8 +1347,6 @@ angular.module('qualitaCoreFrontend')
                 var search = value.substring(value.indexOf("=", value.indexOf("value")) + 1, value.indexOf("&", value.indexOf("value")));
                 if (column !== undefined && search !== undefined && column != "" && search !== "") {
                   filters[column] = search;
-                  console.log("colum %o", column);
-                  console.log("search %o", search);
                 }
               }
               
