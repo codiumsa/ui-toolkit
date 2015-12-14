@@ -185,7 +185,7 @@ angular.module('qualitaCoreFrontend')
           $scope.dtColumns.push(column);
         });
 
-        
+
 
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
@@ -341,7 +341,7 @@ angular.module('qualitaCoreFrontend')
                         },
                         cache: true
                     },
-                    
+
                     initSelection: function(element, callback) {
                         var id = $(element).val();
                         $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
@@ -349,15 +349,15 @@ angular.module('qualitaCoreFrontend')
                                 beforeSend: function(xhr){
                                   xhr.setRequestHeader("Authorization", $rootScope.AuthParams.accessToken);
                                 }
-                            }).done(function(data) { 
-                              callback(data); 
+                            }).done(function(data) {
+                              callback(data);
                             });
                     },
                     formatResult: formatResult, // omitted for brevity, see the source of this page
                     formatSelection: formatSelection,  // omitted for brevity, see the source of this page
                     //dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
                     escapeMarkup: function (m) { return m; }
-                  })              
+                  })
                   .on('change', function(e) {
                     var value = $('#' + title).select2('val');
                     if (value.length > 0) {
@@ -369,7 +369,7 @@ angular.module('qualitaCoreFrontend')
                 }
               } else {
                 $(this).html(
-                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');  
+                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');
               }
             });
             $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
@@ -411,7 +411,7 @@ angular.module('qualitaCoreFrontend')
           });
 
           //$('.input-sm').keyup();
-          $(".dt-button.buttons-collection.buttons-colvis").text('Columnas'); 
+          $(".dt-button.buttons-collection.buttons-colvis").text('Columnas');
 
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
@@ -473,7 +473,7 @@ angular.module('qualitaCoreFrontend')
                   filters[column] = search;
                 }
               }
-              
+
             });
             return filters;
           }
@@ -483,27 +483,46 @@ angular.module('qualitaCoreFrontend')
           $scope.selectedItemId = itemId;
           $scope.tituloModal = "Confirmación de Borrado";
           $scope.mensajeModal = "Esta operación eliminará el registro seleccionado. ¿Desea continuar?";
-          var modalInstance = $modal.open({
+          $scope.modalInstanceBorrar1 = $modal.open({
             template: '<div class="modal-header">' +
-                '<h3 class="modal-title">{{::tituloModal}}</h3>' +
+            '<h3 class="modal-title">{{::tituloModal}}</h3>' +
             '</div>' +
             '<div class="modal-body">{{::mensajeModal}}</div>' +
             '<div class="modal-footer">' +
-                '<button class="btn btn-primary" ng-click="ok(selectedItemId)">Aceptar</button>' +
-                '<button class="btn btn-warning" ng-click="cancel()">Cancelar</button>' +
+            '<button class="btn btn-primary" ng-click="ok(selectedItemId)">Aceptar</button>' +
+            '<button class="btn btn-warning" ng-click="cancel()">Cancelar</button>' +
             '</div>',
             scope: $scope
           });
 
           $scope.cancel = function() {
-            modalInstance.dismiss('cancel');
+            $scope.modalInstanceBorrar1.dismiss('cancel');
           }
 
           $scope.ok = function(itemId) {
             var model = $scope.options.factory.create({id: itemId});
             $scope.options.factory.remove(model).then(function() {
               $scope.dtOptions.reloadData();
-              modalInstance.close(itemId);
+              $scope.modalInstanceBorrar1.close(itemId);
+            }, function(error) {
+              $scope.modalInstanceBorrar1.dismiss('cancel');
+              $scope.tituloModal = "No se pudo borrar el usuario";
+              $scope.mensajeModal = $scope.options.failedDeleteError;
+              var modalInstance = $modal.open({
+                template: '<div class="modal-header">' +
+                '<h3 class="modal-title">{{::tituloModal}}</h3>' +
+                '</div>' +
+                '<div class="modal-body">{{::mensajeModal}}</div>' +
+                '<div class="modal-footer">' +
+                '<button class="btn btn-primary" ng-click="cancel()">Aceptar</button>' +
+                '</div>',
+                scope: $scope
+              });
+              $scope.cancel = function() {
+                modalInstance.dismiss('cancel');
+              };
+              console.log("error al borrar: ");
+              console.log(error);
             });
           }
         };
