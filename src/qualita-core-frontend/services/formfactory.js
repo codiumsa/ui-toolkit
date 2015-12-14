@@ -8,7 +8,7 @@
  * Factory in the qualita.
  */
 angular.module('qualitaCoreFrontend')
-  .factory('formFactory', function ($location, $localForage, notify) {
+  .factory('formFactory', function ($location, $localForage, notify, $rootScope) {
 
     // Public API here
     return {
@@ -37,9 +37,9 @@ angular.module('qualitaCoreFrontend')
       defaultSubmit: function(resource, scope, form, factory, vm) {
         // First we broadcast an event so all fields validate themselves
         scope.$broadcast('schemaFormValidate');
-
         // Then we check if the form is valid
         if (form.$valid) {
+          $rootScope.isProcessing = true;
           // ... do whatever you need to do with your data.
           if(scope.model) {
             var model = factory.create(scope.model);
@@ -48,6 +48,7 @@ angular.module('qualitaCoreFrontend')
             var model = factory.create(vm.model);
           }
           factory.save(model).then(function(){
+            $rootScope.isProcessing = false;
             $location.path('/' + resource);
           }, function(){
             var msg = 'Error al persistir la operación.';
