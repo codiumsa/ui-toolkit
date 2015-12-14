@@ -65,7 +65,7 @@ angular.module('qualitaCoreFrontend')
 
 
         var ajaxRequest = function(data, callback) {
-          
+
           if (table) {
             _.forEach(table.colReorder.order(), function(columnIndex, index) {
               if ($scope.customFilters[columnIndex]) {
@@ -121,7 +121,7 @@ angular.module('qualitaCoreFrontend')
           $scope.dateRangeFilters[ev.opts.index].endDate = null;
         }
 
-         //callback para borrar el rango previamente seleccionado 
+         //callback para borrar el rango previamente seleccionado
         var dataPickerShowEvent = function(ev, picker) {
 
           if ($scope.dateRangeFilters[ev.opts.index].startDate === null) {
@@ -147,9 +147,9 @@ angular.module('qualitaCoreFrontend')
         };
 
         $scope.dateRangeOptions = {};
-        
+
         var dateRangeDefaultOptions = {
-          eventHandlers: { 
+          eventHandlers: {
             'apply.daterangepicker' : dataPickerApplyEvent,
             'cancel.daterangepicker' : dataPickerCancelEvent,
             'show.daterangepicker' : dataPickerShowEvent
@@ -164,7 +164,7 @@ angular.module('qualitaCoreFrontend')
 
         //modelos del filtro de rango numericos
         $scope.numberRangeFilters = {};
-        
+
 
         $scope.dtOptions = DTOptionsBuilder.newOptions()
           .withOption('ajax', ajaxConfig)
@@ -247,12 +247,12 @@ angular.module('qualitaCoreFrontend')
 
         var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable'];
         _.map($scope.options.columns, function(c, index){
-          
+
           var column = DTColumnBuilder.newColumn(c.data);
           //el indice original para la columna
           var originalIndex = indexPadding + index
           $scope.originalIndexKey[originalIndex] = c.data;
-                    
+
           if(c.title) column = column.withTitle(c.title);
           if(c.class) column = column.withClass(c.class);
           if(c.renderWith) column = column.renderWith(c.renderWith);
@@ -261,14 +261,14 @@ angular.module('qualitaCoreFrontend')
           //si hay un orden definido y no está dentro de ese orden o si especifica que no es visible
           if(!_.contains($scope.options.defaultColumnOrder, c.data) || c.visible === false) column = column.notVisible();
           else $scope.visibleColumns += 1;
-            
+
           _.forOwn(c, function(value, key){
             if(!_.contains(commonAttrs, key)) column = column.withOption(key, value);
           });
 
           if(c.type) {
             var customFilter = {'filterType': c.type, 'filterUrl' : c.filterUrl};
-            
+
             if (c.type === 'date-range') {
               $scope.dateRangeFilters[originalIndex] = {startDate: null, endDate: null};
             } else if (c.type === 'number-range') {
@@ -295,7 +295,8 @@ angular.module('qualitaCoreFrontend')
 
         // Se establece el orden por defecto
         //$scope.dtOptions.withColReorderOrder($scope.defaultColumnOrderIndices);
-        
+
+
 
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
@@ -386,7 +387,7 @@ angular.module('qualitaCoreFrontend')
             $scope.options.selection = selectedItems;
         }
 
-        //funciones para el select2          
+        //funciones para el select2
         var formatSelection = function(text) {
           return text.descripcion;
         };
@@ -405,7 +406,7 @@ angular.module('qualitaCoreFrontend')
           $('#' + tableId + ' tfoot tr').empty();
           $scope.dateRangePickerWidgetsOrder = [];
           $(".daterangepicker").remove();
-          
+
           _.forEach(table.context[0].aoColumns, function (column) {
             var realIndex = column._ColReorder_iOrigCol;
             var data = column.mData;
@@ -453,7 +454,7 @@ angular.module('qualitaCoreFrontend')
                         },
                         cache: true
                     },
-                    
+
                     initSelection: function(element, callback) {
                         //var id = $(element).val();
                         $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
@@ -461,15 +462,15 @@ angular.module('qualitaCoreFrontend')
                                 beforeSend: function(xhr){
                                   xhr.setRequestHeader("Authorization", $rootScope.AuthParams.accessToken);
                                 }
-                            }).done(function(data) { 
-                              callback(data); 
+                            }).done(function(data) {
+                              callback(data);
                             });
                     },
                     formatResult: formatResult, // omitted for brevity, see the source of this page
                     formatSelection: formatSelection,  // omitted for brevity, see the source of this page
                     //dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
                     escapeMarkup: function (m) { return m; }
-                  })              
+                  })
                   .on('change', function(e) {
                     var value = $('#' + id).select2('val');
 
@@ -500,16 +501,12 @@ angular.module('qualitaCoreFrontend')
                    '" date-range-picker placeholder="' + title +
                     '" class="column-filter form-control input-sm date-picker" options="dateRangeOptions[' + realIndex +
                     ']" type="text" ng-model="dateRangeFilters[' + realIndex + ']" /></th>';
-  
+
                   html = $compile(input)($scope);
                 }
-              } else if (column.mData) {
-                var value = table.column(column.idx).search();
-
-                html = '<th><input id="filtro_' + realIndex 
-                + '" class="column-filter form-control input-sm" type="text" placeholder="' + title 
-                + '" style="min-width:60px; width: 100%;" value="' + value 
-                +'"/></th>';  
+              } else {
+                $(this).html(
+                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');
               }
 
               $('#' + tableId + ' tfoot tr').append(html);
@@ -560,6 +557,8 @@ angular.module('qualitaCoreFrontend')
               }
           });
 
+          //$('.input-sm').keyup();
+          $(".dt-button.buttons-collection.buttons-colvis").text('Columnas');
 
           //Texto del boton de visibilidad de columnas
           $(".dt-buttons").append("<label class='view-columns'>Vistas&nbsp;</label>");
@@ -606,7 +605,7 @@ angular.module('qualitaCoreFrontend')
                   filters[column] = search;
                 }
               }
-              
+
             });
             return filters;
           }
@@ -616,27 +615,46 @@ angular.module('qualitaCoreFrontend')
           $scope.selectedItemId = itemId;
           $scope.tituloModal = "Confirmación de Borrado";
           $scope.mensajeModal = "Esta operación eliminará el registro seleccionado. ¿Desea continuar?";
-          var modalInstance = $modal.open({
+          $scope.modalInstanceBorrar1 = $modal.open({
             template: '<div class="modal-header">' +
-                '<h3 class="modal-title">{{::tituloModal}}</h3>' +
+            '<h3 class="modal-title">{{::tituloModal}}</h3>' +
             '</div>' +
             '<div class="modal-body">{{::mensajeModal}}</div>' +
             '<div class="modal-footer">' +
-                '<button class="btn btn-primary" ng-click="ok(selectedItemId)">Aceptar</button>' +
-                '<button class="btn btn-warning" ng-click="cancel()">Cancelar</button>' +
+            '<button class="btn btn-primary" ng-click="ok(selectedItemId)">Aceptar</button>' +
+            '<button class="btn btn-warning" ng-click="cancel()">Cancelar</button>' +
             '</div>',
             scope: $scope
           });
 
           $scope.cancel = function() {
-            modalInstance.dismiss('cancel');
+            $scope.modalInstanceBorrar1.dismiss('cancel');
           }
 
           $scope.ok = function(itemId) {
             var model = $scope.options.factory.create({id: itemId});
             $scope.options.factory.remove(model).then(function() {
               $scope.dtOptions.reloadData();
-              modalInstance.close(itemId);
+              $scope.modalInstanceBorrar1.close(itemId);
+            }, function(error) {
+              $scope.modalInstanceBorrar1.dismiss('cancel');
+              $scope.tituloModal = "No se pudo borrar el registro";
+              $scope.mensajeModal = $scope.options.failedDeleteError;
+              var modalInstance = $modal.open({
+                template: '<div class="modal-header">' +
+                '<h3 class="modal-title">{{::tituloModal}}</h3>' +
+                '</div>' +
+                '<div class="modal-body">{{::mensajeModal}}</div>' +
+                '<div class="modal-footer">' +
+                '<button class="btn btn-primary" ng-click="cancel()">Aceptar</button>' +
+                '</div>',
+                scope: $scope
+              });
+              $scope.cancel = function() {
+                modalInstance.dismiss('cancel');
+              };
+              console.log("error al borrar: ");
+              console.log(error);
             });
           }
         };
