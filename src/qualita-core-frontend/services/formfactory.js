@@ -51,6 +51,7 @@ angular.module('qualitaCoreFrontend')
             $rootScope.isProcessing = false;
             $location.path('/' + resource);
           }, function(){
+            $rootScope.isProcessing = false;
             var msg = 'Error al persistir la operación.';
             if(!scope.model.id) msg += '\n\nGuardando localmente, reintente más tarde.'
             notify({ message: msg, classes: 'alert-danger', position: 'right' });
