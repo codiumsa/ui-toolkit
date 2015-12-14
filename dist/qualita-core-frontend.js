@@ -1747,9 +1747,9 @@ angular.module('qualitaCoreFrontend')
       defaultSubmit: function(resource, scope, form, factory, vm) {
         // First we broadcast an event so all fields validate themselves
         scope.$broadcast('schemaFormValidate');
-        $rootScope.isProcessing = true;
         // Then we check if the form is valid
         if (form.$valid) {
+          $rootScope.isProcessing = true;
           // ... do whatever you need to do with your data.
           if(scope.model) {
             var model = factory.create(scope.model);
