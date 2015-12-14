@@ -506,7 +506,7 @@ angular.module('qualitaCoreFrontend')
               $scope.modalInstanceBorrar1.close(itemId);
             }, function(error) {
               $scope.modalInstanceBorrar1.dismiss('cancel');
-              $scope.tituloModal = "No se pudo borrar el usuario";
+              $scope.tituloModal = "No se pudo borrar el registro";
               $scope.mensajeModal = $scope.options.failedDeleteError;
               var modalInstance = $modal.open({
                 template: '<div class="modal-header">' +
