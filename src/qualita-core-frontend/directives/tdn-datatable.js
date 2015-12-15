@@ -456,6 +456,9 @@ angular.module('qualitaCoreFrontend')
                     
                     initSelection: function(element, callback) {
                         //var id = $(element).val();
+                        var value = table.column(column.idx).search();
+                        console.log('valor actual ');
+                        console.log(value);
                         $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
                                 dataType: "json",
                                 beforeSend: function(xhr){
@@ -627,15 +630,14 @@ angular.module('qualitaCoreFrontend')
           });
 
           $scope.cancel = function() {
-            modalInstance.dismiss('cancel');
+            $scope.modalInstanceBorrar1.dismiss('cancel');
           }
 
           $scope.ok = function(itemId) {
             var model = $scope.options.factory.create({id: itemId});
             $scope.options.factory.remove(model).then(function() {
               $scope.dtOptions.reloadData();
-              modalInstance.close(itemId);
-               $scope.modalInstanceBorrar1.close(itemId);
+              $scope.modalInstanceBorrar1.close(itemId);
             }, function(error) {
               $scope.modalInstanceBorrar1.dismiss('cancel');
               $scope.tituloModal = "No se pudo borrar el registro";
