@@ -1247,13 +1247,17 @@ angular.module('qualitaCoreFrontend')
 
                   html = $compile(input)($scope);
                 }
-              } else {
-                $(this).html(
-                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');
+             } else if (column.mData) {
+                var value = table.column(column.idx).search();
+
+                html = '<th><input id="filtro_' + realIndex 
+                + '" class="column-filter form-control input-sm" type="text" placeholder="' + title 
+                + '" style="min-width:60px; width: 100%;" value="' + value 
+                +'"/></th>';  
               }
 
               $('#' + tableId + ' tfoot tr').append(html);
-              //$('[id="filtro_' + table.colReorder.order()[column] + '"]').val(settings.oAjaxData.columns[column].search.value);
+              //$('[id="filtro_' + table.colReorder.order()[column] + '"]').val(settings.oAjaxData.columns[column].search.value);            }
             }
           });
 
