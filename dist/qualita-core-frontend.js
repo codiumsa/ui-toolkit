@@ -1337,20 +1337,14 @@ angular.module('qualitaCoreFrontend')
 
           // obtiene los filtros actuales
           $scope.options.getFilters = function getFilters () {
-            var oTable = $('#' + tableId).dataTable();
-            var oParams = oTable.oApi._fnAjaxParameters(oTable.fnSettings());
-            var res = $.param(oParams).split('data');
             var filters = {};
-
-            _.each(res, function(value, index) {
-              if (value.indexOf("draw") === -1) {
-                var column = value.substring(value.indexOf("=") + 1, value.indexOf("&"));
-                var search = value.substring(value.indexOf("=", value.indexOf("value")) + 1, value.indexOf("&", value.indexOf("value")));
-                if (column !== undefined && search !== undefined && column != "" && search !== "") {
-                  filters[column] = search;
-                }
-              }
-              
+            _.forEach(table.context[0].aoColumns, function (column) {
+                  var realIndex = column._ColReorder_iOrigCol;
+                  var data = column.mData;
+                  if (data !== undefined && data !== "" && data !== null) {
+                    console.log(data);
+                    filters[data] = table.column(realIndex).search();
+                  }
             });
             return filters;
           }
