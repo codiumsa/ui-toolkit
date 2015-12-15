@@ -506,7 +506,7 @@ angular.module('qualitaCoreFrontend')
   
                   html = $compile(input)($scope);
                 }
-              } else if (column.mData) {
+             } else if (column.mData) {
                 var value = table.column(column.idx).search();
 
                 html = '<th><input id="filtro_' + realIndex 
@@ -516,7 +516,7 @@ angular.module('qualitaCoreFrontend')
               }
 
               $('#' + tableId + ' tfoot tr').append(html);
-              //$('[id="filtro_' + table.colReorder.order()[column] + '"]').val(settings.oAjaxData.columns[column].search.value);
+              //$('[id="filtro_' + table.colReorder.order()[column] + '"]').val(settings.oAjaxData.columns[column].search.value);            }
             }
           });
 
