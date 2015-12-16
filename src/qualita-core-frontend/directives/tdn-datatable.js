@@ -19,7 +19,7 @@ angular.module('qualitaCoreFrontend')
           '<a href="#" ng-show="canCreate()" ng-click="new()" title="Nuevo">' +
             '<i class="glyphicon glyphicon-plus"></i>' +
           '</a>' +
-          '<a ng-repeat="menuOption in options.extraMenuOptions" href="#" ng-show="menuOption.showCondition()" ng-click="menuOption.action()" title="{{menuOption.title}}">' +
+          '<a ng-repeat="menuOption in options.extraMenuOptions" href="" ng-show="menuOption.showCondition()" ng-click="menuOption.action()" title="{{menuOption.title}}">' +
             '<p><i class="{{menuOption.icon}}"></i>' +
             '  {{menuOption.data}}&nbsp;&nbsp;&nbsp;</p>' +
           '</a>' +
