@@ -34,7 +34,7 @@
           'ui.bootstrap',
           'ui.select',
           'ui.highlight',
-          'mgcrea.ngStrap.select',
+          //'mgcrea.ngStrap.select',
           'ncy-angular-breadcrumb',
           'ui.router',
           'oc.lazyLoad',
