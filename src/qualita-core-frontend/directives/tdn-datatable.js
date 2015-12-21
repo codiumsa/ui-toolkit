@@ -19,7 +19,7 @@ angular.module('qualitaCoreFrontend')
           '<a href="#" ng-show="canCreate()" ng-click="new()" title="Nuevo">' +
             '<i class="glyphicon glyphicon-plus"></i>' +
           '</a>' +
-          '<a ng-repeat="menuOption in options.extraMenuOptions" href="#" ng-show="menuOption.showCondition()" ng-click="menuOption.action()" title="{{menuOption.title}}">' +
+          '<a ng-repeat="menuOption in options.extraMenuOptions" href="" ng-show="menuOption.showCondition()" ng-click="menuOption.action()" title="{{menuOption.title}}">' +
             '<p><i class="{{menuOption.icon}}"></i>' +
             '  {{menuOption.data}}&nbsp;&nbsp;&nbsp;</p>' +
           '</a>' +
@@ -65,7 +65,7 @@ angular.module('qualitaCoreFrontend')
 
 
         var ajaxRequest = function(data, callback) {
-
+          
           if (table) {
             _.forEach(table.colReorder.order(), function(columnIndex, index) {
               if ($scope.customFilters[columnIndex]) {
@@ -121,6 +121,7 @@ angular.module('qualitaCoreFrontend')
 
         //callback para borrar el rango previamente seleccionado 
         var datePickerShowEvent = function(ev, picker) {
+
           if ($scope.dateRangeFilters[ev.opts.index].startDate === null) {
             var widgetIndex = $scope.dateRangePickerWidgetsOrder.indexOf(ev.opts.index);
             var widget = $($(".daterangepicker").get(widgetIndex));
@@ -143,7 +144,7 @@ angular.module('qualitaCoreFrontend')
         };
 
         $scope.dateRangeOptions = {};
-
+        
         var dateRangeDefaultOptions = {
           eventHandlers: { 
             'apply.daterangepicker' : datePickerApplyEvent,
@@ -212,7 +213,6 @@ angular.module('qualitaCoreFrontend')
 
         $scope.rangePickerWidgetsOrder = [];
 
-
         $scope.dtOptions = DTOptionsBuilder.newOptions()
           .withOption('ajax', ajaxConfig)
           .withDataProp('data')
@@ -221,7 +221,7 @@ angular.module('qualitaCoreFrontend')
           .withOption('order', [[ $scope.options.defaultOrderColumn, $scope.options.defaultOrderDir ]])
           .withOption('language', {
                   'sProcessing' : 'Procesando...',
-                  'sLengthMenu' : 'Mostrar _MENU_ registros',
+                  'sLengthMenu' : 'Registros _MENU_',
                   'sZeroRecords' : 'No se encontraron resultados',
                   'sEmptyTable' : 'Ningún dato disponible en esta tabla',
                   'sInfo' : 'Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros',
@@ -294,12 +294,12 @@ angular.module('qualitaCoreFrontend')
 
         var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable'];
         _.map($scope.options.columns, function(c, index){
-
+          
           var column = DTColumnBuilder.newColumn(c.data);
           //el indice original para la columna
           var originalIndex = indexPadding + index
           $scope.originalIndexKey[originalIndex] = c.data;
-
+                    
           if(c.title) column = column.withTitle(c.title);
           if(c.class) column = column.withClass(c.class);
           if(c.renderWith) column = column.renderWith(c.renderWith);
@@ -308,14 +308,14 @@ angular.module('qualitaCoreFrontend')
           //si hay un orden definido y no está dentro de ese orden o si especifica que no es visible
           if(!_.contains($scope.options.defaultColumnOrder, c.data) || c.visible === false) column = column.notVisible();
           else $scope.visibleColumns += 1;
-
+            
           _.forOwn(c, function(value, key){
             if(!_.contains(commonAttrs, key)) column = column.withOption(key, value);
           });
 
           if(c.type) {
             var customFilter = {'filterType': c.type, 'filterUrl' : c.filterUrl};
-
+            
             if (c.type === 'date-range') {
               $scope.dateRangeFilters[originalIndex] = {startDate: null, endDate: null};
             } else if (c.type === 'number-range') {
@@ -342,8 +342,7 @@ angular.module('qualitaCoreFrontend')
 
         // Se establece el orden por defecto
         //$scope.dtOptions.withColReorderOrder($scope.defaultColumnOrderIndices);
-
-
+        
 
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
@@ -434,7 +433,7 @@ angular.module('qualitaCoreFrontend')
             $scope.options.selection = selectedItems;
         }
 
-        //funciones para el select2
+        //funciones para el select2          
         var formatSelection = function(text) {
           return text.descripcion;
         };
@@ -453,7 +452,7 @@ angular.module('qualitaCoreFrontend')
           $('#' + tableId + ' tfoot tr').empty();
           $scope.dateRangePickerWidgetsOrder = [];
           $(".daterangepicker").remove();
-
+          
           _.forEach(table.context[0].aoColumns, function (column) {
             var realIndex = column._ColReorder_iOrigCol;
             var data = column.mData;
@@ -501,23 +500,26 @@ angular.module('qualitaCoreFrontend')
                         },
                         cache: true
                     },
-
+                    
                     initSelection: function(element, callback) {
                         //var id = $(element).val();
+                        var value = table.column(column.idx).search();
+                        console.log('valor actual ');
+                        console.log(value);
                         $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
                                 dataType: "json",
                                 beforeSend: function(xhr){
                                   xhr.setRequestHeader("Authorization", $rootScope.AuthParams.accessToken);
                                 }
-                            }).done(function(data) {
-                              callback(data);
+                            }).done(function(data) { 
+                              callback(data); 
                             });
                     },
                     formatResult: formatResult, // omitted for brevity, see the source of this page
                     formatSelection: formatSelection,  // omitted for brevity, see the source of this page
                     //dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
                     escapeMarkup: function (m) { return m; }
-                  })
+                  })              
                   .on('change', function(e) {
                     var value = $('#' + id).select2('val');
 
@@ -548,7 +550,7 @@ angular.module('qualitaCoreFrontend')
                    '" date-range-picker placeholder="' + title +
                     '" class="column-filter form-control input-sm date-picker" options="dateRangeOptions[' + realIndex +
                     ']" type="text" ng-model="dateRangeFilters[' + realIndex + ']" /></th>';
-
+  
                   html = $compile(input)($scope);
                 } else if (customFilter.filterType === 'number-range') {
                   $scope.rangeOptions[realIndex] = _.clone(rangeDefaultOptions, true);
@@ -567,6 +569,7 @@ angular.module('qualitaCoreFrontend')
   
                   html = $compile(input)($scope);
                 }
+
               } else if (column.mData) {
                 var value = table.column(column.idx).search();
 
@@ -577,7 +580,7 @@ angular.module('qualitaCoreFrontend')
               }
 
               $('#' + tableId + ' tfoot tr').append(html);
-              //$('[id="filtro_' + table.colReorder.order()[column] + '"]').val(settings.oAjaxData.columns[column].search.value);
+              //$('[id="filtro_' + table.colReorder.order()[column] + '"]').val(settings.oAjaxData.columns[column].search.value);            }
             }
           });
 
@@ -624,13 +627,10 @@ angular.module('qualitaCoreFrontend')
               }
           });
 
-          //$('.input-sm').keyup();
-          $(".dt-button.buttons-collection.buttons-colvis").text('Columnas');
 
           //Texto del boton de visibilidad de columnas
           $(".dt-buttons").append("<label class='view-columns'>Vistas&nbsp;</label>");
           $(".dt-button").addClass("form-control input-sm").text('Columnas');
-
 
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
@@ -659,20 +659,14 @@ angular.module('qualitaCoreFrontend')
 
           // obtiene los filtros actuales
           $scope.options.getFilters = function getFilters () {
-            var oTable = $('#' + tableId).dataTable();
-            var oParams = oTable.oApi._fnAjaxParameters(oTable.fnSettings());
-            var res = $.param(oParams).split('data');
             var filters = {};
-
-            _.each(res, function(value, index) {
-              if (value.indexOf("draw") === -1) {
-                var column = value.substring(value.indexOf("=") + 1, value.indexOf("&"));
-                var search = value.substring(value.indexOf("=", value.indexOf("value")) + 1, value.indexOf("&", value.indexOf("value")));
-                if (column !== undefined && search !== undefined && column != "" && search !== "") {
-                  filters[column] = search;
-                }
-              }
-
+            _.forEach(table.context[0].aoColumns, function (column) {
+                  var realIndex = column._ColReorder_iOrigCol;
+                  var data = column.mData;
+                  if (data !== undefined && data !== "" && data !== null) {
+                    console.log(data);
+                    filters[data] = table.column(realIndex).search();
+                  }
             });
             return filters;
           }
@@ -684,12 +678,12 @@ angular.module('qualitaCoreFrontend')
           $scope.mensajeModal = "Esta operación eliminará el registro seleccionado. ¿Desea continuar?";
           $scope.modalInstanceBorrar1 = $modal.open({
             template: '<div class="modal-header">' +
-            '<h3 class="modal-title">{{::tituloModal}}</h3>' +
+                '<h3 class="modal-title">{{::tituloModal}}</h3>' +
             '</div>' +
             '<div class="modal-body">{{::mensajeModal}}</div>' +
             '<div class="modal-footer">' +
-            '<button class="btn btn-primary" ng-click="ok(selectedItemId)">Aceptar</button>' +
-            '<button class="btn btn-warning" ng-click="cancel()">Cancelar</button>' +
+                '<button class="btn btn-primary" ng-click="ok(selectedItemId)">Aceptar</button>' +
+                '<button class="btn btn-warning" ng-click="cancel()">Cancelar</button>' +
             '</div>',
             scope: $scope
           });
