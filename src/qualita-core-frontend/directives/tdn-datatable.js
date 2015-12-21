@@ -102,7 +102,7 @@ angular.module('qualitaCoreFrontend')
         };
 
         //callback para el boton apply en el widget de rango de fechas
-        var dataPickerApplyEvent = function(ev, picker) {
+        var datePickerApplyEvent = function(ev, picker) {
           var ini = ev.model.startDate.format(dateFormat);
           var end = ev.model.endDate.format(dateFormat);
 
@@ -111,9 +111,7 @@ angular.module('qualitaCoreFrontend')
         }
 
         //callback para el boton cancel en el widget de rango de fechas, que borra el filtro
-        var dataPickerCancelEvent = function(ev, picker) {
-
-
+        var datePickerCancelEvent = function(ev, picker) {
           var index = table.colReorder.order().indexOf(ev.opts.index);
           table.column(index).search("").draw();
           $("#daterange_" + ev.opts.index ).val("");
@@ -121,9 +119,8 @@ angular.module('qualitaCoreFrontend')
           $scope.dateRangeFilters[ev.opts.index].endDate = null;
         }
 
-         //callback para borrar el rango previamente seleccionado
-        var dataPickerShowEvent = function(ev, picker) {
-
+        //callback para borrar el rango previamente seleccionado 
+        var datePickerShowEvent = function(ev, picker) {
           if ($scope.dateRangeFilters[ev.opts.index].startDate === null) {
             var widgetIndex = $scope.dateRangePickerWidgetsOrder.indexOf(ev.opts.index);
             var widget = $($(".daterangepicker").get(widgetIndex));
@@ -131,7 +128,6 @@ angular.module('qualitaCoreFrontend')
             widget.parent().find('.active').removeClass("active");
             widget.parent().find('.input-mini').removeClass("active").val("");
           }
-
         }
 
         moment.locale('es');
@@ -149,10 +145,10 @@ angular.module('qualitaCoreFrontend')
         $scope.dateRangeOptions = {};
 
         var dateRangeDefaultOptions = {
-          eventHandlers: {
-            'apply.daterangepicker' : dataPickerApplyEvent,
-            'cancel.daterangepicker' : dataPickerCancelEvent,
-            'show.daterangepicker' : dataPickerShowEvent
+          eventHandlers: { 
+            'apply.daterangepicker' : datePickerApplyEvent,
+            'cancel.daterangepicker' : datePickerCancelEvent,
+            'show.daterangepicker' : datePickerShowEvent
           },
           opens: "right",
           index: 0,
@@ -163,7 +159,58 @@ angular.module('qualitaCoreFrontend')
         $scope.dateRangePickerWidgetsOrder = [];
 
         //modelos del filtro de rango numericos
-        $scope.numberRangeFilters = {};
+        $scope.numberRangeFilters = {          
+          'i': {
+            startRange: null,
+            endRange: null
+          }
+        };
+
+        //callback para el boton apply en el widget de rango de numeros
+        var rangePickerApplyEvent = function(ev, picker) {
+          //console.log("apply");
+          var ini = ev.model.startRange;
+          var end = ev.model.endRange;
+
+          var index = table.colReorder.order().indexOf(ev.opts.index);
+          table.column(index).search(ini + rangeSeparator + end).draw();
+        }
+
+        //callback para el boton cancel en el widget de rango de numeros, que borra el filtro
+        var rangePickerCancelEvent = function(ev, picker) {
+          //console.log("cancel");
+          var index = table.colReorder.order().indexOf(ev.opts.index);
+          table.column(index).search("").draw();
+          $("#numberrange_" + ev.opts.index ).val("");
+          $scope.numberRangeFilters[ev.opts.index].startRange = null;
+          $scope.numberRangeFilters[ev.opts.index].endRange = null;
+
+          var widgetIndex = $scope.rangePickerWidgetsOrder.indexOf(ev.opts.index);
+          var widget = $($(".rangepicker").get(widgetIndex));
+            widget.parent().find('input[name=rangepicker_start]').val();
+            widget.parent().find('input[name=rangepicker_end]').val();
+        }
+
+        var rangeLocaleOptions = {
+          cancelLabel: 'Limpiar',
+          applyLabel: 'Aplicar',
+          separator: ' a '
+        };
+
+        $scope.rangeOptions = {};
+        
+        var rangeDefaultOptions = {
+          eventHandlers: { 
+            'apply.rangepicker' : rangePickerApplyEvent,
+            'cancel.rangepicker' : rangePickerCancelEvent
+          },
+          opens: "right",
+          index: 0,
+          showDropdowns: true,
+          locale: rangeLocaleOptions
+        };
+
+        $scope.rangePickerWidgetsOrder = [];
 
 
         $scope.dtOptions = DTOptionsBuilder.newOptions()
@@ -272,7 +319,7 @@ angular.module('qualitaCoreFrontend')
             if (c.type === 'date-range') {
               $scope.dateRangeFilters[originalIndex] = {startDate: null, endDate: null};
             } else if (c.type === 'number-range') {
-              $scope.numberRangeFilters[originalIndex] = {start: null, end: null};
+              $scope.numberRangeFilters[originalIndex] = {startRange: null, endRange: null};
             }
 
             $scope.customFilters[originalIndex] = customFilter;
@@ -497,16 +544,36 @@ angular.module('qualitaCoreFrontend')
                   //$('body').append('<div id="container-daterange_' + realIndex +'"></div>');
                   //$scope.dateRangeOptions[realIndex]['parentEl'] = "#container-daterange_" + realIndex;
                   $scope.dateRangePickerWidgetsOrder.push[realIndex];
-                  var input = '<th><input readonly="true" id="daterange_' + realIndex +
+                  var input = '<th><input id="daterange_' + realIndex +
                    '" date-range-picker placeholder="' + title +
                     '" class="column-filter form-control input-sm date-picker" options="dateRangeOptions[' + realIndex +
                     ']" type="text" ng-model="dateRangeFilters[' + realIndex + ']" /></th>';
 
                   html = $compile(input)($scope);
+                } else if (customFilter.filterType === 'number-range') {
+                  $scope.rangeOptions[realIndex] = _.clone(rangeDefaultOptions, true);
+                  $scope.rangeOptions[realIndex].index = realIndex;
+
+                  //si esta despues de la mitad abrir a la izquierda
+                  if (realIndex > ($scope.options.columns.length / 2)) {
+                     $scope.rangeOptions[realIndex].opens = 'left';
+                  }
+
+                  $scope.rangePickerWidgetsOrder.push[realIndex];
+                  var input = '<th><input  id="numberrange_' + realIndex +
+                   '" range-picker placeholder="' + title +
+                    '" class="column-filter form-control input-sm " options="rangeOptions[' + realIndex +
+                    ']" type="text" ng-model="numberRangeFilters[' + realIndex + ']" /></th>';
+  
+                  html = $compile(input)($scope);
                 }
-              } else {
-                $(this).html(
-                  '<input id="' + title + '" class="column-filter form-control input-sm" type="text" placeholder="' + title + '" style="min-width:60px; width: 100%;" />');
+              } else if (column.mData) {
+                var value = table.column(column.idx).search();
+
+                html = '<th><input id="filtro_' + realIndex 
+                + '" class="column-filter form-control input-sm" type="text" placeholder="' + title 
+                + '" style="min-width:60px; width: 100%;" value="' + value 
+                + '"/></th>';  
               }
 
               $('#' + tableId + ' tfoot tr').append(html);

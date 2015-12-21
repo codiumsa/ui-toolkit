@@ -42,6 +42,7 @@
           'LocalForageModule',
           'datatables.buttons',
           'datatables.colreorder',
-          'daterangepicker'
+          'daterangepicker',
+          'rangepicker'
       ]);
 })(angular);
