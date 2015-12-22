@@ -42,6 +42,7 @@
           'datatables.buttons',
           'datatables.colreorder',
           'daterangepicker',
+          'rangepicker',
           'ngWebSocket'
       ]);
 })(angular);
