@@ -41,6 +41,7 @@
           'LocalForageModule',
           'datatables.buttons',
           'datatables.colreorder',
-          'daterangepicker'
+          'daterangepicker',
+          'ngWebSocket'
       ]);
 })(angular);
