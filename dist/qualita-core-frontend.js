@@ -236,10 +236,10 @@ angular.module('qualitaCoreFrontend')
         };
 
         scope.$watch('url', function() {
-
+         
           if(scope.url) {
             scope.trustedUrl = $sce.trustAsResourceUrl(scope.url);
-
+            
             if(!scope.background){
               scope.modalInstance = $modal.open({
                 template: '<div class="modal-header">' +
@@ -813,7 +813,7 @@ angular.module('qualitaCoreFrontend')
 
 
         var ajaxRequest = function(data, callback) {
-
+          
           if (table) {
             _.forEach(table.colReorder.order(), function(columnIndex, index) {
               if ($scope.customFilters[columnIndex]) {
@@ -867,7 +867,7 @@ angular.module('qualitaCoreFrontend')
           $scope.dateRangeFilters[ev.opts.index].endDate = null;
         }
 
-        //callback para borrar el rango previamente seleccionado
+        //callback para borrar el rango previamente seleccionado 
         var datePickerShowEvent = function(ev, picker) {
 
           if ($scope.dateRangeFilters[ev.opts.index].startDate === null) {
@@ -892,9 +892,9 @@ angular.module('qualitaCoreFrontend')
         };
 
         $scope.dateRangeOptions = {};
-
+        
         var dateRangeDefaultOptions = {
-          eventHandlers: {
+          eventHandlers: { 
             'apply.daterangepicker' : datePickerApplyEvent,
             'cancel.daterangepicker' : datePickerCancelEvent,
             'show.daterangepicker' : datePickerShowEvent
@@ -908,7 +908,7 @@ angular.module('qualitaCoreFrontend')
         $scope.dateRangePickerWidgetsOrder = [];
 
         //modelos del filtro de rango numericos
-        $scope.numberRangeFilters = {
+        $scope.numberRangeFilters = {          
           'i': {
             startRange: null,
             endRange: null
@@ -947,9 +947,9 @@ angular.module('qualitaCoreFrontend')
         };
 
         $scope.rangeOptions = {};
-
+        
         var rangeDefaultOptions = {
-          eventHandlers: {
+          eventHandlers: { 
             'apply.rangepicker' : rangePickerApplyEvent,
             'cancel.rangepicker' : rangePickerCancelEvent
           },
@@ -1042,12 +1042,12 @@ angular.module('qualitaCoreFrontend')
 
         var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable'];
         _.map($scope.options.columns, function(c, index){
-
+          
           var column = DTColumnBuilder.newColumn(c.data);
           //el indice original para la columna
           var originalIndex = indexPadding + index
           $scope.originalIndexKey[originalIndex] = c.data;
-
+                    
           if(c.title) column = column.withTitle(c.title);
           if(c.class) column = column.withClass(c.class);
           if(c.renderWith) column = column.renderWith(c.renderWith);
@@ -1056,14 +1056,14 @@ angular.module('qualitaCoreFrontend')
           //si hay un orden definido y no está dentro de ese orden o si especifica que no es visible
           if(!_.contains($scope.options.defaultColumnOrder, c.data) || c.visible === false) column = column.notVisible();
           else $scope.visibleColumns += 1;
-
+            
           _.forOwn(c, function(value, key){
             if(!_.contains(commonAttrs, key)) column = column.withOption(key, value);
           });
 
           if(c.type) {
             var customFilter = {'filterType': c.type, 'filterUrl' : c.filterUrl};
-
+            
             if (c.type === 'date-range') {
               $scope.dateRangeFilters[originalIndex] = {startDate: null, endDate: null};
             } else if (c.type === 'number-range') {
@@ -1090,7 +1090,7 @@ angular.module('qualitaCoreFrontend')
 
         // Se establece el orden por defecto
         //$scope.dtOptions.withColReorderOrder($scope.defaultColumnOrderIndices);
-
+        
 
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
@@ -1181,7 +1181,7 @@ angular.module('qualitaCoreFrontend')
             $scope.options.selection = selectedItems;
         }
 
-        //funciones para el select2
+        //funciones para el select2          
         var formatSelection = function(text) {
           return text.descripcion;
         };
@@ -1200,7 +1200,7 @@ angular.module('qualitaCoreFrontend')
           $('#' + tableId + ' tfoot tr').empty();
           $scope.dateRangePickerWidgetsOrder = [];
           $(".daterangepicker").remove();
-
+          
           _.forEach(table.context[0].aoColumns, function (column) {
             var realIndex = column._ColReorder_iOrigCol;
             var data = column.mData;
@@ -1248,7 +1248,7 @@ angular.module('qualitaCoreFrontend')
                         },
                         cache: true
                     },
-
+                    
                     initSelection: function(element, callback) {
                         //var id = $(element).val();
                         var value = table.column(column.idx).search();
@@ -1259,15 +1259,15 @@ angular.module('qualitaCoreFrontend')
                                 beforeSend: function(xhr){
                                   xhr.setRequestHeader("Authorization", $rootScope.AuthParams.accessToken);
                                 }
-                            }).done(function(data) {
-                              callback(data);
+                            }).done(function(data) { 
+                              callback(data); 
                             });
                     },
                     formatResult: formatResult, // omitted for brevity, see the source of this page
                     formatSelection: formatSelection,  // omitted for brevity, see the source of this page
                     //dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
                     escapeMarkup: function (m) { return m; }
-                  })
+                  })              
                   .on('change', function(e) {
                     var value = $('#' + id).select2('val');
 
@@ -1298,7 +1298,7 @@ angular.module('qualitaCoreFrontend')
                    '" date-range-picker placeholder="' + title +
                     '" class="column-filter form-control input-sm date-picker" options="dateRangeOptions[' + realIndex +
                     ']" type="text" ng-model="dateRangeFilters[' + realIndex + ']" /></th>';
-
+  
                   html = $compile(input)($scope);
                 } else if (customFilter.filterType === 'number-range') {
                   $scope.rangeOptions[realIndex] = _.clone(rangeDefaultOptions, true);
@@ -1314,17 +1314,17 @@ angular.module('qualitaCoreFrontend')
                    '" range-picker placeholder="' + title +
                     '" class="column-filter form-control input-sm " options="rangeOptions[' + realIndex +
                     ']" type="text" ng-model="numberRangeFilters[' + realIndex + ']" /></th>';
-
+  
                   html = $compile(input)($scope);
                 }
 
               } else if (column.mData) {
                 var value = table.column(column.idx).search();
 
-                html = '<th><input id="filtro_' + realIndex
-                + '" class="column-filter form-control input-sm" type="text" placeholder="' + title
-                + '" style="min-width:60px; width: 100%;" value="' + value
-                + '"/></th>';
+                html = '<th><input id="filtro_' + realIndex 
+                + '" class="column-filter form-control input-sm" type="text" placeholder="' + title 
+                + '" style="min-width:60px; width: 100%;" value="' + value 
+                + '"/></th>';  
               }
 
               $('#' + tableId + ' tfoot tr').append(html);
@@ -1565,7 +1565,7 @@ angular.module('qualitaCoreFrontend')
  */
 angular.module('qualitaCoreFrontend')
   .service('AuthorizationService', function ($rootScope, $resource, $http, baseurl, AuthenticationService) {
-
+    
     var Authorization = $resource(baseurl.getBaseUrl() + '/authorization/:action',
                                   {action: '@action'});
 
@@ -1591,7 +1591,7 @@ angular.module('qualitaCoreFrontend')
       },
 
       setupCredentials: function(username, requestToken, accessToken, callback) {
-
+        
         var AuthParams = {
           username: username,
           requestToken: requestToken,
@@ -1611,7 +1611,7 @@ angular.module('qualitaCoreFrontend')
         });
       },
 
-      cleanupCredentials: function() {
+      cleanupCredentials: function() {        
         localStorage.removeItem('AUTH_PARAMS');
       },
 
@@ -1968,6 +1968,7 @@ function NotificacionesWSFactory($resource, baseurl, $websocket) {
     init: init,
     remove: remove,
     save: save,
+    registerMessageObserver: registerMessageObserver
   };
 
   var notificaciones = $resource( baseurl.getBaseUrl() + "/notificaciones/:id", {id: '@id'}, {
@@ -1978,7 +1979,6 @@ function NotificacionesWSFactory($resource, baseurl, $websocket) {
 
   var websocket = $websocket(baseurl.getBareServerUrl() + "wsnotificaciones");
 
-  websocket.onMessage(onMessageHandler);
 
   websocket.onOpen(function() {
     console.log("Socket abierto");
@@ -2010,8 +2010,8 @@ function NotificacionesWSFactory($resource, baseurl, $websocket) {
     websocket.send(JSON.stringify(obj));
   }
 
-  function onMessageHandler(message) {
-    console.log(JSON.parse(message.data));
+  function registerMessageObserver(functionHandler) {
+    websocket.onMessage(functionHandler);
   }
 
   function remove(notificacion) {
@@ -2036,7 +2036,7 @@ function NotificacionesWSFactory($resource, baseurl, $websocket) {
  */
 angular.module('qualitaCoreFrontend')
   .factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
-
+  
     var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID', {action: '@reportID'});
 
     return {

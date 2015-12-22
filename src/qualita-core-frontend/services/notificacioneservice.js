@@ -13,6 +13,7 @@ function NotificacionesWSFactory($resource, baseurl, $websocket) {
     init: init,
     remove: remove,
     save: save,
+    registerMessageObserver: registerMessageObserver
   };
 
   var notificaciones = $resource( baseurl.getBaseUrl() + "/notificaciones/:id", {id: '@id'}, {
@@ -23,7 +24,6 @@ function NotificacionesWSFactory($resource, baseurl, $websocket) {
 
   var websocket = $websocket(baseurl.getBareServerUrl() + "wsnotificaciones");
 
-  websocket.onMessage(onMessageHandler);
 
   websocket.onOpen(function() {
     console.log("Socket abierto");
@@ -55,8 +55,8 @@ function NotificacionesWSFactory($resource, baseurl, $websocket) {
     websocket.send(JSON.stringify(obj));
   }
 
-  function onMessageHandler(message) {
-    console.log(JSON.parse(message.data));
+  function registerMessageObserver(functionHandler) {
+    websocket.onMessage(functionHandler);
   }
 
   function remove(notificacion) {
