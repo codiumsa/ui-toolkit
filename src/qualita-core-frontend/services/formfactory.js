@@ -38,7 +38,7 @@ angular.module('qualitaCoreFrontend')
         // First we broadcast an event so all fields validate themselves
         scope.$broadcast('schemaFormValidate');
         // Then we check if the form is valid
-        if (form.$valid) {
+        if (form.$valid && !$rootScope.isProcessing) {
           $rootScope.isProcessing = true;
           // ... do whatever you need to do with your data.
           if(scope.model) {
@@ -48,7 +48,6 @@ angular.module('qualitaCoreFrontend')
             var model = factory.create(vm.model);
           }
           factory.save(model).then(function(){
-            $rootScope.isProcessing = false;
             $location.path('/' + resource);
           }, function(){
             $rootScope.isProcessing = false;
