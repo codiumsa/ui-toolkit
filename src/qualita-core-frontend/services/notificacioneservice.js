@@ -11,6 +11,7 @@ function NotificacionesWSFactory($resource, baseurl, $log, $websocket) {
     close: close,
     create: create,
     get: get,
+    getLatest: getLatest,
     init: init,
     remove: remove,
     save: save,
@@ -47,6 +48,15 @@ function NotificacionesWSFactory($resource, baseurl, $log, $websocket) {
 
   function get(id) {
     return notificaciones.get({id: id});
+  }
+
+  function getLatest(offset, limit) {
+    var obj = {
+      action: "get",
+      offset: offset,
+      limit: limit
+    };
+    websocket.send(JSON.stringify(obj));
   }
 
   function init(username) {
