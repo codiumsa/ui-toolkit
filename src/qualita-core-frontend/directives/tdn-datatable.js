@@ -65,7 +65,7 @@ angular.module('qualitaCoreFrontend')
 
 
         var ajaxRequest = function(data, callback) {
-          
+
           if (table) {
             _.forEach(table.colReorder.order(), function(columnIndex, index) {
               if ($scope.customFilters[columnIndex]) {
@@ -85,6 +85,20 @@ angular.module('qualitaCoreFrontend')
           });
 
           xhr.query().$promise.then(function(response) {
+            console.log("respuesta obtenida: ");
+            console.log(response);
+            var datos = response.data;
+            if(datos) {
+              datos.forEach(function(registro) {
+                Object.keys(registro).forEach(function(key) {
+                  if(registro[key] === true) {
+                    registro[key] = "sí";
+                  } else if(registro[key] === false) {
+                    registro[key] = "no";
+                  }
+                });
+              });
+            }
             callback(response);
           }).catch(function(response) {
             console.log(response);
@@ -119,7 +133,7 @@ angular.module('qualitaCoreFrontend')
           $scope.dateRangeFilters[ev.opts.index].endDate = null;
         }
 
-        //callback para borrar el rango previamente seleccionado 
+        //callback para borrar el rango previamente seleccionado
         var datePickerShowEvent = function(ev, picker) {
 
           if ($scope.dateRangeFilters[ev.opts.index].startDate === null) {
@@ -144,9 +158,9 @@ angular.module('qualitaCoreFrontend')
         };
 
         $scope.dateRangeOptions = {};
-        
+
         var dateRangeDefaultOptions = {
-          eventHandlers: { 
+          eventHandlers: {
             'apply.daterangepicker' : datePickerApplyEvent,
             'cancel.daterangepicker' : datePickerCancelEvent,
             'show.daterangepicker' : datePickerShowEvent
@@ -160,7 +174,7 @@ angular.module('qualitaCoreFrontend')
         $scope.dateRangePickerWidgetsOrder = [];
 
         //modelos del filtro de rango numericos
-        $scope.numberRangeFilters = {          
+        $scope.numberRangeFilters = {
           'i': {
             startRange: null,
             endRange: null
@@ -199,9 +213,9 @@ angular.module('qualitaCoreFrontend')
         };
 
         $scope.rangeOptions = {};
-        
+
         var rangeDefaultOptions = {
-          eventHandlers: { 
+          eventHandlers: {
             'apply.rangepicker' : rangePickerApplyEvent,
             'cancel.rangepicker' : rangePickerCancelEvent
           },
@@ -294,12 +308,12 @@ angular.module('qualitaCoreFrontend')
 
         var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable'];
         _.map($scope.options.columns, function(c, index){
-          
+
           var column = DTColumnBuilder.newColumn(c.data);
           //el indice original para la columna
           var originalIndex = indexPadding + index
           $scope.originalIndexKey[originalIndex] = c.data;
-                    
+
           if(c.title) column = column.withTitle(c.title);
           if(c.class) column = column.withClass(c.class);
           if(c.renderWith) column = column.renderWith(c.renderWith);
@@ -308,14 +322,14 @@ angular.module('qualitaCoreFrontend')
           //si hay un orden definido y no está dentro de ese orden o si especifica que no es visible
           if(!_.contains($scope.options.defaultColumnOrder, c.data) || c.visible === false) column = column.notVisible();
           else $scope.visibleColumns += 1;
-            
+
           _.forOwn(c, function(value, key){
             if(!_.contains(commonAttrs, key)) column = column.withOption(key, value);
           });
 
           if(c.type) {
             var customFilter = {'filterType': c.type, 'filterUrl' : c.filterUrl};
-            
+
             if (c.type === 'date-range') {
               $scope.dateRangeFilters[originalIndex] = {startDate: null, endDate: null};
             } else if (c.type === 'number-range') {
@@ -342,7 +356,7 @@ angular.module('qualitaCoreFrontend')
 
         // Se establece el orden por defecto
         //$scope.dtOptions.withColReorderOrder($scope.defaultColumnOrderIndices);
-        
+
 
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
@@ -433,7 +447,7 @@ angular.module('qualitaCoreFrontend')
             $scope.options.selection = selectedItems;
         }
 
-        //funciones para el select2          
+        //funciones para el select2
         var formatSelection = function(text) {
           return text.descripcion;
         };
@@ -452,7 +466,7 @@ angular.module('qualitaCoreFrontend')
           $('#' + tableId + ' tfoot tr').empty();
           $scope.dateRangePickerWidgetsOrder = [];
           $(".daterangepicker").remove();
-          
+
           _.forEach(table.context[0].aoColumns, function (column) {
             var realIndex = column._ColReorder_iOrigCol;
             var data = column.mData;
@@ -477,64 +491,68 @@ angular.module('qualitaCoreFrontend')
                   $('#' + id).select2({
                     minimumResultsForSearch: -1,
                     //allowClear: true,
-                    id: function(text){ return text.codigo; },
+                    id: function (text) {
+                      return text.codigo;
+                    },
                     data: function () {
                       return $http({
-                          url: baseurl.getBaseUrl() + customFilter.filterUrl,
-                          method: "GET"
-                       });
+                        url: baseurl.getBaseUrl() + customFilter.filterUrl,
+                        method: "GET"
+                      });
                     },
                     ajax: {
-                        url: baseurl.getBaseUrl() + "/" + customFilter.filterUrl,
-                        dataType: 'json',
-                        quietMillis: 250,
-                        params: { headers: { "Authorization": $rootScope.AuthParams.accessToken } },
-                        data: function (term, page) { // page is the one-based page number tracked by Select2
-                            return {
-                                q: term
-                            };
-                        },
-                        results: function (data, page) { // parse the results into the format expected by Select2.
-                            // since we are using custom formatting functions we do not need to alter the remote JSON data
-                            return { results: data };
-                        },
-                        cache: true
+                      url: baseurl.getBaseUrl() + "/" + customFilter.filterUrl,
+                      dataType: 'json',
+                      quietMillis: 250,
+                      params: {headers: {"Authorization": $rootScope.AuthParams.accessToken}},
+                      data: function (term, page) { // page is the one-based page number tracked by Select2
+                        return {
+                          q: term
+                        };
+                      },
+                      results: function (data, page) { // parse the results into the format expected by Select2.
+                        // since we are using custom formatting functions we do not need to alter the remote JSON data
+                        return {results: data};
+                      },
+                      cache: true
                     },
-                    
-                    initSelection: function(element, callback) {
-                        //var id = $(element).val();
-                        var value = table.column(column.idx).search();
-                        console.log('valor actual ');
-                        console.log(value);
-                        $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
-                                dataType: "json",
-                                beforeSend: function(xhr){
-                                  xhr.setRequestHeader("Authorization", $rootScope.AuthParams.accessToken);
-                                }
-                            }).done(function(data) { 
-                              callback(data); 
-                            });
+
+                    initSelection: function (element, callback) {
+                      //var id = $(element).val();
+                      var value = table.column(column.idx).search();
+                      console.log('valor actual ');
+                      console.log(value);
+                      $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
+                        dataType: "json",
+                        beforeSend: function (xhr) {
+                          xhr.setRequestHeader("Authorization", $rootScope.AuthParams.accessToken);
+                        }
+                      }).done(function (data) {
+                        callback(data);
+                      });
                     },
                     formatResult: formatResult, // omitted for brevity, see the source of this page
                     formatSelection: formatSelection,  // omitted for brevity, see the source of this page
                     //dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
-                    escapeMarkup: function (m) { return m; }
-                  })              
-                  .on('change', function(e) {
-                    var value = $('#' + id).select2('val');
-
-                    //los ids de los inputs tiene la forma "combo_[realIndex]"
-                    var realIndex = parseInt(id.substring(6));
-                    var index = table.colReorder.order().indexOf(realIndex);
-
-                    console.log(this.value);
-                    if(this.value.length >= 1){
-                      table.column(index).search(this.value).draw();
-                    } else {
-                      table.column(index).search("").draw();
+                    escapeMarkup: function (m) {
+                      return m;
                     }
-                  });
-                } else if (customFilter.filterType === 'date-range') {
+                  })
+                    .on('change', function (e) {
+                      var value = $('#' + id).select2('val');
+
+                      //los ids de los inputs tiene la forma "combo_[realIndex]"
+                      var realIndex = parseInt(id.substring(6));
+                      var index = table.colReorder.order().indexOf(realIndex);
+
+                      console.log(this.value);
+                      if (this.value.length >= 1) {
+                        table.column(index).search(this.value).draw();
+                      } else {
+                        table.column(index).search("").draw();
+                      }
+                    });
+                }  else if (customFilter.filterType === 'date-range') {
                   $scope.dateRangeOptions[realIndex] = _.clone(dateRangeDefaultOptions, true);
                   $scope.dateRangeOptions[realIndex].index = realIndex;
 
@@ -550,7 +568,7 @@ angular.module('qualitaCoreFrontend')
                    '" date-range-picker placeholder="' + title +
                     '" class="column-filter form-control input-sm date-picker" options="dateRangeOptions[' + realIndex +
                     ']" type="text" ng-model="dateRangeFilters[' + realIndex + ']" /></th>';
-  
+
                   html = $compile(input)($scope);
                 } else if (customFilter.filterType === 'number-range') {
                   $scope.rangeOptions[realIndex] = _.clone(rangeDefaultOptions, true);
@@ -566,17 +584,17 @@ angular.module('qualitaCoreFrontend')
                    '" range-picker placeholder="' + title +
                     '" class="column-filter form-control input-sm " options="rangeOptions[' + realIndex +
                     ']" type="text" ng-model="numberRangeFilters[' + realIndex + ']" /></th>';
-  
+
                   html = $compile(input)($scope);
                 }
 
               } else if (column.mData) {
                 var value = table.column(column.idx).search();
 
-                html = '<th><input id="filtro_' + realIndex 
-                + '" class="column-filter form-control input-sm" type="text" placeholder="' + title 
-                + '" style="min-width:60px; width: 100%;" value="' + value 
-                + '"/></th>';  
+                html = '<th><input id="filtro_' + realIndex
+                + '" class="column-filter form-control input-sm" type="text" placeholder="' + title
+                + '" style="min-width:60px; width: 100%;" value="' + value
+                + '"/></th>';
               }
 
               $('#' + tableId + ' tfoot tr').append(html);
