@@ -341,7 +341,7 @@ angular.module('qualitaCoreFrontend')
           $scope.dtColumns.push(column);
         });
 
-
+        console.log($scope.dtColumns);
         if($scope.options.hasOptions) {
           $scope.originalIndexKey[$scope.visibleColumns] = null;//'actions';
           // Fix last right column
@@ -647,8 +647,8 @@ angular.module('qualitaCoreFrontend')
 
 
           //Texto del boton de visibilidad de columnas
-          $(".dt-buttons").append("<label class='view-columns'>Vistas&nbsp;</label>");
-          $(".dt-button").addClass("form-control input-sm").text('Columnas');
+          //$(".dt-buttons").append("<label class='view-columns'>Vistas&nbsp;</label>");
+          $(".dt-button.buttons-colvis").addClass("form-control input-sm").html('<i class="glyphicon glyphicon-th-list"></i>');
 
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
