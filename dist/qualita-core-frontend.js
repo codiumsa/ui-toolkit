@@ -1707,7 +1707,7 @@ angular.module('qualitaCoreFrontend')
 
         //si es el servidor de homologacion
         if (hostname === Config.serverIp)
-          return 'ws://' + hostname + '/' + Config.serverName;
+          return 'ws://' + hostname + '/' + Config.serverName + '/';
         //si es localhost es desarrollo local
         else
           return 'ws://' + hostname + ':' + Config.serverPort + '/' + Config.serverName + '/';
