@@ -1135,7 +1135,8 @@ angular.module('qualitaCoreFrontend')
         };
 
         $scope.canCreate = function() {
-          return hasPermission('create_' + $scope.options.resource);
+          var permission = hasPermission('create_' + $scope.options.resource);
+          return permission && ! $scope.options.hideAddMenu;
         };
 
         if($scope.options.hasOptions) {
