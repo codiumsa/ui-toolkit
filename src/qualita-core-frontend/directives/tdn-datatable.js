@@ -92,9 +92,9 @@ angular.module('qualitaCoreFrontend')
               datos.forEach(function(registro) {
                 Object.keys(registro).forEach(function(key) {
                   if(registro[key] === true) {
-                    registro[key] = "sí";
+                    registro[key] = "Sí";
                   } else if(registro[key] === false) {
-                    registro[key] = "no";
+                    registro[key] = "No";
                   }
                 });
               });

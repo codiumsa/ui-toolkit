@@ -65,7 +65,7 @@ angular.module('qualitaCoreFrontend')
       'flow-files-added="filesAdded($files, $event, uploader.flow)"' +
       'flow-name="uploader.flow"' +
       'class="ng-scope">' +
-      '<h3>{{uploadOptions.title}}</h3>' +
+      '<label>{{uploadOptions.title}}</label>' +
 
       '<div class="thumbnail" ng-show="uploader.currentFile && !uploader.flow.files.length">' +
       '<img src="{{uploader.currentFile}}"/> ' +
@@ -840,9 +840,9 @@ angular.module('qualitaCoreFrontend')
               datos.forEach(function(registro) {
                 Object.keys(registro).forEach(function(key) {
                   if(registro[key] === true) {
-                    registro[key] = "sí";
+                    registro[key] = "Sí";
                   } else if(registro[key] === false) {
-                    registro[key] = "no";
+                    registro[key] = "No";
                   }
                 });
               });

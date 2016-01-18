@@ -16,7 +16,7 @@ angular.module('qualitaCoreFrontend')
       'flow-files-added="filesAdded($files, $event, uploader.flow)"' +
       'flow-name="uploader.flow"' +
       'class="ng-scope">' +
-      '<h3>{{uploadOptions.title}}</h3>' +
+      '<label>{{uploadOptions.title}}</label>' +
 
       '<div class="thumbnail" ng-show="uploader.currentFile && !uploader.flow.files.length">' +
       '<img src="{{uploader.currentFile}}"/> ' +
