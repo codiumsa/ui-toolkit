@@ -1314,8 +1314,7 @@ angular.module('qualitaCoreFrontend')
                   //$scope.dateRangeOptions[realIndex]['parentEl'] = "#container-daterange_" + realIndex;
                   $scope.dateRangePickerWidgetsOrder.push[realIndex];
                   var input = '<th><input id="daterange_' + realIndex +
-                   '" date-range-picker placeholder="' + title +
-                    '" class="column-filter form-control input-sm date-picker" options="dateRangeOptions[' + realIndex +
+                   '" date-range-picker class="column-filter form-control input-sm date-picker" options="dateRangeOptions[' + realIndex +
                     ']" type="text" ng-model="dateRangeFilters[' + realIndex + ']" /></th>';
 
                   html = $compile(input)($scope);
@@ -1330,8 +1329,7 @@ angular.module('qualitaCoreFrontend')
 
                   $scope.rangePickerWidgetsOrder.push[realIndex];
                   var input = '<th><input  id="numberrange_' + realIndex +
-                   '" range-picker placeholder="' + title +
-                    '" class="column-filter form-control input-sm " options="rangeOptions[' + realIndex +
+                   '" range-picker class="column-filter form-control input-sm " options="rangeOptions[' + realIndex +
                     ']" type="text" ng-model="numberRangeFilters[' + realIndex + ']" /></th>';
 
                   html = $compile(input)($scope);
@@ -1341,8 +1339,7 @@ angular.module('qualitaCoreFrontend')
                 var value = table.column(column.idx).search();
 
                 html = '<th><input id="filtro_' + realIndex
-                + '" class="column-filter form-control input-sm" type="text" placeholder="' + title
-                + '" style="min-width:60px; width: 100%;" value="' + value
+                + '" class="column-filter form-control input-sm" type="text" style="min-width:60px; width: 100%;" value="' + value
                 + '"/></th>';
               }
 
