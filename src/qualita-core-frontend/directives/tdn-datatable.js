@@ -379,11 +379,13 @@ angular.module('qualitaCoreFrontend')
 
 
         $scope.canEdit = function() {
-          return hasPermission('update_' + $scope.options.resource);
+          var permission = hasPermission('update_' + $scope.options.resource);
+          return permission && !$scope.options.hideEditMenu;
         };
 
         $scope.canRemove = function() {
-          return hasPermission('delete_' + $scope.options.resource);
+          var permission = hasPermission('delete_' + $scope.options.resource);
+          return permission && !$scope.options.hideRemoveMenu;
         };
 
         $scope.canCreate = function() {
