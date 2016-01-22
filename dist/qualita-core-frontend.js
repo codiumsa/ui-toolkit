@@ -43,7 +43,8 @@
           'datatables.colreorder',
           'daterangepicker',
           'rangepicker',
-          'ngWebSocket'
+          'ngWebSocket',
+          'pickadate'
       ]);
 })(angular);
 
