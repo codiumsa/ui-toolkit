@@ -44,7 +44,6 @@
           'daterangepicker',
           'rangepicker',
           'ngWebSocket',
-          'pickadate'
       ]);
 })(angular);
 
