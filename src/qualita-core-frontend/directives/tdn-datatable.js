@@ -50,7 +50,14 @@ angular.module('qualitaCoreFrontend')
         options: '='
       },
       controller: function controller($scope, $element) {
-        var actionsColumn, selectionColumn, urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
+        var actionsColumn, selectionColumn, urlTemplate;
+        // Se arma la ruta según tenga o no filtros estáticos
+        if ($scope.options.staticFilter) {
+          urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?search=' 
+            + encodeURI(JSON.stringify($scope.options.staticFilter.search)) + '&');
+        } else {
+          urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
+        }
 
         $scope.dtInstance = {};
         $scope.selectAll = false;
