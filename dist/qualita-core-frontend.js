@@ -803,6 +803,7 @@ angular.module('qualitaCoreFrontend')
 
         $scope.dtInstance = {};
         $scope.selectAll = false;
+        $scope.options.selection = {};
         $scope.headerCompiled = false;
         $scope.customFilters = {};
 
@@ -981,7 +982,7 @@ angular.module('qualitaCoreFrontend')
           .withDataProp('data')
           .withOption('processing', true)
           .withOption('serverSide', true)
-          .withOption('order', [[ $scope.options.defaultOrderColumn, $scope.options.defaultOrderDir ]])
+          .withOption('order', [$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir])
           .withOption('language', {
                   'sProcessing' : 'Procesando...',
                   'sLengthMenu' : 'Registros _MENU_',
@@ -1035,13 +1036,13 @@ angular.module('qualitaCoreFrontend')
         var indexPadding = 0;
         if($scope.options.isSelectable) {
 
-          var titleHtml = '<label><input type="checkbox" ng-model="selectAll" ng-click="toggleAll(selectAll)"><span class="text"></span></label>';
+          var titleHtml = '<label><input type="checkbox" ng-model="selectAll" ng-click="toggleAll()"><span class="text"></span></label>';
 
           selectionColumn = DTColumnBuilder.newColumn(null).withTitle(titleHtml).notSortable()
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
               var checkbox = '<label>' +
-                '<input id="' + data.id + '" type="checkbox" ng-model="$scope.options.selection[' + data.id + ']" ng-click="toggleOne($scope.options.selection)">' +
+                '<input id="' + data.id + '" type="checkbox" ng-model="options.selection[' + data.id + ']" ng-click="toggleOne()">' +
               '<span class="text"></span></label>';
               return checkbox;
           })
@@ -1159,44 +1160,24 @@ angular.module('qualitaCoreFrontend')
           //$location.path(pathTemplate(params));
         }
 
-        $scope.toggleAll = function (selectAll) {
-            if (!$scope.selectAll)
-              $scope.selectAll = false;
-            else
-              $scope.selectAll = true;
-
+        $scope.toggleAll = function () {
             if ($scope.selectAll) {         //If true then select visible
                 _.each(table.rows().data(), function (value, index) {
-                  if (!$scope.options.selection[value.id]) {
-                    $("#"+value.id).click();
-                  }
-                })
+                    $scope.options.selection[value.id] = true;
+                });
             } else {
-              _.each($scope.options.selection, function (value, index) {
-                if (value) {
-                  $("#"+index).click();
-                }
-              })
+              _.each(table.rows().data(), function (value, index) {
+                  $scope.options.selection[value.id] = false;
+              });
             }
+
         }
 
-        $scope.toggleOne = function (selectedItems) {
-            for (var id in selectedItems) {
-              if (selectedItems.hasOwnProperty(id)) {
-                  if(!selectedItems[id]) {
-                      $scope.selectAll = false;
-                      return;
-                  }
-              }
-            }
-            var selectAll = true;
-            _.each(table.rows().data(), function (value, index) {
-                if (!$scope.options.selection[value.id]) {
-                  selectAll = false;
-                }
-              });
-            $scope.selectAll = selectAll;
-            $scope.options.selection = selectedItems;
+        $scope.toggleOne = function () {
+            var notSelectAll = _.some(table.rows().data(), function (value, index) {
+              return !$scope.options.selection[value.id];
+            });
+            $scope.selectAll = !notSelectAll;
         }
 
         //funciones para el select2
@@ -1405,15 +1386,25 @@ angular.module('qualitaCoreFrontend')
             $('#' + tableId).DataTable().ajax.reload();
           }
 
+
           table.on('draw', function() {
             $timeout(function() {
-              var selectAll = true;
-              _.each(table.rows().data(), function (value, index) {
-                  if (!$scope.options.selection[value.id]) {
-                    selectAll = false;
-                  }
-                });
-              $scope.selectAll = selectAll;
+              if (table.rows().data().length > 0) {
+                var selectAll = true;
+                _.each(table.rows().data(), function (value, index) {
+                    
+                    if ($scope.options.selection[value.id] === undefined) {
+                      $scope.options.selection[value.id] = false;
+                      selectAll = false;
+                    } else if ($scope.options.selection[value.id] == false) {
+                      selectAll = false;
+                    }
+                  });
+
+                $scope.selectAll = selectAll;
+              } else {
+                $scope.selectAll = false;
+              }
             });
           });
 
@@ -1672,46 +1663,57 @@ angular.module('qualitaCoreFrontend')
  * @name qualita.baseurl
  * @description
  * # baseurl
- * Factory in the qualita.
+ * Provider in the qualita.
  */
 angular.module('qualitaCoreFrontend')
-  .factory('baseurl', function (Config) {
+  .provider('baseurl', function () {
+    this.config = {};
 
-    // Public API here
-    return {
-      getBaseUrl: function () {
-        var hostname = window.location.hostname;
+    this.setConfig = function(config) {
+        this.config = config;
+    };
 
-        //si es el servidor de homologacion
-        if (hostname === Config.serverIp) {
-          return 'http://' + hostname + '/' + Config.serverName + '/' + Config.serverAPI;
+    this.$get = function() {
+      var Config = this.config;
+      return {
+        getBaseUrl: function () {
+          var hostname = window.location.hostname;
+
+          //si es el servidor de homologacion
+          if (hostname === Config.serverIp) {
+            return 'http://' + hostname + '/' + Config.serverName + '/' + Config.serverAPI;
+          }
+          //si es localhost es desarrollo local
+          else {
+            return 'http://' + hostname + ':' + Config.serverPort
+                  + '/' + Config.serverName + '/' + Config.serverAPI;
+          }
+
+        },
+
+
+        getPublicBaseUrl: function () {
+          var hostname = window.location.hostname;
+
+          //si es el servidor de homologacion
+          if (hostname === Config.serverIp)
+            return 'http://' + hostname + '/public/';
+          //si es localhost es desarrollo local
+          else
+            return 'http://' + hostname + ':' + Config.serverPort
+                  + '/' + Config.serverName + '/public/';
+        },
+
+        getBareServerUrl: function() {
+          var hostname = window.location.hostname;
+
+          //si es el servidor de homologacion
+          if (hostname === Config.serverIp)
+            return 'ws://' + hostname + '/' + Config.serverWSName + '/';
+          //si es localhost es desarrollo local
+          else
+            return 'ws://' + hostname + ':' + Config.serverPort + '/' + Config.serverName + '/';
         }
-        //si es localhost es desarrollo local
-        else {
-          return 'http://' + hostname + ':' + Config.serverPort
-                + '/' + Config.serverName + '/' + Config.serverAPI;
-        }
-
-      },
-      getPublicBaseUrl: function () {
-        var hostname = window.location.hostname;
-        //si es el servidor de homologacion
-        if (hostname === Config.serverIp)
-          return 'http://' + hostname + '/public/';
-        //si es localhost es desarrollo local
-        else
-          return 'http://' + hostname + ':' + Config.serverPort  + '/public/';
-      },
-
-      getBareServerUrl: function() {
-        var hostname = window.location.hostname;
-
-        //si es el servidor de homologacion
-        if (hostname === Config.serverIp)
-          return 'ws://' + hostname + '/' + Config.serverWSName + '/';
-        //si es localhost es desarrollo local
-        else
-          return 'ws://' + hostname + ':' + Config.serverPort + '/' + Config.serverName + '/';
       }
     };
   });
