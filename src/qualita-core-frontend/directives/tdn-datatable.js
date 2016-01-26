@@ -13,7 +13,7 @@ angular.module('qualitaCoreFrontend')
     return {
       template: '<div>' +
     '<div class="widget">' +
-      '<div class="widget-header">' +
+      '<div class="widget-header bordered-top bordered-palegreen">' +
         '<span class="widget-caption">{{options.title}}</span>' +
         '<div class="widget-buttons">' +
           '<a href="#" ng-show="canCreate()" ng-click="new()" title="Nuevo">' +
