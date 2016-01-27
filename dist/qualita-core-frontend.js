@@ -1128,7 +1128,7 @@ angular.module('qualitaCoreFrontend')
               _.forEach($scope.options.extraRowOptions, function(menuOpt) {
                 var compilado = _.template(menuOpt.templateToRender);
                 $scope[menuOpt.functionName] = menuOpt.functionDef;
-                basicOpts = basicOpts + compilado({'dataCustom': data[menuOpt.customAttribute] ,'dataId': data.id, '$state': $state, '$scope': $scope});
+                basicOpts = basicOpts + compilado({'dataCustom': JSON.stringify(data[menuOpt.customAttribute]) ,'dataId': data.id, '$state': $state, '$scope': $scope});
                 $scope[menuOpt.conditionName] = menuOpt.conditionDef;
               });
             }
