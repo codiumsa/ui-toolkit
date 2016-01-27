@@ -637,7 +637,7 @@ angular.module('qualitaCoreFrontend')
 
           //Texto del boton de visibilidad de columnas
           //$(".dt-buttons").append("<label class='view-columns'>Vistas&nbsp;</label>");
-          $(".dt-button.buttons-colvis").addClass("form-control input-sm").html('<i class="glyphicon glyphicon-th-list"></i>');
+          $(".dt-button.buttons-colvis").removeClass().addClass("columns-selection").html('<i class="glyphicon glyphicon-th-list"></i>');
 
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
