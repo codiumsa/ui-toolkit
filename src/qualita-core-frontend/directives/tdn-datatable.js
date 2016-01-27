@@ -50,7 +50,12 @@ angular.module('qualitaCoreFrontend')
         options: '='
       },
       controller: function controller($scope, $element) {
-        var actionsColumn, selectionColumn, urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
+        var actionsColumn, selectionColumn;
+        if($scope.options.extraPath) {
+          var urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/' + $scope.options.extraPath);
+        } else {
+          var urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
+        }
 
         $scope.dtInstance = {};
         $scope.selectAll = false;
@@ -643,7 +648,7 @@ angular.module('qualitaCoreFrontend')
               if (table.rows().data().length > 0) {
                 var selectAll = true;
                 _.each(table.rows().data(), function (value, index) {
-                    
+
                     if ($scope.options.selection[value.id] === undefined) {
                       $scope.options.selection[value.id] = false;
                       selectAll = false;
