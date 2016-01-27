@@ -237,10 +237,10 @@ angular.module('qualitaCoreFrontend')
         };
 
         scope.$watch('url', function() {
-
+         
           if(scope.url) {
             scope.trustedUrl = $sce.trustAsResourceUrl(scope.url);
-
+            
             if(!scope.background){
               scope.modalInstance = $modal.open({
                 template: '<div class="modal-header">' +
@@ -799,7 +799,14 @@ angular.module('qualitaCoreFrontend')
         options: '='
       },
       controller: function controller($scope, $element) {
-        var actionsColumn, selectionColumn, urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
+        var actionsColumn, selectionColumn, urlTemplate;
+        // Se arma la ruta según tenga o no filtros estáticos
+        if ($scope.options.staticFilter) {
+          urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?search='
+            + encodeURI(JSON.stringify($scope.options.staticFilter.search)) + '&');
+        } else {
+          urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
+        }
 
         $scope.dtInstance = {};
         $scope.selectAll = false;
@@ -1122,6 +1129,7 @@ angular.module('qualitaCoreFrontend')
                 var compilado = _.template(menuOpt.templateToRender);
                 $scope[menuOpt.functionName] = menuOpt.functionDef;
                 basicOpts = basicOpts + compilado({'dataCustom': data[menuOpt.customAttribute] ,'dataId': data.id, '$state': $state, '$scope': $scope});
+                $scope[menuOpt.conditionName] = menuOpt.conditionDef;
               });
             }
             return basicOpts;
@@ -1576,7 +1584,7 @@ angular.module('qualitaCoreFrontend')
  */
 angular.module('qualitaCoreFrontend')
   .service('AuthorizationService', function ($rootScope, $resource, $http, baseurl, AuthenticationService) {
-
+    
     var Authorization = $resource(baseurl.getBaseUrl() + '/authorization/:action',
                                   {action: '@action'});
 
@@ -1602,7 +1610,7 @@ angular.module('qualitaCoreFrontend')
       },
 
       setupCredentials: function(username, requestToken, accessToken, callback) {
-
+        
         var AuthParams = {
           username: username,
           requestToken: requestToken,
@@ -1622,7 +1630,7 @@ angular.module('qualitaCoreFrontend')
         });
       },
 
-      cleanupCredentials: function() {
+      cleanupCredentials: function() {        
         localStorage.removeItem('AUTH_PARAMS');
       },
 
@@ -2091,7 +2099,7 @@ function NotificacionesWSFactory($resource, baseurl, $log, $websocket) {
  */
 angular.module('qualitaCoreFrontend')
   .factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
-
+  
     var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID', {action: '@reportID'});
 
     return {

@@ -380,6 +380,7 @@ angular.module('qualitaCoreFrontend')
                 var compilado = _.template(menuOpt.templateToRender);
                 $scope[menuOpt.functionName] = menuOpt.functionDef;
                 basicOpts = basicOpts + compilado({'dataCustom': data[menuOpt.customAttribute] ,'dataId': data.id, '$state': $state, '$scope': $scope});
+                $scope[menuOpt.conditionName] = menuOpt.conditionDef;
               });
             }
             return basicOpts;
