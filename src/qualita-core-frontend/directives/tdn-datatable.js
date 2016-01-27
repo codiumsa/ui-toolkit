@@ -13,7 +13,7 @@ angular.module('qualitaCoreFrontend')
     return {
       template: '<div>' +
     '<div class="widget">' +
-      '<div class="widget-header">' +
+      '<div class="widget-header bordered-top bordered-palegreen">' +
         '<span class="widget-caption">{{options.title}}</span>' +
         '<div class="widget-buttons">' +
           '<a href="#" ng-show="canCreate()" ng-click="new()" title="Nuevo">' +
@@ -50,11 +50,13 @@ angular.module('qualitaCoreFrontend')
         options: '='
       },
       controller: function controller($scope, $element) {
-        var actionsColumn, selectionColumn;
-        if($scope.options.extraPath) {
-          var urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/' + $scope.options.extraPath);
+        var actionsColumn, selectionColumn, urlTemplate;
+        // Se arma la ruta según tenga o no filtros estáticos
+        if ($scope.options.staticFilter) {
+          urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?search='
+            + encodeURI(JSON.stringify($scope.options.staticFilter.search)) + '&');
         } else {
-          var urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
+          urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
         }
 
         $scope.dtInstance = {};

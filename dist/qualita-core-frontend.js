@@ -237,10 +237,10 @@ angular.module('qualitaCoreFrontend')
         };
 
         scope.$watch('url', function() {
-         
+
           if(scope.url) {
             scope.trustedUrl = $sce.trustAsResourceUrl(scope.url);
-            
+
             if(!scope.background){
               scope.modalInstance = $modal.open({
                 template: '<div class="modal-header">' +
@@ -762,7 +762,7 @@ angular.module('qualitaCoreFrontend')
     return {
       template: '<div>' +
     '<div class="widget">' +
-      '<div class="widget-header">' +
+      '<div class="widget-header bordered-top bordered-palegreen">' +
         '<span class="widget-caption">{{options.title}}</span>' +
         '<div class="widget-buttons">' +
           '<a href="#" ng-show="canCreate()" ng-click="new()" title="Nuevo">' +
@@ -799,12 +799,7 @@ angular.module('qualitaCoreFrontend')
         options: '='
       },
       controller: function controller($scope, $element) {
-        var actionsColumn, selectionColumn;
-        if($scope.options.extraPath) {
-          var urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/' + $scope.options.extraPath);
-        } else {
-          var urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
-        }
+        var actionsColumn, selectionColumn, urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
 
         $scope.dtInstance = {};
         $scope.selectAll = false;
@@ -1581,7 +1576,7 @@ angular.module('qualitaCoreFrontend')
  */
 angular.module('qualitaCoreFrontend')
   .service('AuthorizationService', function ($rootScope, $resource, $http, baseurl, AuthenticationService) {
-    
+
     var Authorization = $resource(baseurl.getBaseUrl() + '/authorization/:action',
                                   {action: '@action'});
 
@@ -1607,7 +1602,7 @@ angular.module('qualitaCoreFrontend')
       },
 
       setupCredentials: function(username, requestToken, accessToken, callback) {
-        
+
         var AuthParams = {
           username: username,
           requestToken: requestToken,
@@ -1627,7 +1622,7 @@ angular.module('qualitaCoreFrontend')
         });
       },
 
-      cleanupCredentials: function() {        
+      cleanupCredentials: function() {
         localStorage.removeItem('AUTH_PARAMS');
       },
 
@@ -2096,7 +2091,7 @@ function NotificacionesWSFactory($resource, baseurl, $log, $websocket) {
  */
 angular.module('qualitaCoreFrontend')
   .factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
-  
+
     var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID', {action: '@reportID'});
 
     return {
