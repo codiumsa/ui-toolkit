@@ -1439,6 +1439,7 @@ angular.module('qualitaCoreFrontend')
         }
 
         $scope.remove = function(itemId) {
+          $scope.disableButton = false;
           $scope.selectedItemId = itemId;
           $scope.tituloModal = "Confirmación de Borrado";
           $scope.mensajeModal = "Esta operación eliminará el registro seleccionado. ¿Desea continuar?";
@@ -1448,17 +1449,19 @@ angular.module('qualitaCoreFrontend')
             '</div>' +
             '<div class="modal-body">{{::mensajeModal}}</div>' +
             '<div class="modal-footer">' +
-                '<button class="btn btn-primary" ng-click="ok(selectedItemId)">Aceptar</button>' +
-                '<button class="btn btn-warning" ng-click="cancel()">Cancelar</button>' +
+                '<button class="btn btn-primary" ng-disabled="disableButton" ng-click="ok(selectedItemId)">Aceptar</button>' +
+                '<button class="btn btn-warning" ng-disabled="disableButton" ng-click="cancel()">Cancelar</button>' +
             '</div>',
             scope: $scope
           });
 
           $scope.cancel = function() {
+            $scope.disableButton = true;
             $scope.modalInstanceBorrar1.dismiss('cancel');
           }
 
           $scope.ok = function(itemId) {
+            $scope.disableButton = true;
             var model = $scope.options.factory.create({id: itemId});
             $scope.options.factory.remove(model).then(function() {
               $scope.dtOptions.reloadData();
