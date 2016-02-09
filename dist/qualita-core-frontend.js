@@ -73,11 +73,11 @@ angular.module('qualitaCoreFrontend')
       '</div>' +
 
       '<div class="thumbnail" ng-show="!uploader.flow.files.length && !uploader.currentFile && !uploadOptions.imagePath">' +
-      '<img src="images/placeholder.png">' +
+      '<img src="images/placeholder.png" style="max-width: 300px; max-height: 200px;>' +
       '</div>' +
 
       '<div class="thumbnail" ng-show="uploader.flow.files.length">' +
-      '<img flow-img="uploader.flow.files[0]"/> ' +
+      '<img flow-img="uploader.flow.files[0]" style="max-width: 300px; max-height: 200px;/> ' +
       '</div>' +
 
       '<div class="thumbnail" ng-show="uploadOptions.imagePath && !uploader.currentFile && !uploader.flow.files.length">' +
