@@ -374,6 +374,9 @@ angular.module('qualitaCoreFrontend')
                   '</button>' +
                   '<button class="btn btn-danger btn-dt" style="margin-right: 5px;" ng-show="canRemove()" ng-click="remove(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-trash"></span>' +
+                  '</button>' +
+                  '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-show="canList()" ng-click="view(' + data.id + ')">' +
+                  '   <span class="glyphicon glyphicon-eye-open"></span>' +
                   '</button>';
             if($scope.options.extraRowOptions) {
               _.forEach($scope.options.extraRowOptions, function(menuOpt) {
@@ -396,10 +399,15 @@ angular.module('qualitaCoreFrontend')
           var permission = hasPermission('delete_' + $scope.options.resource);
           return permission && !$scope.options.hideRemoveMenu;
         };
-
+ 
         $scope.canCreate = function() {
           var permission = hasPermission('create_' + $scope.options.resource);
           return permission && ! $scope.options.hideAddMenu;
+        };
+
+        $scope.canList = function() {
+          var permission = hasPermission('index_' + $scope.options.resource);
+          return permission && ! $scope.options.hideViewMenu;
         };
 
         if($scope.options.hasOptions) {
@@ -414,6 +422,13 @@ angular.module('qualitaCoreFrontend')
 
         $scope.edit = function(itemId){
           var pathTemplate = _.template('app.<%= resource %>.edit');
+          //var params = _.extend($scope.options, {itemId: itemId});
+          $state.go(pathTemplate($scope.options), {id: itemId});
+          //$location.path(pathTemplate(params));
+        }
+
+        $scope.view = function(itemId) {
+          var pathTemplate = _.template('app.<%= resource %>.view');
           //var params = _.extend($scope.options, {itemId: itemId});
           $state.go(pathTemplate($scope.options), {id: itemId});
           //$location.path(pathTemplate(params));
