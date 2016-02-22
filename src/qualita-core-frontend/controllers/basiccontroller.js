@@ -10,6 +10,8 @@ angular.module('qualitaCoreFrontend')
           activateNew();
         } else if($state.is($scope.editProperties.state)) {
           activateEdit();
+        } else if($state.is($scope.viewProperties.state)) {
+          activateView();
         }
         $scope.schema = $scope.factory.schema();
         $scope.options = formFactory.defaultOptions();
@@ -48,6 +50,26 @@ angular.module('qualitaCoreFrontend')
         $scope.entidad = $scope.editProperties.entidad;
         $scope.form = $scope.factory.form('edit');
         $scope.title = $scope.editProperties.title;
+      }
+
+      function activateEdit() {
+        if (!formFactory.canList($scope.resources)) {
+          var notify = $injector.get('notify');
+          // error de autorización
+          notify({
+            message: "No tiene permiso de vista",
+            classes: ['alert-danger'],
+            position: 'right'
+          });
+          $location.path('/');
+        }
+        $scope.model = $scope.prepService;
+        $scope.entidadId = $scope.model.id;
+        $scope.entidad = $scope.editProperties.entidad;
+        $scope.form = $scope.factory.form('edit');
+        $scope.title = $scope.editProperties.title;
+        $scope.view = true;
+        $scope.schema.readonly = true;
       }
 
       $scope.submit = function (form) {
