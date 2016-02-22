@@ -34,14 +34,15 @@ angular.module('qualitaCoreFrontend')
       },
 
       responseError: function(rejection) {
-
+        console.log('responseError 401');
         var notify = $injector.get('notify');
         if(rejection.status === 401) {
           if(rejection.data && rejection.data.code === 403) {
             // error de autorización
             notify({
               message: rejection.data.error,
-              classes: ['alert-danger']
+              classes: ['alert-danger'],
+              position: 'right'
             });
             $location.path('/');
             return $q.reject(rejection);

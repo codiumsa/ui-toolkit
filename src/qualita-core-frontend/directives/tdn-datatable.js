@@ -369,10 +369,10 @@ angular.module('qualitaCoreFrontend')
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
-              var basicOpts = '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-show="canEdit()" ng-click="edit(' + data.id + ')">' +
+              var basicOpts = '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canEdit()}" ng-click="edit(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-pencil"></span>' +
                   '</button>' +
-                  '<button class="btn btn-danger btn-dt" style="margin-right: 5px;" ng-show="canRemove()" ng-click="remove(' + data.id + ')">' +
+                  '<button class="btn btn-danger btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canRemove()}" ng-click="remove(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-trash"></span>' +
                   '</button>' +
                   '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-show="canList()" ng-click="view(' + data.id + ')">' +

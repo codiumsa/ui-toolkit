@@ -50,6 +50,68 @@
 
 'use strict';
 
+angular.module('qualitaCoreFrontend')
+  .controller('BasicController', ['$rootScope', '$scope', 'formFactory', '$location',
+    '$state', '$injector', function ($rootScope, $scope, formFactory, $location,
+    $state, $injector) {
+
+      $scope.activate = function () {
+        if($state.is($scope.newProperties.state)) {
+          activateNew();
+        } else if($state.is($scope.editProperties.state)) {
+          activateEdit();
+        }
+        $scope.schema = $scope.factory.schema();
+        $scope.options = formFactory.defaultOptions();
+        $rootScope.isProcessing = false;
+      }
+
+      function activateNew() {
+        if (!formFactory.canCreate($scope.resources)) {
+          var notify = $injector.get('notify');
+          // error de autorización
+          notify({
+            message: "No tiene permiso de creación",
+            classes: ['alert-danger'],
+            position: 'right'
+          });
+          $location.path('/');
+        }
+        $scope.title = $scope.newProperties.title;
+        $scope.form = $scope.factory.form('new');
+        $scope.model = {};
+      }
+
+      function activateEdit() {
+        if (!formFactory.canEdit($scope.resources)) {
+          var notify = $injector.get('notify');
+          // error de autorización
+          notify({
+            message: "No tiene permiso de edición",
+            classes: ['alert-danger'],
+            position: 'right'
+          });
+          $location.path('/');
+        }
+        $scope.model = $scope.prepService;
+        $scope.entidadId = $scope.model.id;
+        $scope.entidad = $scope.editProperties.entidad;
+        $scope.form = $scope.factory.form('edit');
+        $scope.title = $scope.editProperties.title;
+      }
+
+      $scope.submit = function (form) {
+        formFactory.defaultSubmit($scope.resource, $scope, form, $scope.factory);
+      };
+
+      $scope.cancel = function () {
+        $location.path('/' + $scope.resource);
+      };
+
+  }]);
+
+'use strict';
+
 /**
  * @ngdoc directive
  * @name qualita.directive:fileupload
@@ -186,10 +248,14 @@ angular.module('qualitaCoreFrontend')
       link: function postLink(scope, element, attrs) {
         scope.position = 0;
 
-        $localForage.getItem(scope.resource).then(function(value) {
-          scope.pending = _(value).filter(function(e) { return !e.id; })
-                            .map(function(e, i){ e.index = i; return e; }).value();
-        });
+        if (scope.resource) {
+          $localForage.getItem(scope.resource).then(function(value) {
+            scope.pending = _(value).filter(function(e) { return !e.id; })
+                              .map(function(e, i){ e.index = i; return e; }).value();
+          });
+        } else {
+          console.log('scope.resource no definido');
+        }
 
         scope.next = function() {
           scope.position++;
@@ -1118,10 +1184,10 @@ angular.module('qualitaCoreFrontend')
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
-              var basicOpts = '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-show="canEdit()" ng-click="edit(' + data.id + ')">' +
+              var basicOpts = '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canEdit()}" ng-click="edit(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-pencil"></span>' +
                   '</button>' +
-                  '<button class="btn btn-danger btn-dt" style="margin-right: 5px;" ng-show="canRemove()" ng-click="remove(' + data.id + ')">' +
+                  '<button class="btn btn-danger btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canRemove()}" ng-click="remove(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-trash"></span>' +
                   '</button>' +
                   '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-show="canList()" ng-click="view(' + data.id + ')">' +
@@ -1862,7 +1928,8 @@ angular.module('qualitaCoreFrontend')
  * Factory in the qualita.
  */
 angular.module('qualitaCoreFrontend')
-  .factory('formFactory', function ($location, $localForage, notify, $rootScope) {
+  .factory('formFactory', function ($location, $localForage, notify, $rootScope, AuthorizationService) {
+    var hasPermission = AuthorizationService.hasPermission;
 
     // Public API here
     return {
@@ -1888,9 +1955,33 @@ angular.module('qualitaCoreFrontend')
           }
         };
       },
-      defaultSubmit: function(resource, scope, form, factory, vm) {
+      defaultSubmit: function(resource, scope, form, factory, vm, errorHandler) {
+        var backEndValidatedField = [];
+
+        _.each(form.$error, function (error, errorKey) {
+
+          if (_.contains(scope.schema.backEndValidatedErrors, errorKey)) {
+            _.each(error, function (field, index) {
+              var fieldName = 'schemaForm.error.' + field.$name;
+              backEndValidatedField.push(fieldName);
+              console.log('schemaForm.error.' + field.$name + ' error: ' + errorKey);
+              scope.$broadcast(fieldName, errorKey.toString(), true, true);
+            });
+            
+          } 
+
+          _.each(backEndValidatedField, function (fieldName, index) {
+            console.log(fieldName + ' error: ' + index);
+            scope.$broadcast(fieldName, 'schemaForm', true, true);
+          });
+
+        });
+
+
         // First we broadcast an event so all fields validate themselves
         scope.$broadcast('schemaFormValidate');
+
+
         // Then we check if the form is valid
         if (form.$valid && !$rootScope.isProcessing) {
           $rootScope.isProcessing = true;
@@ -1901,20 +1992,70 @@ angular.module('qualitaCoreFrontend')
             //si se usa controllerAs, se busca el modelo dentro del vm especificado
             var model = factory.create(vm.model);
           }
+
+          //se convierten los campos de fecha desde string a date
+          _.each(scope.schema.properties, function (field, fieldName) {
+            if (field.format && (field.format === 'date' || field.format === 'date-time')) {
+              if(model[fieldName] && typeof model[fieldName] === 'string') {
+                //console.log(field.formatDate);
+                model[fieldName] = new moment(model[fieldName], field.formatDate || 'DD/MM/YYYY').toDate();
+              } 
+            }
+          });
+
           factory.save(model).then(function(){
             $location.path('/' + resource);
-          }, function(){
-            $rootScope.isProcessing = false;
-            var msg = 'Error al persistir la operación.';
-            if(!scope.model.id) msg += '\n\nGuardando localmente, reintente más tarde.'
-            notify({ message: msg, classes: 'alert-danger', position: 'right' });
-            $localForage.getItem(resource).then(function(value) {
-              value = value || [];
-              value.unshift(scope.model);
-              if(!scope.model.id) $localForage.setItem(resource, value);
+          })
+          .catch(function(e) {
+            console.log(e);
+
+            if (errorHandler) {
+              errorHandler(e);
+            }
+            
+            //se convierten los campos de fecha desde date a string
+            _.each(scope.schema.properties, function (field, fieldName) {
+              if (field.format && (field.format === 'date' || field.format === 'date-time')) {
+                if(scope.model[fieldName] && scope.model[fieldName] instanceof Date) {
+                  scope.model[fieldName] = currentForm[fieldName].$viewValue;//.to('dd/MM/yyyy');
+                }
+              }
             });
+
+            $rootScope.isProcessing = false;
+
+            //se establecen los errores del backend
+            if ((e.constructor === Array && e.data[0].constraint)) {
+              scope.$broadcast('schemaForm.error.' + e.data[0].constraint, e.data[0].codigoError.toString(), false);
+            }
+            
+            if(e.data && e.data.code !== 403) {
+              var msg = 'Error al persistir la operación.';
+              if(!scope.model.id) msg += '\n\nGuardando localmente, reintente más tarde.'
+                notify({ message: msg, classes: 'alert-danger', position: 'right' });
+                $localForage.getItem(resource).then(function(value) {
+                  value = value || [];
+                  value.unshift(scope.model);
+                  if(!scope.model.id) $localForage.setItem(resource, value);
+                });
+              }
           });
         }
+      },
+
+      canEdit : function(resource) {
+          var permission = hasPermission('update_' + resource);
+          return permission;
+      },
+
+      canRemove : function(resource) {
+          var permission = hasPermission('delete_' + resource);
+          return permission;
+      },
+
+      canCreate : function(resource) {
+          var permission = hasPermission('create_' + resource);
+          return permission;
       }
     };
   });
@@ -1955,14 +2096,15 @@ angular.module('qualitaCoreFrontend')
       },
 
       responseError: function(rejection) {
-
+        console.log('responseError 401');
         var notify = $injector.get('notify');
         if(rejection.status === 401) {
           if(rejection.data && rejection.data.code === 403) {
             // error de autorización
             notify({
               message: rejection.data.error,
-              classes: ['alert-danger']
+              classes: ['alert-danger'],
+              position: 'right'
             });
             $location.path('/');
             return $q.reject(rejection);

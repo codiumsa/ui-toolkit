@@ -18,10 +18,14 @@ angular.module('qualitaCoreFrontend')
       link: function postLink(scope, element, attrs) {
         scope.position = 0;
 
-        $localForage.getItem(scope.resource).then(function(value) {
-          scope.pending = _(value).filter(function(e) { return !e.id; })
-                            .map(function(e, i){ e.index = i; return e; }).value();
-        });
+        if (scope.resource) {
+          $localForage.getItem(scope.resource).then(function(value) {
+            scope.pending = _(value).filter(function(e) { return !e.id; })
+                              .map(function(e, i){ e.index = i; return e; }).value();
+          });
+        } else {
+          console.log('scope.resource no definido');
+        }
 
         scope.next = function() {
           scope.position++;
