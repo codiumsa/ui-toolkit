@@ -1212,7 +1212,7 @@ angular.module('qualitaCoreFrontend')
                   '<button class="btn btn-danger btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canRemove()}" ng-click="remove(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-trash"></span>' +
                   '</button>' +
-                  '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-show="canList()" ng-click="view(' + data.id + ')">' +
+                  '<button class="btn btn-primary btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canList()}" ng-click="view(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-eye-open"></span>' +
                   '</button>';
             if($scope.options.extraRowOptions) {
