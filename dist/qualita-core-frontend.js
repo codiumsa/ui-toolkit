@@ -1212,7 +1212,7 @@ angular.module('qualitaCoreFrontend')
                   '<button class="btn btn-danger btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canRemove()}" ng-click="remove(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-trash"></span>' +
                   '</button>' +
-                  '<button class="btn btn-primary btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canList()}" ng-click="view(' + data.id + ')">' +
+                  '<button class="btn btn-info btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canList()}" ng-click="view(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-eye-open"></span>' +
                   '</button>';
             if($scope.options.extraRowOptions) {
@@ -2063,6 +2063,44 @@ angular.module('qualitaCoreFrontend')
               }
           });
         }
+      },
+      defaultNSFSubmit: function(form, factory, resourceModel, errorHandler) {
+
+        // Then we check if the form is valid
+        if (form.$valid && !$rootScope.isProcessing) {
+          $rootScope.isProcessing = true;
+          // ... do whatever you need to do with your data.
+          var model = factory.create(resourceModel);
+
+          //se convierten los campos de fecha desde string a date
+          var deferred = $q.defer();
+          factory.save(model).then(function(response){
+            // la redireccion se deja a cargo del controller
+            // $location.path('/' + resource);
+            deferred.resolve(response);
+          })
+          .catch(function(e) {
+            console.log(e);
+            $rootScope.isProcessing = false;
+
+            if (errorHandler) {
+              errorHandler(e);
+              deferred.reject(msg);
+            } else {
+              //se establecen los errores del backend
+              if(e && e.status === 500) {
+                var msg = '';
+                _.forEach(e.data, function(error) {
+                  msg += '\n\n' + error.message + '.'
+                });
+                notify({ message: msg, classes: 'alert-danger', position: 'right' });
+                // guardar en local storage
+                deferred.reject(msg);
+              }
+            }                 
+          });
+        }
+        return deferred.promise;
       },
 
       canEdit : function(resource) {
