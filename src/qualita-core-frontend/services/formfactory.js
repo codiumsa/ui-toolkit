@@ -96,6 +96,7 @@ angular.module('qualitaCoreFrontend')
 
             if (errorHandler) {
               errorHandler(e);
+              return;
             }
 
             //se convierten los campos de fecha desde date a string
@@ -128,7 +129,19 @@ angular.module('qualitaCoreFrontend')
                   value.unshift(scope.model);
                   if(!scope.model.id) $localForage.setItem(resource, value);
                 });
-              }
+            }
+
+            // manejo general de errores
+            else if(e && e.status === 500) {
+              var msg = '';
+              _.forEach(e.data, function(error) {
+                msg += '\n\n' + error.message + '.'
+              });
+              notify({ message: msg, classes: 'alert-danger', position: 'right' });
+              // guardar en local storage
+              deferred.reject(msg);
+            }
+
           });
         }
       },
