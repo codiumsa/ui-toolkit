@@ -1989,8 +1989,8 @@ angular.module('qualitaCoreFrontend')
               console.log('schemaForm.error.' + field.$name + ' error: ' + errorKey);
               scope.$broadcast(fieldName, errorKey.toString(), true, true);
             });
-            
-          } 
+
+          }
 
           _.each(backEndValidatedField, function (fieldName, index) {
             console.log(fieldName + ' error: ' + index);
@@ -2016,12 +2016,17 @@ angular.module('qualitaCoreFrontend')
           }
 
           //se convierten los campos de fecha desde string a date
-          _.each(scope.schema.properties, function (field, fieldName) {
+          if(scope.schema) {
+            var schema = scope.schema;
+          } else {
+            var schema = vm.schema;
+          }
+          _.each(schema.properties, function (field, fieldName) {
             if (field.format && (field.format === 'date' || field.format === 'date-time')) {
               if(model[fieldName] && typeof model[fieldName] === 'string') {
                 //console.log(field.formatDate);
                 model[fieldName] = new moment(model[fieldName], field.formatDate || 'DD/MM/YYYY').toDate();
-              } 
+              }
             }
           });
 
@@ -2034,9 +2039,14 @@ angular.module('qualitaCoreFrontend')
             if (errorHandler) {
               errorHandler(e);
             }
-            
+
             //se convierten los campos de fecha desde date a string
-            _.each(scope.schema.properties, function (field, fieldName) {
+              if(scope.schema) {
+                var schema = scope.schema;
+              } else {
+                var schema = vm.schema;
+              }
+            _.each(schema.properties, function (field, fieldName) {
               if (field.format && (field.format === 'date' || field.format === 'date-time')) {
                 if(scope.model[fieldName] && scope.model[fieldName] instanceof Date) {
                   scope.model[fieldName] = currentForm[fieldName].$viewValue;//.to('dd/MM/yyyy');
@@ -2050,7 +2060,7 @@ angular.module('qualitaCoreFrontend')
             if ((e.constructor === Array && e.data[0].constraint)) {
               scope.$broadcast('schemaForm.error.' + e.data[0].constraint, e.data[0].codigoError.toString(), false);
             }
-            
+
             if(e.data && e.data.code !== 403) {
               var msg = 'Error al persistir la operación.';
               if(!scope.model.id) msg += '\n\nGuardando localmente, reintente más tarde.'
