@@ -8,7 +8,7 @@
  * Factory in the qualita.
  */
 angular.module('qualitaCoreFrontend')
-  .factory('formFactory', function ($location, $localForage, notify, $rootScope, AuthorizationService) {
+  .factory('formFactory', function ($location, $localForage, notify, $rootScope, AuthorizationService, $q) {
     var hasPermission = AuthorizationService.hasPermission;
 
     // Public API here
