@@ -146,7 +146,7 @@ angular.module('qualitaCoreFrontend')
         }
       },
       defaultNSFSubmit: function(form, factory, resourceModel, errorHandler) {
-
+        var deferred = $q.defer();
         // Then we check if the form is valid
         if (form.$valid && !$rootScope.isProcessing) {
           $rootScope.isProcessing = true;
@@ -154,7 +154,6 @@ angular.module('qualitaCoreFrontend')
           var model = factory.create(resourceModel);
 
           //se convierten los campos de fecha desde string a date
-          var deferred = $q.defer();
           factory.save(model).then(function(response){
             // la redireccion se deja a cargo del controller
             // $location.path('/' + resource);
