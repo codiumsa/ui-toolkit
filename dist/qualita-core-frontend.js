@@ -2035,6 +2035,7 @@ angular.module('qualitaCoreFrontend')
           })
           .catch(function(e) {
             console.log(e);
+            $rootScope.isProcessing = false;
 
             if (errorHandler) {
               errorHandler(e);
@@ -2054,8 +2055,6 @@ angular.module('qualitaCoreFrontend')
                 }
               }
             });
-
-            $rootScope.isProcessing = false;
 
             //se establecen los errores del backend
             if ((e.constructor === Array && e.data[0].constraint)) {
