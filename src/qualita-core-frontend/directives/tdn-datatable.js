@@ -93,8 +93,8 @@ angular.module('qualitaCoreFrontend')
           });
 
           xhr.query().$promise.then(function(response) {
-            console.log("respuesta obtenida: ");
-            console.log(response);
+            //console.log("respuesta obtenida: ");
+            //console.log(response);
             var datos = response.data;
             if(datos) {
               datos.forEach(function(registro) {
@@ -349,7 +349,7 @@ angular.module('qualitaCoreFrontend')
           $scope.dtColumns.push(column);
         });
 
-        console.log($scope.dtColumns);
+        //console.log($scope.dtColumns);
         if($scope.options.hasOptions) {
           $scope.originalIndexKey[$scope.visibleColumns] = null;//'actions';
           // Fix last right column
@@ -499,7 +499,7 @@ angular.module('qualitaCoreFrontend')
                     minimumResultsForSearch: -1,
                     //allowClear: true,
                     id: function (text) {
-                      return text.codigo;
+                      return text.descripcion;
                     },
                     data: function () {
                       return $http({
@@ -527,8 +527,6 @@ angular.module('qualitaCoreFrontend')
                     initSelection: function (element, callback) {
                       //var id = $(element).val();
                       var value = table.column(column.idx).search();
-                      console.log('valor actual ');
-                      console.log(value);
                       $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
                         dataType: "json",
                         beforeSend: function (xhr) {
@@ -552,7 +550,7 @@ angular.module('qualitaCoreFrontend')
                       var realIndex = parseInt(id.substring(6));
                       var index = table.colReorder.order().indexOf(realIndex);
 
-                      console.log(this.value);
+                      //console.log(this.value);
                       if (this.value.length >= 1) {
                         table.column(index).search(this.value).draw();
                       } else {
@@ -628,7 +626,7 @@ angular.module('qualitaCoreFrontend')
 
         $scope.dtOptions.withColReorderCallback(function() {
             var order = this.fnOrder();
-            console.log('Columns order has been changed with: ' + order);
+            //console.log('Columns order has been changed with: ' + order);
             createFilters();
         });
 
@@ -683,7 +681,7 @@ angular.module('qualitaCoreFrontend')
           });
 
           table.on('column-visibility', function (e, settings, column, state ) {
-            console.log('change column visibility %o', state);
+            //console.log('change column visibility %o', state);
             createFilters();
           });
 
@@ -696,7 +694,7 @@ angular.module('qualitaCoreFrontend')
                   var realIndex = column._ColReorder_iOrigCol;
                   var data = column.mData;
                   if (data !== undefined && data !== "" && data !== null) {
-                    console.log(data);
+                    //console.log(data);
                     filters[data] = table.column(realIndex).search();
                   }
             });
