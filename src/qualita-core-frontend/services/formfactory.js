@@ -176,7 +176,7 @@ angular.module('qualitaCoreFrontend')
                 // guardar en local storage
                 deferred.reject(msg);
               }
-            }                 
+            }
           });
         }
         return deferred.promise;
@@ -185,6 +185,11 @@ angular.module('qualitaCoreFrontend')
       canEdit : function(resource) {
           var permission = hasPermission('update_' + resource);
           return permission;
+      },
+
+      canList : function(resource) {
+        var permission = hasPermission('index_' + resource);
+        return permission;
       },
 
       canRemove : function(resource) {

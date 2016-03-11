@@ -6,6 +6,7 @@ angular.module('qualitaCoreFrontend')
     $state, $injector) {
 
       $scope.activate = function () {
+        $scope.schema = $scope.factory.schema();
         if($state.is($scope.newProperties.state)) {
           activateNew();
         } else if($state.is($scope.editProperties.state)) {
@@ -13,7 +14,6 @@ angular.module('qualitaCoreFrontend')
         } else if($state.is($scope.viewProperties.state)) {
           activateView();
         }
-        $scope.schema = $scope.factory.schema();
         $scope.options = formFactory.defaultOptions();
         $rootScope.isProcessing = false;
       }
@@ -52,7 +52,7 @@ angular.module('qualitaCoreFrontend')
         $scope.title = $scope.editProperties.title;
       }
 
-      function activateEdit() {
+      function activateView() {
         if (!formFactory.canList($scope.resources)) {
           var notify = $injector.get('notify');
           // error de autorización
