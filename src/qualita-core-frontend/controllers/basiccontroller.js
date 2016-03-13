@@ -32,6 +32,7 @@ angular.module('qualitaCoreFrontend')
         $scope.title = $scope.newProperties.title;
         $scope.form = $scope.factory.form('new');
         $scope.model = {};
+        $scope.schema.readonly = false;
       }
 
       function activateEdit() {
@@ -50,6 +51,7 @@ angular.module('qualitaCoreFrontend')
         $scope.entidad = $scope.editProperties.entidad;
         $scope.form = $scope.factory.form('edit');
         $scope.title = $scope.editProperties.title;
+        $scope.schema.readonly = false;
       }
 
       function activateView() {
@@ -65,9 +67,9 @@ angular.module('qualitaCoreFrontend')
         }
         $scope.model = $scope.prepService;
         $scope.entidadId = $scope.model.id;
-        $scope.entidad = $scope.editProperties.entidad;
+        $scope.entidad = $scope.viewProperties.entidad;
         $scope.form = $scope.factory.form('edit');
-        $scope.title = $scope.editProperties.title;
+        $scope.title = $scope.viewProperties.title;
         $scope.view = true;
         $scope.schema.readonly = true;
       }
