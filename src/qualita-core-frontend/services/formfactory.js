@@ -29,7 +29,7 @@ angular.module('qualitaCoreFrontend')
             ngModelOptions: {
              updateOn: 'blur'
             },
-            
+            disabled: false,
             disableSuccessState: false,
             disableErrorState: false,
             feedback: true
@@ -42,7 +42,7 @@ angular.module('qualitaCoreFrontend')
       defaultViewOptions: function() {
         return {
           formDefaults: {
-
+            disabled: true,
             disableSuccessState: true,
             disableErrorState: true,
             feedback: false            

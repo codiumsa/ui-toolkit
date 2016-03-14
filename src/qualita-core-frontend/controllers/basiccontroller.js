@@ -72,7 +72,7 @@ angular.module('qualitaCoreFrontend')
         $scope.model = $scope.prepService;
         $scope.entidadId = $scope.model.id;
         $scope.entidad = $scope.viewProperties.entidad;
-        $scope.form = $scope.factory.form('edit');
+        $scope.form = $scope.factory.form('view');
         $scope.title = $scope.viewProperties.title;
         $scope.view = true;
         $scope.schema.readonly = true;

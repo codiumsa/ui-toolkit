@@ -122,7 +122,7 @@ angular.module('qualitaCoreFrontend')
         $scope.model = $scope.prepService;
         $scope.entidadId = $scope.model.id;
         $scope.entidad = $scope.viewProperties.entidad;
-        $scope.form = $scope.factory.form('edit');
+        $scope.form = $scope.factory.form('view');
         $scope.title = $scope.viewProperties.title;
         $scope.view = true;
         $scope.schema.readonly = true;
@@ -2068,7 +2068,7 @@ angular.module('qualitaCoreFrontend')
             ngModelOptions: {
              updateOn: 'blur'
             },
-            
+            disabled: false,
             disableSuccessState: false,
             disableErrorState: false,
             feedback: true
@@ -2081,7 +2081,7 @@ angular.module('qualitaCoreFrontend')
       defaultViewOptions: function() {
         return {
           formDefaults: {
-
+            disabled: true,
             disableSuccessState: true,
             disableErrorState: true,
             feedback: false            
