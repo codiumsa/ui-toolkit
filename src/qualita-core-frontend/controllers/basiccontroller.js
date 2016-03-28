@@ -2,19 +2,22 @@
 
 angular.module('qualitaCoreFrontend')
   .controller('BasicController', ['$rootScope', '$scope', 'formFactory', '$location',
-    '$state', '$injector', function ($rootScope, $scope, formFactory, $location,
-    $state, $injector) {
+    '$state', '$injector',
+    function($rootScope, $scope, formFactory, $location,
+      $state, $injector) {
 
-      $scope.activate = function () {
+      $scope.activate = function() {
         $scope.schema = $scope.factory.schema();
-        if($state.is($scope.newProperties.state)) {
+        $scope.options = formFactory.defaultOptions();
+
+        if ($state.is($scope.newProperties.state)) {
           activateNew();
-        } else if($state.is($scope.editProperties.state)) {
+        } else if ($state.is($scope.editProperties.state)) {
           activateEdit();
-        } else if($state.is($scope.viewProperties.state)) {
+        } else if ($state.is($scope.viewProperties.state)) {
           activateView();
         }
-        $scope.options = formFactory.defaultOptions();
+        
         $rootScope.isProcessing = false;
       }
 
@@ -65,21 +68,23 @@ angular.module('qualitaCoreFrontend')
           });
           $location.path('/');
         }
+        $scope.options = formFactory.defaultViewOptions();
         $scope.model = $scope.prepService;
         $scope.entidadId = $scope.model.id;
         $scope.entidad = $scope.viewProperties.entidad;
-        $scope.form = $scope.factory.form('edit');
+        $scope.form = $scope.factory.form('view');
         $scope.title = $scope.viewProperties.title;
         $scope.view = true;
         $scope.schema.readonly = true;
       }
 
-      $scope.submit = function (form) {
+      $scope.submit = function(form) {
         formFactory.defaultSubmit($scope.resource, $scope, form, $scope.factory);
       };
 
-      $scope.cancel = function () {
+      $scope.cancel = function() {
         $location.path('/' + $scope.resource);
       };
 
-  }]);
+    }
+  ]);

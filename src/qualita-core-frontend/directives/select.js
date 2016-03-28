@@ -1,3 +1,109 @@
+
+angular.module('qualitaCoreFrontend').run(["$templateCache", function($templateCache) {
+
+$templateCache.put("views/directives/uiselect.html", "<div class=\"form-group\"\n" +
+      "     ng-class=\"{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess(), 'has-feedback': form.feedback !== false}\"\n" +
+      "     ng-init=\"selectedOptions=form.titleMap; insideModel=$$value$$;\" ng-controller=\"dynamicSelectController\">\n" +
+      "  <label class=\"control-label\" ng-show=\"showTitle()\">{{form.title}}</label>\n" +
+      "\n" +
+      "  <div class=\"form-group\">\n" +
+      "    <ui-select ng-model=\"select_model.selected\"\n" +
+      "               ng-if=\"!(form.options.tagging||false)\" theme=\"bootstrap\" ng-disabled=\"form.disabled\"\n" +
+      "               on-select=\"$$value$$=$item.value\" class=\"{{form.options.uiClass}}\">\n" +
+      "      <ui-select-match\n" +
+      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('placeholders.select' | translate)}}\">\n" +
+      "        {{select_model.selected.name}}\n" +
+      "      </ui-select-match>\n" +
+      "      <ui-select-choices refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" +
+      "                         refresh-delay=\"form.options.refreshDelay\" group-by=\"form.options.groupBy\"\n" +
+      "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" +
+      "        <div ng-bind-html=\"item.name | highlight: $select.search\"></div>\n" +
+      "        <div ng-if=\"item.description\">\n" +
+      "          <span\n" +
+      "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS'))+ '</small>'\"></span>\n" +
+      "        </div>\n" +
+      "      </ui-select-choices>\n" +
+      "    </ui-select>\n" +
+      "    <ui-select ng-model=\"select_model.selected\"\n" +
+      "               ng-if=\"(form.options.tagging||false) && !(form.options.groupBy || false)\"\n" +
+      "               tagging=\"form.options.tagging||false\" tagging-label=\"form.options.taggingLabel\"\n" +
+      "               tagging-tokens=\"form.options.taggingTokens\"\n" +
+      "               theme=\"bootstrap\" ng-disabled=\"form.disabled\" on-select=\"$$value$$=$item.value\"\n" +
+      "               class=\"{{form.options.uiClass}}\">\n" +
+      "      <ui-select-match\n" +
+      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('placeholders.select' | translate)}}\">\n" +
+      "        {{select_model.selected.name}}&nbsp;\n" +
+      "        <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>\n" +
+      "      </ui-select-match>\n" +
+      "      <!--repeat code because tagging does not display properly under group by but is still useful -->\n" +
+      "      <ui-select-choices refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" +
+      "                         refresh-delay=\"form.options.refreshDelay\"\n" +
+      "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescription===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" +
+      "        <div ng-if=\"item.isTag\"\n" +
+      "             ng-bind-html=\"'<div>' + (item.name   | highlight: $select.search) + ' ' + form.options.taggingLabel + '</div><div class=&quot;divider&quot;></div>'\"></div>\n" +
+      "        <div ng-if=\"!item.isTag\" ng-bind-html=\"item.name + item.isTag| highlight: $select.search\"></div>\n" +
+      "        <div ng-if=\"item.description\">\n" +
+      "          <span\n" +
+      "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS')) + '</small>'\"></span>\n" +
+      "        </div>\n" +
+      "      </ui-select-choices>\n" +
+      "    </ui-select>\n" +
+      "\n" +
+      "    <!--repeat code because tagging does not display properly under group by but is still useful -->\n" +
+      "\n" +
+      "    <ui-select ng-model=\"select_model.selected\"\n" +
+      "               ng-if=\"(form.options.tagging||false) && (form.options.groupBy || false)\"\n" +
+      "               tagging=\"form.options.tagging||false\" tagging-label=\"form.options.taggingLabel\"\n" +
+      "               tagging-tokens=\"form.options.taggingTokens\"\n" +
+      "               theme=\"bootstrap\" ng-disabled=\"form.disabled\" on-select=\"$$value$$=$item.value\"\n" +
+      "               class=\"{{form.options.uiClass}}\">\n" +
+      "      <ui-select-match\n" +
+      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('placeholders.select' | translate)}}\">\n" +
+      "        {{select_model.selected.name}}&nbsp;\n" +
+      "        <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>\n" +
+      "      </ui-select-match>\n" +
+      "      <ui-select-choices group-by=\"form.options.groupBy\"\n" +
+      "                         refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" +
+      "                         refresh-delay=\"form.options.refreshDelay\"\n" +
+      "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescription===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" +
+      "        <div ng-if=\"item.isTag\"\n" +
+      "             ng-bind-html=\"'<div>' + (item.name  | highlight: $select.search) + ' ' + form.options.taggingLabel + '</div><div class=&quot;divider&quot;></div>'\"></div>\n" +
+      "        <div ng-if=\"!item.isTag\" ng-bind-html=\"item.name + item.isTag| highlight: $select.search\"></div>\n" +
+      "        <div ng-if=\"item.description\">\n" +
+      "          <span\n" +
+      "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS')) + '</small>'\"></span>\n" +
+      "        </div>\n" +
+      "      </ui-select-choices>\n" +
+      "    </ui-select>\n" +
+      "    <input type=\"hidden\" toggle-single-model sf-changed=\"form\" ng-model=\"insideModel\" schema-validate=\"form\"/>\n" +
+      "    <span ng-if=\"form.feedback !== false\"\n" +
+      "          class=\"form-control-feedback\"\n" +
+      "          ng-class=\"evalInScope(form.feedback) || {'glyphicon': true, 'glyphicon-ok': hasSuccess(), 'glyphicon-remove': hasError() }\"></span>\n" +
+      "\n" +
+      "    <div class=\"help-block\"\n" +
+      "         ng-show=\"(hasError() && errorMessage(schemaError())) || form.description\"\n" +
+      "         ng-bind-html=\"(hasError() && errorMessage(schemaError())) || form.description\"></div>\n" +
+      "  </div>\n" +
+      "</div>\n"
+  );
+
+    $templateCache.put('ngTagsInput/tags-input.html',
+    "<div class=\"host\" tabindex=\"-1\" ng-click=\"eventHandlers.host.click()\" ti-transclude-append><div class=\"tags\" ng-class=\"{focused: hasFocus}\"><ul class=\"tag-list\"><li class=\"tag-item\" ng-repeat=\"tag in tagList.items track by track(tag)\" ng-class=\"{ selected: tag == tagList.selected }\" ng-click=\"eventHandlers.tag.click(tag)\"><ti-tag-item data=\"::tag\"></ti-tag-item></li></ul><input class=\"tag-input-text input\" autocomplete=\"off\" ng-model=\"newTag.text\" ng-model-options=\"{getterSetter: true}\" ng-keydown=\"eventHandlers.input.keydown($event)\" ng-focus=\"eventHandlers.input.focus($event)\" ng-blur=\"eventHandlers.input.blur($event)\" ng-paste=\"eventHandlers.input.paste($event)\" ng-trim=\"false\" ng-class=\"{'invalid-tag': newTag.invalid}\" ng-disabled=\"disabled\" ti-bind-attrs=\"{type: options.type, tabindex: options.tabindex, spellcheck: options.spellcheck}\" ti-autosize></div></div>"
+  );
+
+  $templateCache.put('ngTagsInput/tag-item.html',
+    "<span ng-bind=\"$getDisplayText()\"></span> <span class=\"remove-button close ui-select-match-close\" ng-click=\"$removeTag()\" ng-bind=\"::$$removeTagSymbol\"></span>"
+  );
+
+  $templateCache.put('ngTagsInput/auto-complete.html',
+    "<div class=\"autocomplete\" ng-if=\"suggestionList.visible\"><ul class=\"suggestion-list\"><li class=\"suggestion-item\" ng-repeat=\"item in suggestionList.items track by track(item)\" ng-class=\"{selected: item == suggestionList.selected}\" ng-click=\"addSuggestionByIndex($index)\" ng-mouseenter=\"suggestionList.select($index)\"><ti-autocomplete-match data=\"::item\"></ti-autocomplete-match></li></ul></div>"
+  );
+
+  $templateCache.put('ngTagsInput/auto-complete-match.html',
+    "<span ng-bind-html=\"$highlight($getDisplayText())\"></span>"
+  );
+}]);
+
 angular.module('qualitaCoreFrontend').config(
   ['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider',
     function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
@@ -481,3 +587,6 @@ angular.module('qualitaCoreFrontend').filter('selectFilter', [function ($filter)
     return data;
   };
 }]);
+
+
+

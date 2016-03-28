@@ -1,5 +1,5 @@
 <div class="form-group"
-     ng-class="{'has-error': hasError(), 'has-success': hasSuccess(), 'has-feedback': form.feedback !== false}"
+     ng-class="{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess(), 'has-feedback': form.feedback !== false}"
      ng-init="selectedOptions=form.titleMap; insideModel=$$value$$;" ng-controller="dynamicSelectController">
   <label class="control-label" ng-show="showTitle()">{{form.title}}</label>
 

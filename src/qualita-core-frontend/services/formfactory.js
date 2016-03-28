@@ -28,10 +28,24 @@ angular.module('qualitaCoreFrontend')
           formDefaults: {
             ngModelOptions: {
              updateOn: 'blur'
-            }
+            },
+            disabled: false,
+            disableSuccessState: false,
+            disableErrorState: false,
+            feedback: true
           },
           validationMessage: {
             302: 'El campo es obligatorio'
+          }
+        };
+      },
+      defaultViewOptions: function() {
+        return {
+          formDefaults: {
+            disabled: true,
+            disableSuccessState: true,
+            disableErrorState: true,
+            feedback: false            
           }
         };
       },
