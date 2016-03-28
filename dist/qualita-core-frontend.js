@@ -1004,12 +1004,7 @@ angular.module('qualitaCoreFrontend')
       controller: function controller($scope, $element) {
         var actionsColumn, selectionColumn, urlTemplate;
         // Se arma la ruta según tenga o no filtros estáticos
-        if ($scope.options.staticFilter) {
-          urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?search='
-            + encodeURI(JSON.stringify($scope.options.staticFilter.search)) + '&');
-        } else {
-          urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
-        }
+        updateStaticFilters();
 
         $scope.dtInstance = {};
         $scope.selectAll = false;
@@ -1418,8 +1413,6 @@ angular.module('qualitaCoreFrontend')
         };
 
 
-
-
         //funcion para crear los filtros
         var createFilters = function() {
           $('#' + tableId + ' tfoot tr').empty();
@@ -1582,6 +1575,16 @@ angular.module('qualitaCoreFrontend')
             createFilters();
         });
 
+        /* Funcion de actualizacion de URL Base con o sin filtros estaticos */
+        function updateStaticFilters() {
+          if ($scope.options.staticFilter) {
+            urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?search='
+              + encodeURI(JSON.stringify($scope.options.staticFilter.search)) + '&');
+          } else {
+            urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
+          }
+        }
+
         $scope.dtInstanceCallback = function(dtInstance){
           $('thead+tfoot').remove();
           tableId = dtInstance.id;
@@ -1599,7 +1602,6 @@ angular.module('qualitaCoreFrontend')
               }
           });
 
-
           //Texto del boton de visibilidad de columnas
           //$(".dt-buttons").append("<label class='view-columns'>Vistas&nbsp;</label>");
           $(".dt-button.buttons-colvis").removeClass().addClass("columns-selection").html('<i class="glyphicon glyphicon-th-list"></i>');
@@ -1610,6 +1612,22 @@ angular.module('qualitaCoreFrontend')
             $('#' + tableId).DataTable().ajax.reload();
           }
 
+          /* funcion para actualizar la tabla manualmente */
+          $scope.options.reloadData = function(){
+            updateStaticFilters();
+            $('#' + tableId).DataTable().ajax.reload();
+          }
+
+          /* whatcher para actualizar la tabla automaticamente cuando los filtros estaticos cambian */
+          $scope.$watch(
+              "options.staticFilter",
+              function handleStaticFilterChange( newValue, oldValue ) {
+                  //console.log( "oldValue", oldValue );
+                  //console.log( "newValue", newValue );
+                  updateStaticFilters();
+                  $('#' + tableId).DataTable().ajax.reload();
+              }
+          );
 
           table.on('draw', function() {
             $timeout(function() {
