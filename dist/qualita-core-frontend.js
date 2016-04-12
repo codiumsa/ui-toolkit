@@ -622,7 +622,7 @@ angular.module('qualitaCoreFrontend').config(
           var keys = Object.keys(props);
           for (var i = 0; i < keys.length; i++) {
             var prop = keys[i];
-            if (item.hasOwnProperty(prop)) {
+            if (item && item.hasOwnProperty(prop)) {
               //only match if this property is actually in the item to avoid
               var text = props[prop].toLowerCase();
               //search for either a space before the text or the textg at the start of the string so that the middle of words are not matched
