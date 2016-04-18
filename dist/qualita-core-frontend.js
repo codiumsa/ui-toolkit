@@ -1187,7 +1187,8 @@ angular.module('qualitaCoreFrontend')
           .withDataProp('data')
           .withOption('processing', true)
           .withOption('serverSide', true)
-          .withOption('order', [$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir])
+          //.withOption('order', [[$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir]])
+          //.withOption('order', [])
           .withOption('language', {
                   'sProcessing' : 'Procesando...',
                   'sLengthMenu' : 'Registros _MENU_',
@@ -1311,7 +1312,6 @@ angular.module('qualitaCoreFrontend')
 
         // Se establece el orden por defecto
         //$scope.dtOptions.withColReorderOrder($scope.defaultColumnOrderIndices);
-
 
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
@@ -1608,9 +1608,9 @@ angular.module('qualitaCoreFrontend')
 
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
-          $scope.dtOptions.reloadData = function(){
-            $('#' + tableId).DataTable().ajax.reload();
-          }
+          // $scope.dtOptions.reloadData = function(){
+          //   $('#' + tableId).DataTable().ajax.reload();
+          // }
 
           /* funcion para actualizar la tabla manualmente */
           $scope.options.reloadData = function(){
@@ -1669,6 +1669,11 @@ angular.module('qualitaCoreFrontend')
                   }
             });
             return filters;
+          }
+
+          if ($scope.options.defaultOrderColumn !== undefined && $scope.options.defaultOrderDir !== undefined) {
+            console.log('order: ' + $scope.options.defaultOrderColumn);
+            table.order([[$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir]]);
           }
         }
 
