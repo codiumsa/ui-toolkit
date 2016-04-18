@@ -40,7 +40,7 @@
     "angular-websocket": "~1.0.14",
     "angular-daterangepicker": "~0.2.1",
     "angular-rangepicker": "nahu/angular-rangepicker#0.1",
-    "angular-ui-select": "https://gitlab.com/codium/angular-ui-select.git#master",
+    "angular-ui-select": "git@gitlab.com:codium/angular-ui-select.git#master",
     "ng-pickadate": "~0.3.0"
   },
   "devDependencies": {
