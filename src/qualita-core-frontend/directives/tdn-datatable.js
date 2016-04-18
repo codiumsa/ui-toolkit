@@ -207,7 +207,7 @@ angular.module('qualitaCoreFrontend')
           var widget = $($(".rangepicker").get(widgetIndex));
             widget.parent().find('input[name=rangepicker_start]').val();
             widget.parent().find('input[name=rangepicker_end]').val();
-        }
+        };
 
         var rangeLocaleOptions = {
           cancelLabel: 'Limpiar',
@@ -364,13 +364,13 @@ angular.module('qualitaCoreFrontend')
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
-              var basicOpts = '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canEdit()}" ng-click="edit(' + data.id + ')">' +
+              var basicOpts = '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canEdit(' + data.id + ')}" ng-click="edit(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-pencil"></span>' +
                   '</button>' +
-                  '<button class="btn btn-danger btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canRemove()}" ng-click="remove(' + data.id + ')">' +
+                  '<button class="btn btn-danger btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canRemove(' + data.id + ')}" ng-click="remove(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-trash"></span>' +
                   '</button>' +
-                  '<button class="btn btn-info btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canList()}" ng-click="view(' + data.id + ')">' +
+                  '<button class="btn btn-info btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canList(' + data.id + ')}" ng-click="view(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-eye-open"></span>' +
                   '</button>';
             if($scope.options.extraRowOptions) {
@@ -385,13 +385,25 @@ angular.module('qualitaCoreFrontend')
           });
 
 
-        $scope.canEdit = function() {
+        $scope.canEdit = function(data) {
           var permission = hasPermission('update_' + $scope.options.resource);
+          if($scope.options.extraEditConditions) {
+            var valor = _.find(table.rows().data(), function(value) {
+              return value.id == data;
+            });
+            return permission && $scope.options.extraEditConditions(valor) && !$scope.options.hideEditMenu;
+          }
           return permission && !$scope.options.hideEditMenu;
         };
 
-        $scope.canRemove = function() {
+        $scope.canRemove = function(data) {
           var permission = hasPermission('delete_' + $scope.options.resource);
+          if($scope.options.extraRemoveConditions) {
+            var valor = _.find(table.rows().data(), function(value) {
+              return value.id == data;
+            });
+            return permission && $scope.options.extraRemoveConditions(valor) && !$scope.options.hideRemoveMenu;
+          }
           return permission && !$scope.options.hideRemoveMenu;
         };
  
@@ -400,8 +412,14 @@ angular.module('qualitaCoreFrontend')
           return permission && ! $scope.options.hideAddMenu;
         };
 
-        $scope.canList = function() {
+        $scope.canList = function(data) {
           var permission = hasPermission('index_' + $scope.options.resource);
+          if($scope.options.extraViewConditions) {
+            var valor = _.find(table.rows().data(), function(value) {
+              return value.id == data;
+            });
+            return permission && $scope.options.extraViewConditions(valor) && !$scope.options.hideViewMenu;
+          }
           return permission && ! $scope.options.hideViewMenu;
         };
 
