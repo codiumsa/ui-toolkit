@@ -979,7 +979,7 @@ angular.module('qualitaCoreFrontend')
       '</div>' +
       '<div class="widget-body">' +
           '<div class="table-responsive">' +
-            '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-striped no-footer">' +
+            '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-hover table-responsive table-condensed no-footer">' +
             '</table>' +
           '</div>' +
           '<div ng-if="selected">' +
