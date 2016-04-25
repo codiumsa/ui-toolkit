@@ -430,20 +430,20 @@ angular.module('qualitaCoreFrontend')
 
         $scope.new = function(){
           var pathTemplate = _.template('app.<%= resource %>.new');
-          $state.go(pathTemplate($scope.options), {}, {reload: true});
+          $state.go(pathTemplate($scope.options), {});
         }
 
         $scope.edit = function(itemId){
           var pathTemplate = _.template('app.<%= resource %>.edit');
           //var params = _.extend($scope.options, {itemId: itemId});
-          $state.go(pathTemplate($scope.options), {id: itemId}, {reload: true});
+          $state.go(pathTemplate($scope.options), {id: itemId});
           //$location.path(pathTemplate(params));
         }
 
         $scope.view = function(itemId) {
           var pathTemplate = _.template('app.<%= resource %>.view');
           //var params = _.extend($scope.options, {itemId: itemId});
-          $state.go(pathTemplate($scope.options), {id: itemId}, {reload: true});
+          $state.go(pathTemplate($scope.options), {id: itemId});
           //$location.path(pathTemplate(params));
         }
 
