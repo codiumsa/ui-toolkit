@@ -1721,7 +1721,8 @@ angular.module('qualitaCoreFrontend')
             $scope.disableButton = true;
             var model = $scope.options.factory.create({id: itemId});
             $scope.options.factory.remove(model).then(function() {
-              $scope.dtOptions.reloadData();
+              // se refresca la tabla
+              $('#' + tableId).DataTable().ajax.reload();
               $scope.modalInstanceBorrar1.close(itemId);
             }, function(error) {
               $scope.modalInstanceBorrar1.dismiss('cancel');
