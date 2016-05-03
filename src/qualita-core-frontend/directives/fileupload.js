@@ -54,7 +54,7 @@ angular.module('qualitaCoreFrontend')
       '</div>' +
 
       '<div ng-show="!uploadOptions.imageOnly">' +
-      '<div flow-init="{singleFile: true, target: form.uploadOptions.target}" ' +
+      '<div flow-init="{singleFile: true}" ' +
       'flow-file-added="filesAdded($files, $event, uploader.flow)"' +
       'flow-files-submitted="form.uploader.flow.upload()"' +
       'flow-files-added="filesAdded($files, $event, form.uploader.flow)"' +
@@ -65,7 +65,7 @@ angular.module('qualitaCoreFrontend')
       '<span class="btn btn-default" flow-btn>Cargar archivo' +
       '<input type="file" ng-model="$$value$$" sf-changed="form" style="visibility: hidden; position: absolute;" />' +
       '</span>' +
-      '<b>OR</b>' +
+      '<b>O</b>' +
       'Arrastre el archivo aqu&iacute;' +
       '</div>' +
       '<br/>' +
@@ -101,16 +101,18 @@ angular.module('qualitaCoreFrontend')
       '</div>',
       restrict: 'E',
       tranclude: true,
-      scope: true,
+      scope: {
+        uploadOptions: '='
+      },
       link: function postLink(scope, element, attrs) {
         scope.uploader = {};
         scope.title = attrs.title;
         scope.fileModel = {};
         scope.filesAdded = function (files, event, flow) {
 
-          if (!$rootScope.flow) {
-            $rootScope.flow = flow;
-          }
+          //if (!$rootScope.flow) {
+            scope.uploadOptions.flow = flow;
+          //}
         };
       }
     };
