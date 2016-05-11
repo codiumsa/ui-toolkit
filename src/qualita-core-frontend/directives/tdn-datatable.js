@@ -309,7 +309,7 @@ angular.module('qualitaCoreFrontend')
           $scope.dtOptions.withColReorderOption('iFixedColumnsLeft', 1);
         }
 
-        var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable'];
+        var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable', 'searchable'];
         _.map($scope.options.columns, function(c, index){
 
           var column = DTColumnBuilder.newColumn(c.data);
@@ -329,6 +329,12 @@ angular.module('qualitaCoreFrontend')
           _.forOwn(c, function(value, key){
             if(!_.contains(commonAttrs, key)) column = column.withOption(key, value);
           });
+
+          if(c.searchable === false) {
+            column = column.withOption('bSearchable', false);
+          } else {
+            column = column.withOption('bSearchable', true);
+          }
 
           if(c.type) {
             var customFilter = {'filterType': c.type, 'filterUrl' : c.filterUrl};
@@ -584,12 +590,14 @@ angular.module('qualitaCoreFrontend')
                   html = $compile(input)($scope);
                 }
 
-              } else if (column.mData) {
+              } else if (column.mData && column.bSearchable) {
                 var value = table.column(column.idx).search();
 
                 html = '<th><input id="filtro_' + realIndex
                 + '" class="column-filter form-control input-sm" type="text" style="min-width:60px; width: 100%;" value="' + value
                 + '"/></th>';
+              } else {
+                html = '<th></th>';
               }
 
               $('#' + tableId + ' tfoot tr').append(html);
