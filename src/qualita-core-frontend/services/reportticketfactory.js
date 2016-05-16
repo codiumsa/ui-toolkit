@@ -10,12 +10,20 @@
 angular.module('qualitaCoreFrontend')
   .factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
   
-    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID', {action: '@reportID'});
+    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID', 
+      {
+        action: '@reportID'
+      });
 
     return {
-      ticket: function(reportID, filters) {
+      ticket: function(reportID, filters, columns) {
         var report = new ReportTicket(filters);
-        return report.$save({reportID: reportID});
+        var params = {reportID: reportID}; 
+
+        if (columns) {
+          params.columns = columns;
+        }
+        return report.$save(params);
       },
 
       downloadURL: function(reportTicket, exportType) {
