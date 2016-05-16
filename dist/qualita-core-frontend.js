@@ -1479,12 +1479,18 @@ angular.module('qualitaCoreFrontend')
           $scope.dateRangePickerWidgetsOrder = [];
           $(".daterangepicker").remove();
 
+          $scope.options.currentDataOrder = [];
+
           _.forEach(table.context[0].aoColumns, function (column) {
             var realIndex = column._ColReorder_iOrigCol;
             var data = column.mData;
             var html = '<th></th>';
 
             if (column.bVisible) {
+              if (data) {
+                $scope.options.currentDataOrder.push(data);
+              }
+              
               var title = column.name;
               if (!name) {
                 title = column.sTitle;
@@ -2605,12 +2611,20 @@ function NotificacionesWSFactory($resource, baseurl, $log, $websocket) {
 angular.module('qualitaCoreFrontend')
   .factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
   
-    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID', {action: '@reportID'});
+    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID', 
+      {
+        action: '@reportID'
+      });
 
     return {
-      ticket: function(reportID, filters) {
+      ticket: function(reportID, filters, columns) {
         var report = new ReportTicket(filters);
-        return report.$save({reportID: reportID});
+        var params = {reportID: reportID}; 
+
+        if (columns) {
+          params.columns = columns;
+        }
+        return report.$save(params);
       },
 
       downloadURL: function(reportTicket, exportType) {

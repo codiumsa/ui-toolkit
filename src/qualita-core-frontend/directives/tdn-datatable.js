@@ -491,12 +491,18 @@ angular.module('qualitaCoreFrontend')
           $scope.dateRangePickerWidgetsOrder = [];
           $(".daterangepicker").remove();
 
+          $scope.options.currentDataOrder = [];
+
           _.forEach(table.context[0].aoColumns, function (column) {
             var realIndex = column._ColReorder_iOrigCol;
             var data = column.mData;
             var html = '<th></th>';
 
             if (column.bVisible) {
+              if (data) {
+                $scope.options.currentDataOrder.push(data);
+              }
+              
               var title = column.name;
               if (!name) {
                 title = column.sTitle;
