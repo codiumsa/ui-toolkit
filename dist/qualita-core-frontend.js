@@ -138,6 +138,7 @@ angular.module('qualitaCoreFrontend')
 
     }
   ]);
+
 'use strict';
 
 /**
@@ -147,7 +148,7 @@ angular.module('qualitaCoreFrontend')
  * # fileupload
  */
 angular.module('qualitaCoreFrontend')
-  .directive('fileupload', ['$rootScope', function ($rootScope) {
+  .directive('fileupload', ['$rootScope', 'notify', 'UploadFactory', 'baseurl', function ($rootScope, notify, UploadFactory, baseurl) {
     return {
       template: '<div ng-show="uploadOptions.imageOnly">' +
       '<div flow-init="{singleFile: true}" ' +
@@ -194,30 +195,31 @@ angular.module('qualitaCoreFrontend')
       '</div>' +
 
       '<div ng-show="!uploadOptions.imageOnly">' +
-      '<div flow-init="{singleFile: true}" ' +
-      'flow-file-added="filesAdded($files, $event, uploader.flow)"' +
-      'flow-files-submitted="form.uploader.flow.upload()"' +
-      'flow-files-added="filesAdded($files, $event, form.uploader.flow)"' +
-      'flow-name="form.uploader.flow"' +
+      '<div flow-init ' +
+      'flow-files-submitted="uploader.flow.upload()"' +
+      'flow-file-added="fileAdded($file, $event, $flow)" ' +
+      'flow-files-added="filesAdded($files, $event, $flow)" ' +
+      'flow-file-success="uploadCompleted()" ' +
       'class="ng-scope">' +
-      '<h3>{{showTitle()}}</h3>' +
+      '<h3>{{uploadOptions.title}}</h3>' +
       '<div class="drop" flow-drop ng-class="dropClass">' +
-      '<span class="btn btn-default" flow-btn>Cargar archivo' +
-      '<input type="file" ng-model="$$value$$" sf-changed="form" style="visibility: hidden; position: absolute;" />' +
-      '</span>' +
-      '<b>O</b>' +
-      'Arrastre el archivo aqu&iacute;' +
-      '</div>' +
-      '<br/>' +
-      '<div>' +
-      '<div ng-repeat="file in form.uploader.flow.files" class="transfer-box">' +
+
+      '<span class="btn btn-default btn-sm" flow-btn>Cargar archivo ' +
+        '<input type="file" ng-model="$$value$$" sf-changed="form" style="visibility: hidden; position: absolute;"/> ' +
+      '</span> ' +
+      '<br/> ' +
+      '<b>O</b> ' +
+      'Arrastre el archivo aqu&iacute; ' +
+      '</div> ' +
+      '<br/> ' +
+      '<div ng-repeat="file in uploader.flow.files" class="transfer-box">' +
       '{{file.relativePath}} ({{file.size}}bytes)' +
       '<div class="progress progress-striped" ng-class="{active: file.isUploading()}">' +
-      '<div class="progress-bar" role="progressbar"' +
-      'aria-valuenow="{{file.progress() * 100}}"' +
-      'aria-valuemin="0"' +
-      'aria-valuemax="100"' +
-      'ng-style="{width: (file.progress() * 100) + '%'}">' +
+      '<div class="progress-bar" role="progressbar" ' +
+      'aria-valuenow="{{file.progress() * 100}}" ' +
+      'aria-valuemin="0" ' +
+      'aria-valuemax="100" ' +
+      'ng-style="{width: progressWith(file.progress())}">' +
       '<span class="sr-only">{{file.progress()}}% Complete</span>' +
       '</div>' +
       '</div>' +
@@ -248,15 +250,48 @@ angular.module('qualitaCoreFrontend')
         scope.uploader = {};
         scope.title = attrs.title;
         scope.fileModel = {};
-        scope.filesAdded = function (files, event, flow) {
 
-          //if (!$rootScope.flow) {
-            scope.uploadOptions.flow = flow;
-          //}
+        scope.progressWith = function (progress) {
+          return (progress * 100) + '%';
+        };
+        
+        scope.filesAdded = function (files, event, flow) {
+          scope.uploader.flow = flow;
+          scope.uploadOptions.flow = flow;
+        };
+
+        scope.uploader.flow = scope.uploadOptions.flow;
+        scope.files = [];
+        scope.adjuntosBaseURL = baseurl.getPublicBaseUrl();
+
+        scope.fileAdded = function(file, event) {
+          // controlamos que no se supere el limite de tamano          
+          if(scope.uploadOptions.FILE_UPLOAD_LIMIT && file.size > (scope.uploadOptions.FILE_UPLOAD_LIMIT * 1000 * 1000)){
+            event.preventDefault();
+            ngNotify.set('El tamaño del archivo supera el límite de ' + scope.uploadOptions.FILE_UPLOAD_LIMIT + ' MB.', 'warn');
+            return false;
+          }
+          var ext = file.getExtension();
+          // si es imagen controlamos que sea alguna de las extensiones permitidas
+          if(scope.uploadOptions.imageOnly && ['png', 'gif', 'jpg', 'jpeg'].indexOf(ext) < 0){
+            notify({message: 'Solo se permiten archivos con extensión: png, gif, jpg o jpeg.', classes: 'alert-warning', position: 'right'});
+            return false;
+          }
+          // controlamos que el tamanio del nombre no supere 255 caracteres
+          if(file.name.length > 255) {
+            notify({message: 'El nombre del archivo supera los 255 caracteres', classes: 'alert-warning', position: 'right'});
+            return false;
+          }
+        };
+
+        scope.uploadCompleted = function() {
+          notify({message: 'Archivo cargado correctamente', classes: 'alert-warning', position: 'right'});
+          scope.files = UploadFactory.getCurrentFiles(scope.uploadOptions);
         };
       }
     };
   }]);
+
 'use strict';
 
 /**
@@ -2584,6 +2619,92 @@ angular.module('qualitaCoreFrontend')
       }
     };
   }]);
+
+'use strict';
+/* @ngdoc service
+ * @name qualitaCoreFrontend.UploadFactory
+ * @description
+ * # UploadFactory
+ * Factory in the qualitaCoreFrontend.
+ */
+angular.module('qualitaCoreFrontend')
+  .service('UploadFactory', ['$rootScope', 'baseurl', function ($rootScope, baseurl) {
+      var flow;
+      var mimeTypeMap = {
+        jpg: 'image/jpg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        gif: 'image/gif'
+      };
+     
+      function setFlow(uploadOptions) {
+        flow = uploadOptions.flow;
+      }
+
+      // Public API here
+      return {
+        getCurrentFiles: function(uploadOptions) {
+          var self = this;
+          setFlow(uploadOptions);
+
+          if(!flow) {
+            return;
+          }
+          var flowFiles = flow.files;
+          var files = []; // Lista de objetos de tipo { path: '' }
+
+          if (flowFiles.length > 0){
+            angular.forEach(flowFiles, function(file) {
+              files.push({
+                path: self.getFilename(file)
+              });
+            });
+          }
+          return files;
+        },
+
+        clearCurrentFiles: function() {
+          $rootScope.flow.files = [];
+        },
+
+        /**
+         * Se encarga de cargar en el objeto flow el array de imagenes.
+         **/
+        addFiles: function(images) {
+          setFlow();
+          
+          if(!flow) {
+            return;
+          }
+          
+          angular.forEach(images, function(img) {
+            var contentType = mimeTypeMap[img.path.toLowerCase().substring(_.lastIndexOf(img.path, '.') + 1)];
+            var blob = new Blob(['pre_existing_image'], {type: contentType});
+            blob.name = img.path;
+            blob.image_url = baseurl.getPublicBaseUrl() + img.path;
+            var file = new Flow.FlowFile(flow, blob);
+            file.fromServer = true; // el archivo ya se encuentra en el servidor, no hay que procesar de vuelta.
+            flow.files.push(file);
+          });
+        },
+        
+        /**
+         * Retorna el nombre del archivo. Esto se corresponde con la logica en el backend
+         **/
+        getFilename: function(file) {
+          
+          if(file.fromServer) {
+            return file.name;
+          }
+          var basename = file.size + '-' + file.name;
+          // se corresponde con el backend
+          basename = basename.replace(/[^a-zA-Z/-_\\.0-9]+/g, '');
+          basename = basename.replace(/\s/g, '');
+          return basename;
+        }
+      };
+  }]);
+
 'use strict';
 
 /**
