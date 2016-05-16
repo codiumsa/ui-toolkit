@@ -2020,7 +2020,7 @@ angular.module('qualitaCoreFrontend')
           //si es localhost es desarrollo local
           else
             return 'http://' + hostname + ':' + Config.serverPort
-                  + '/' + Config.serverName + '/public/';
+                  + '/public/';
         },
 
         getBareServerUrl: function() {
