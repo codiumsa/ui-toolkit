@@ -138,6 +138,7 @@ angular.module('qualitaCoreFrontend')
 
     }
   ]);
+
 'use strict';
 
 /**
@@ -147,7 +148,7 @@ angular.module('qualitaCoreFrontend')
  * # fileupload
  */
 angular.module('qualitaCoreFrontend')
-  .directive('fileupload', ['$rootScope', function ($rootScope) {
+  .directive('fileupload', ['$rootScope', 'notify', 'UploadFactory', 'baseurl', function ($rootScope, notify, UploadFactory, baseurl) {
     return {
       template: '<div ng-show="uploadOptions.imageOnly">' +
       '<div flow-init="{singleFile: true}" ' +
@@ -194,30 +195,31 @@ angular.module('qualitaCoreFrontend')
       '</div>' +
 
       '<div ng-show="!uploadOptions.imageOnly">' +
-      '<div flow-init="{singleFile: true, target: form.uploadOptions.target}" ' +
-      'flow-file-added="filesAdded($files, $event, uploader.flow)"' +
-      'flow-files-submitted="form.uploader.flow.upload()"' +
-      'flow-files-added="filesAdded($files, $event, form.uploader.flow)"' +
-      'flow-name="form.uploader.flow"' +
+      '<div flow-init ' +
+      'flow-files-submitted="uploader.flow.upload()"' +
+      'flow-file-added="fileAdded($file, $event, $flow)" ' +
+      'flow-files-added="filesAdded($files, $event, $flow)" ' +
+      'flow-file-success="uploadCompleted()" ' +
       'class="ng-scope">' +
-      '<h3>{{showTitle()}}</h3>' +
+      '<h3>{{uploadOptions.title}}</h3>' +
       '<div class="drop" flow-drop ng-class="dropClass">' +
-      '<span class="btn btn-default" flow-btn>Cargar archivo' +
-      '<input type="file" ng-model="$$value$$" sf-changed="form" style="visibility: hidden; position: absolute;" />' +
-      '</span>' +
-      '<b>OR</b>' +
-      'Arrastre el archivo aqu&iacute;' +
-      '</div>' +
-      '<br/>' +
-      '<div>' +
-      '<div ng-repeat="file in form.uploader.flow.files" class="transfer-box">' +
+
+      '<span class="btn btn-default btn-sm" flow-btn>Cargar archivo ' +
+        '<input type="file" ng-model="$$value$$" sf-changed="form" style="visibility: hidden; position: absolute;"/> ' +
+      '</span> ' +
+      '<br/> ' +
+      '<b>O</b> ' +
+      'Arrastre el archivo aqu&iacute; ' +
+      '</div> ' +
+      '<br/> ' +
+      '<div ng-repeat="file in uploader.flow.files" class="transfer-box">' +
       '{{file.relativePath}} ({{file.size}}bytes)' +
       '<div class="progress progress-striped" ng-class="{active: file.isUploading()}">' +
-      '<div class="progress-bar" role="progressbar"' +
-      'aria-valuenow="{{file.progress() * 100}}"' +
-      'aria-valuemin="0"' +
-      'aria-valuemax="100"' +
-      'ng-style="{width: (file.progress() * 100) + '%'}">' +
+      '<div class="progress-bar" role="progressbar" ' +
+      'aria-valuenow="{{file.progress() * 100}}" ' +
+      'aria-valuemin="0" ' +
+      'aria-valuemax="100" ' +
+      'ng-style="{width: progressWith(file.progress())}">' +
       '<span class="sr-only">{{file.progress()}}% Complete</span>' +
       '</div>' +
       '</div>' +
@@ -241,16 +243,50 @@ angular.module('qualitaCoreFrontend')
       '</div>',
       restrict: 'E',
       tranclude: true,
-      scope: true,
+      scope: {
+        uploadOptions: '='
+      },
       link: function postLink(scope, element, attrs) {
         scope.uploader = {};
         scope.title = attrs.title;
         scope.fileModel = {};
-        scope.filesAdded = function (files, event, flow) {
 
-          if (!$rootScope.flow) {
-            $rootScope.flow = flow;
+        scope.progressWith = function (progress) {
+          return (progress * 100) + '%';
+        };
+        
+        scope.filesAdded = function (files, event, flow) {
+          scope.uploader.flow = flow;
+          scope.uploadOptions.flow = flow;
+        };
+
+        scope.uploader.flow = scope.uploadOptions.flow;
+        scope.files = [];
+        scope.adjuntosBaseURL = baseurl.getPublicBaseUrl();
+
+        scope.fileAdded = function(file, event) {
+          // controlamos que no se supere el limite de tamano          
+          if(scope.uploadOptions.FILE_UPLOAD_LIMIT && file.size > (scope.uploadOptions.FILE_UPLOAD_LIMIT * 1000 * 1000)){
+            event.preventDefault();
+            ngNotify.set('El tamaño del archivo supera el límite de ' + scope.uploadOptions.FILE_UPLOAD_LIMIT + ' MB.', 'warn');
+            return false;
           }
+          var ext = file.getExtension();
+          // si es imagen controlamos que sea alguna de las extensiones permitidas
+          if(scope.uploadOptions.imageOnly && ['png', 'gif', 'jpg', 'jpeg'].indexOf(ext) < 0){
+            notify({message: 'Solo se permiten archivos con extensión: png, gif, jpg o jpeg.', classes: 'alert-warning', position: 'right'});
+            return false;
+          }
+          // controlamos que el tamanio del nombre no supere 255 caracteres
+          if(file.name.length > 255) {
+            notify({message: 'El nombre del archivo supera los 255 caracteres', classes: 'alert-warning', position: 'right'});
+            return false;
+          }
+        };
+
+        scope.uploadCompleted = function() {
+          notify({message: 'Archivo cargado correctamente', classes: 'alert-warning', position: 'right'});
+          scope.files = UploadFactory.getCurrentFiles(scope.uploadOptions);
         };
       }
     };
@@ -370,7 +406,7 @@ $templateCache.put("views/directives/uiselect.html", "<div class=\"form-group\"\
       "               ng-if=\"!(form.options.tagging||false)\" theme=\"bootstrap\" ng-disabled=\"form.disabled\"\n" +
       "               on-select=\"$$value$$=$item.value\" class=\"{{form.options.uiClass}}\">\n" +
       "      <ui-select-match\n" +
-      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('placeholders.select' | translate)}}\">\n" +
+      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" +
       "        {{select_model.selected.name}}\n" +
       "      </ui-select-match>\n" +
       "      <ui-select-choices refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" +
@@ -390,7 +426,7 @@ $templateCache.put("views/directives/uiselect.html", "<div class=\"form-group\"\
       "               theme=\"bootstrap\" ng-disabled=\"form.disabled\" on-select=\"$$value$$=$item.value\"\n" +
       "               class=\"{{form.options.uiClass}}\">\n" +
       "      <ui-select-match\n" +
-      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('placeholders.select' | translate)}}\">\n" +
+      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" +
       "        {{select_model.selected.name}}&nbsp;\n" +
       "        <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>\n" +
       "      </ui-select-match>\n" +
@@ -417,7 +453,7 @@ $templateCache.put("views/directives/uiselect.html", "<div class=\"form-group\"\
       "               theme=\"bootstrap\" ng-disabled=\"form.disabled\" on-select=\"$$value$$=$item.value\"\n" +
       "               class=\"{{form.options.uiClass}}\">\n" +
       "      <ui-select-match\n" +
-      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('placeholders.select' | translate)}}\">\n" +
+      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" +
       "        {{select_model.selected.name}}&nbsp;\n" +
       "        <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>\n" +
       "      </ui-select-match>\n" +
@@ -965,7 +1001,7 @@ angular.module('qualitaCoreFrontend')
     return {
       template: '<div>' +
     '<div class="widget">' +
-      '<div class="widget-header bordered-top bordered-palegreen">' +
+      '<div class="widget-header bordered-top bordered-palegreen" ng-if="!options.hideHeader">' +
         '<span class="widget-caption">{{options.title}}</span>' +
         '<div class="widget-buttons">' +
           '<a href="#" ng-show="canCreate()" ng-click="new()" title="Nuevo">' +
@@ -979,7 +1015,7 @@ angular.module('qualitaCoreFrontend')
       '</div>' +
       '<div class="widget-body">' +
           '<div class="table-responsive">' +
-            '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-striped no-footer">' +
+            '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-hover table-responsive table-condensed no-footer">' +
             '</table>' +
           '</div>' +
           '<div ng-if="selected">' +
@@ -1187,7 +1223,8 @@ angular.module('qualitaCoreFrontend')
           .withDataProp('data')
           .withOption('processing', true)
           .withOption('serverSide', true)
-          .withOption('order', [$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir])
+          //.withOption('order', [[$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir]])
+          //.withOption('order', [])
           .withOption('language', {
                   'sProcessing' : 'Procesando...',
                   'sLengthMenu' : 'Registros _MENU_',
@@ -1261,7 +1298,7 @@ angular.module('qualitaCoreFrontend')
           $scope.dtOptions.withColReorderOption('iFixedColumnsLeft', 1);
         }
 
-        var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable'];
+        var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable', 'searchable'];
         _.map($scope.options.columns, function(c, index){
 
           var column = DTColumnBuilder.newColumn(c.data);
@@ -1281,6 +1318,12 @@ angular.module('qualitaCoreFrontend')
           _.forOwn(c, function(value, key){
             if(!_.contains(commonAttrs, key)) column = column.withOption(key, value);
           });
+
+          if(c.searchable === false) {
+            column = column.withOption('bSearchable', false);
+          } else {
+            column = column.withOption('bSearchable', true);
+          }
 
           if(c.type) {
             var customFilter = {'filterType': c.type, 'filterUrl' : c.filterUrl};
@@ -1311,7 +1354,6 @@ angular.module('qualitaCoreFrontend')
 
         // Se establece el orden por defecto
         //$scope.dtOptions.withColReorderOrder($scope.defaultColumnOrderIndices);
-
 
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
@@ -1382,20 +1424,20 @@ angular.module('qualitaCoreFrontend')
 
         $scope.new = function(){
           var pathTemplate = _.template('app.<%= resource %>.new');
-          $state.go(pathTemplate($scope.options), {}, {reload: true});
+          $state.go(pathTemplate($scope.options), {});
         }
 
         $scope.edit = function(itemId){
           var pathTemplate = _.template('app.<%= resource %>.edit');
           //var params = _.extend($scope.options, {itemId: itemId});
-          $state.go(pathTemplate($scope.options), {id: itemId}, {reload: true});
+          $state.go(pathTemplate($scope.options), {id: itemId});
           //$location.path(pathTemplate(params));
         }
 
         $scope.view = function(itemId) {
           var pathTemplate = _.template('app.<%= resource %>.view');
           //var params = _.extend($scope.options, {itemId: itemId});
-          $state.go(pathTemplate($scope.options), {id: itemId}, {reload: true});
+          $state.go(pathTemplate($scope.options), {id: itemId});
           //$location.path(pathTemplate(params));
         }
 
@@ -1437,12 +1479,18 @@ angular.module('qualitaCoreFrontend')
           $scope.dateRangePickerWidgetsOrder = [];
           $(".daterangepicker").remove();
 
+          $scope.options.currentDataOrder = [];
+
           _.forEach(table.context[0].aoColumns, function (column) {
             var realIndex = column._ColReorder_iOrigCol;
             var data = column.mData;
             var html = '<th></th>';
 
             if (column.bVisible) {
+              if (data) {
+                $scope.options.currentDataOrder.push(data);
+              }
+              
               var title = column.name;
               if (!name) {
                 title = column.sTitle;
@@ -1554,12 +1602,14 @@ angular.module('qualitaCoreFrontend')
                   html = $compile(input)($scope);
                 }
 
-              } else if (column.mData) {
+              } else if (column.mData && column.bSearchable) {
                 var value = table.column(column.idx).search();
 
                 html = '<th><input id="filtro_' + realIndex
                 + '" class="column-filter form-control input-sm" type="text" style="min-width:60px; width: 100%;" value="' + value
                 + '"/></th>';
+              } else {
+                html = '<th></th>';
               }
 
               $('#' + tableId + ' tfoot tr').append(html);
@@ -1626,9 +1676,9 @@ angular.module('qualitaCoreFrontend')
 
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
-          $scope.dtOptions.reloadData = function(){
-            $('#' + tableId).DataTable().ajax.reload();
-          }
+          // $scope.dtOptions.reloadData = function(){
+          //   $('#' + tableId).DataTable().ajax.reload();
+          // }
 
           /* funcion para actualizar la tabla manualmente */
           $scope.options.reloadData = function(){
@@ -1688,6 +1738,11 @@ angular.module('qualitaCoreFrontend')
             });
             return filters;
           }
+
+          if ($scope.options.defaultOrderColumn !== undefined && $scope.options.defaultOrderDir !== undefined) {
+            console.log('order: ' + $scope.options.defaultOrderColumn);
+            table.order([[$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir]]);
+          }
         }
 
         $scope.remove = function(itemId) {
@@ -1716,7 +1771,8 @@ angular.module('qualitaCoreFrontend')
             $scope.disableButton = true;
             var model = $scope.options.factory.create({id: itemId});
             $scope.options.factory.remove(model).then(function() {
-              $scope.dtOptions.reloadData();
+              // se refresca la tabla
+              $('#' + tableId).DataTable().ajax.reload();
               $scope.modalInstanceBorrar1.close(itemId);
             }, function(error) {
               $scope.modalInstanceBorrar1.dismiss('cancel');
@@ -1964,7 +2020,7 @@ angular.module('qualitaCoreFrontend')
           //si es localhost es desarrollo local
           else
             return 'http://' + hostname + ':' + Config.serverPort
-                  + '/' + Config.serverName + '/public/';
+                  + '/public/';
         },
 
         getBareServerUrl: function() {
@@ -2555,12 +2611,20 @@ function NotificacionesWSFactory($resource, baseurl, $log, $websocket) {
 angular.module('qualitaCoreFrontend')
   .factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
   
-    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID', {action: '@reportID'});
+    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID', 
+      {
+        action: '@reportID'
+      });
 
     return {
-      ticket: function(reportID, filters) {
+      ticket: function(reportID, filters, columns) {
         var report = new ReportTicket(filters);
-        return report.$save({reportID: reportID});
+        var params = {reportID: reportID}; 
+
+        if (columns) {
+          params.columns = columns;
+        }
+        return report.$save(params);
       },
 
       downloadURL: function(reportTicket, exportType) {
@@ -2569,6 +2633,92 @@ angular.module('qualitaCoreFrontend')
       }
     };
   }]);
+
+'use strict';
+/* @ngdoc service
+ * @name qualitaCoreFrontend.UploadFactory
+ * @description
+ * # UploadFactory
+ * Factory in the qualitaCoreFrontend.
+ */
+angular.module('qualitaCoreFrontend')
+  .service('UploadFactory', ['$rootScope', 'baseurl', function ($rootScope, baseurl) {
+      var flow;
+      var mimeTypeMap = {
+        jpg: 'image/jpg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        gif: 'image/gif'
+      };
+     
+      function setFlow(uploadOptions) {
+        flow = uploadOptions.flow;
+      }
+
+      // Public API here
+      return {
+        getCurrentFiles: function(uploadOptions) {
+          var self = this;
+          setFlow(uploadOptions);
+
+          if(!flow) {
+            return;
+          }
+          var flowFiles = flow.files;
+          var files = []; // Lista de objetos de tipo { path: '' }
+
+          if (flowFiles.length > 0){
+            angular.forEach(flowFiles, function(file) {
+              files.push({
+                path: self.getFilename(file)
+              });
+            });
+          }
+          return files;
+        },
+
+        clearCurrentFiles: function() {
+          $rootScope.flow.files = [];
+        },
+
+        /**
+         * Se encarga de cargar en el objeto flow el array de imagenes.
+         **/
+        addFiles: function(images) {
+          setFlow();
+          
+          if(!flow) {
+            return;
+          }
+          
+          angular.forEach(images, function(img) {
+            var contentType = mimeTypeMap[img.path.toLowerCase().substring(_.lastIndexOf(img.path, '.') + 1)];
+            var blob = new Blob(['pre_existing_image'], {type: contentType});
+            blob.name = img.path;
+            blob.image_url = baseurl.getPublicBaseUrl() + img.path;
+            var file = new Flow.FlowFile(flow, blob);
+            file.fromServer = true; // el archivo ya se encuentra en el servidor, no hay que procesar de vuelta.
+            flow.files.push(file);
+          });
+        },
+        
+        /**
+         * Retorna el nombre del archivo. Esto se corresponde con la logica en el backend
+         **/
+        getFilename: function(file) {
+          
+          if(file.fromServer) {
+            return file.name;
+          }
+          var basename = file.size + '-' + file.name;
+          // se corresponde con el backend
+          basename = basename.replace(/[^a-zA-Z/-_\\.0-9]+/g, '');
+          basename = basename.replace(/\s/g, '');
+          return basename;
+        }
+      };
+  }]);
+
 'use strict';
 
 /**

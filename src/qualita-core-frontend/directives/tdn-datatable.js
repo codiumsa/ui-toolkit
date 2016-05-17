@@ -13,7 +13,7 @@ angular.module('qualitaCoreFrontend')
     return {
       template: '<div>' +
     '<div class="widget">' +
-      '<div class="widget-header bordered-top bordered-palegreen">' +
+      '<div class="widget-header bordered-top bordered-palegreen" ng-if="!options.hideHeader">' +
         '<span class="widget-caption">{{options.title}}</span>' +
         '<div class="widget-buttons">' +
           '<a ng-show="canCreate()" ng-click="new()" title="Nuevo">' +
@@ -27,7 +27,7 @@ angular.module('qualitaCoreFrontend')
       '</div>' +
       '<div class="widget-body">' +
           '<div class="table-responsive">' +
-            '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-striped no-footer">' +
+            '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-hover table-responsive table-condensed no-footer">' +
             '</table>' +
           '</div>' +
           '<div ng-if="selected">' +
@@ -235,7 +235,8 @@ angular.module('qualitaCoreFrontend')
           .withDataProp('data')
           .withOption('processing', true)
           .withOption('serverSide', true)
-          .withOption('order', [$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir])
+          //.withOption('order', [[$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir]])
+          //.withOption('order', [])
           .withOption('language', {
                   'sProcessing' : 'Procesando...',
                   'sLengthMenu' : 'Registros _MENU_',
@@ -309,7 +310,7 @@ angular.module('qualitaCoreFrontend')
           $scope.dtOptions.withColReorderOption('iFixedColumnsLeft', 1);
         }
 
-        var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable'];
+        var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable', 'searchable'];
         _.map($scope.options.columns, function(c, index){
 
           var column = DTColumnBuilder.newColumn(c.data);
@@ -329,6 +330,12 @@ angular.module('qualitaCoreFrontend')
           _.forOwn(c, function(value, key){
             if(!_.contains(commonAttrs, key)) column = column.withOption(key, value);
           });
+
+          if(c.searchable === false) {
+            column = column.withOption('bSearchable', false);
+          } else {
+            column = column.withOption('bSearchable', true);
+          }
 
           if(c.type) {
             var customFilter = {'filterType': c.type, 'filterUrl' : c.filterUrl};
@@ -359,7 +366,6 @@ angular.module('qualitaCoreFrontend')
 
         // Se establece el orden por defecto
         //$scope.dtOptions.withColReorderOrder($scope.defaultColumnOrderIndices);
-
 
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
@@ -430,20 +436,20 @@ angular.module('qualitaCoreFrontend')
 
         $scope.new = function(){
           var pathTemplate = _.template('app.<%= resource %>.new');
-          $state.go(pathTemplate($scope.options), {}, {reload: true});
+          $state.go(pathTemplate($scope.options), {});
         }
 
         $scope.edit = function(itemId){
           var pathTemplate = _.template('app.<%= resource %>.edit');
           //var params = _.extend($scope.options, {itemId: itemId});
-          $state.go(pathTemplate($scope.options), {id: itemId}, {reload: true});
+          $state.go(pathTemplate($scope.options), {id: itemId});
           //$location.path(pathTemplate(params));
         }
 
         $scope.view = function(itemId) {
           var pathTemplate = _.template('app.<%= resource %>.view');
           //var params = _.extend($scope.options, {itemId: itemId});
-          $state.go(pathTemplate($scope.options), {id: itemId}, {reload: true});
+          $state.go(pathTemplate($scope.options), {id: itemId});
           //$location.path(pathTemplate(params));
         }
 
@@ -485,12 +491,18 @@ angular.module('qualitaCoreFrontend')
           $scope.dateRangePickerWidgetsOrder = [];
           $(".daterangepicker").remove();
 
+          $scope.options.currentDataOrder = [];
+
           _.forEach(table.context[0].aoColumns, function (column) {
             var realIndex = column._ColReorder_iOrigCol;
             var data = column.mData;
             var html = '<th></th>';
 
             if (column.bVisible) {
+              if (data) {
+                $scope.options.currentDataOrder.push(data);
+              }
+              
               var title = column.name;
               if (!name) {
                 title = column.sTitle;
@@ -602,12 +614,14 @@ angular.module('qualitaCoreFrontend')
                   html = $compile(input)($scope);
                 }
 
-              } else if (column.mData) {
+              } else if (column.mData && column.bSearchable) {
                 var value = table.column(column.idx).search();
 
                 html = '<th><input id="filtro_' + realIndex
                 + '" class="column-filter form-control input-sm" type="text" style="min-width:60px; width: 100%;" value="' + value
                 + '"/></th>';
+              } else {
+                html = '<th></th>';
               }
 
               $('#' + tableId + ' tfoot tr').append(html);
@@ -674,9 +688,9 @@ angular.module('qualitaCoreFrontend')
 
           /* Esto se hace por un bug en Angular Datatables,
           al actualizar hay que revisar */
-          $scope.dtOptions.reloadData = function(){
-            $('#' + tableId).DataTable().ajax.reload();
-          }
+          // $scope.dtOptions.reloadData = function(){
+          //   $('#' + tableId).DataTable().ajax.reload();
+          // }
 
           /* funcion para actualizar la tabla manualmente */
           $scope.options.reloadData = function(){
@@ -736,6 +750,11 @@ angular.module('qualitaCoreFrontend')
             });
             return filters;
           }
+
+          if ($scope.options.defaultOrderColumn !== undefined && $scope.options.defaultOrderDir !== undefined) {
+            console.log('order: ' + $scope.options.defaultOrderColumn);
+            table.order([[$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir]]);
+          }
         }
 
         $scope.remove = function(itemId) {
@@ -764,7 +783,8 @@ angular.module('qualitaCoreFrontend')
             $scope.disableButton = true;
             var model = $scope.options.factory.create({id: itemId});
             $scope.options.factory.remove(model).then(function() {
-              $scope.dtOptions.reloadData();
+              // se refresca la tabla
+              $('#' + tableId).DataTable().ajax.reload();
               $scope.modalInstanceBorrar1.close(itemId);
             }, function(error) {
               $scope.modalInstanceBorrar1.dismiss('cancel');
