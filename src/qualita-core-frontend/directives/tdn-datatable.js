@@ -70,6 +70,8 @@ angular.module('qualitaCoreFrontend')
         var ajaxRequest = function(data, callback) {
 
           if (table) {
+            $scope.options.tableAjaxParams = table.ajax.params(); 
+            
             _.forEach(table.colReorder.order(), function(columnIndex, index) {
               if ($scope.customFilters[columnIndex]) {
                 data.columns[index]['type'] = $scope.customFilters[columnIndex].filterType;
@@ -490,8 +492,7 @@ angular.module('qualitaCoreFrontend')
           $('#' + tableId + ' tfoot tr').empty();
           $scope.dateRangePickerWidgetsOrder = [];
           $(".daterangepicker").remove();
-
-          $scope.options.currentDataOrder = [];
+          $scope.options.currentColumnOrder = [];
 
           _.forEach(table.context[0].aoColumns, function (column) {
             var realIndex = column._ColReorder_iOrigCol;
@@ -500,7 +501,7 @@ angular.module('qualitaCoreFrontend')
 
             if (column.bVisible) {
               if (data) {
-                $scope.options.currentDataOrder.push(data);
+                $scope.options.currentColumnOrder.push(data);
               }
               
               var title = column.name;

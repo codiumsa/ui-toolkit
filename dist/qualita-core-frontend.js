@@ -1058,6 +1058,8 @@ angular.module('qualitaCoreFrontend')
         var ajaxRequest = function(data, callback) {
 
           if (table) {
+            $scope.options.tableAjaxParams = table.ajax.params(); 
+            
             _.forEach(table.colReorder.order(), function(columnIndex, index) {
               if ($scope.customFilters[columnIndex]) {
                 data.columns[index]['type'] = $scope.customFilters[columnIndex].filterType;
@@ -1478,8 +1480,7 @@ angular.module('qualitaCoreFrontend')
           $('#' + tableId + ' tfoot tr').empty();
           $scope.dateRangePickerWidgetsOrder = [];
           $(".daterangepicker").remove();
-
-          $scope.options.currentDataOrder = [];
+          $scope.options.currentColumnOrder = [];
 
           _.forEach(table.context[0].aoColumns, function (column) {
             var realIndex = column._ColReorder_iOrigCol;
@@ -1488,7 +1489,7 @@ angular.module('qualitaCoreFrontend')
 
             if (column.bVisible) {
               if (data) {
-                $scope.options.currentDataOrder.push(data);
+                $scope.options.currentColumnOrder.push(data);
               }
               
               var title = column.name;
@@ -2611,19 +2612,24 @@ function NotificacionesWSFactory($resource, baseurl, $log, $websocket) {
 angular.module('qualitaCoreFrontend')
   .factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
   
-    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID', 
+    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID?:query&currentColumnOrder=:currentColumnOrder', 
       {
         action: '@reportID'
       });
 
     return {
-      ticket: function(reportID, filters, columns) {
+      ticket: function(reportID, filters, searchParams, currentColumnOrder) {
         var report = new ReportTicket(filters);
         var params = {reportID: reportID}; 
 
-        if (columns) {
-          params.columns = columns;
+        if (searchParams) {
+          params.query = decodeURIComponent($.param(searchParams));
         }
+
+        if (currentColumnOrder) {
+          params.currentColumnOrder = currentColumnOrder;
+        }
+        
         return report.$save(params);
       },
 

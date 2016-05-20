@@ -10,19 +10,24 @@
 angular.module('qualitaCoreFrontend')
   .factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
   
-    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID', 
+    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID?:query&currentColumnOrder=:currentColumnOrder', 
       {
         action: '@reportID'
       });
 
     return {
-      ticket: function(reportID, filters, columns) {
+      ticket: function(reportID, filters, searchParams, currentColumnOrder) {
         var report = new ReportTicket(filters);
         var params = {reportID: reportID}; 
 
-        if (columns) {
-          params.columns = columns;
+        if (searchParams) {
+          params.query = decodeURIComponent($.param(searchParams));
         }
+
+        if (currentColumnOrder) {
+          params.currentColumnOrder = currentColumnOrder;
+        }
+        
         return report.$save(params);
       },
 
