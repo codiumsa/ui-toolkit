@@ -263,6 +263,7 @@ angular.module('qualitaCoreFrontend')
                   }
                 })
           .withOption('createdRow', function(row, data, dataIndex) {
+            console.log(row);
             $compile(angular.element(row).contents())($scope);
           })
           .withOption('headerCallback', function(header) {
@@ -372,13 +373,13 @@ angular.module('qualitaCoreFrontend')
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
-              var basicOpts = '<button class="btn btn-success btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canEdit(' + data.id + ')}" ng-click="edit(' + data.id + ')">' +
+              var basicOpts = '<button class="btn-row-datatable btn btn-success btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canEdit(' + data.id + ')}" ng-click="edit(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-pencil"></span>' +
                   '</button>' +
-                  '<button class="btn btn-danger btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canRemove(' + data.id + ')}" ng-click="remove(' + data.id + ')">' +
+                  '<button class="btn-row-datatable btn btn-danger btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canRemove(' + data.id + ')}" ng-click="remove(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-trash"></span>' +
                   '</button>' +
-                  '<button class="btn btn-info btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canList(' + data.id + ')}" ng-click="view(' + data.id + ')">' +
+                  '<button class="btn-row-datatable btn btn-info btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canList(' + data.id + ')}" ng-click="view(' + data.id + ')">' +
                   '   <span class="glyphicon glyphicon-eye-open"></span>' +
                   '</button>';
             if($scope.options.extraRowOptions) {
@@ -449,6 +450,7 @@ angular.module('qualitaCoreFrontend')
         }
 
         $scope.view = function(itemId) {
+          console.log('view');
           var pathTemplate = _.template('app.<%= resource %>.view');
           //var params = _.extend($scope.options, {itemId: itemId});
           $state.go(pathTemplate($scope.options), {id: itemId});
@@ -494,6 +496,7 @@ angular.module('qualitaCoreFrontend')
           $(".daterangepicker").remove();
           $scope.options.currentColumnOrder = [];
 
+          
           _.forEach(table.context[0].aoColumns, function (column) {
             var realIndex = column._ColReorder_iOrigCol;
             var data = column.mData;
@@ -628,6 +631,8 @@ angular.module('qualitaCoreFrontend')
               $('#' + tableId + ' tfoot tr').append(html);
               //$('[id="filtro_' + table.colReorder.order()[column] + '"]').val(settings.oAjaxData.columns[column].search.value);            }
             }
+            
+            $compile($('.btn-row-datatable'))($scope);
           });
 
           //bind de eventos para filtros
@@ -649,12 +654,6 @@ angular.module('qualitaCoreFrontend')
             });
           });
         };
-
-        $scope.dtOptions.withColReorderCallback(function() {
-            var order = this.fnOrder();
-            //console.log('Columns order has been changed with: ' + order);
-            createFilters();
-        });
 
         /* Funcion de actualizacion de URL Base con o sin filtros estaticos */
         function updateStaticFilters() {
@@ -732,6 +731,11 @@ angular.module('qualitaCoreFrontend')
           });
 
           table.on('column-visibility', function (e, settings, column, state ) {
+            //console.log('change column visibility %o', state);
+            createFilters();
+          });
+
+          table.on('column-reorder', function (e, settings, details ) {
             //console.log('change column visibility %o', state);
             createFilters();
           });
