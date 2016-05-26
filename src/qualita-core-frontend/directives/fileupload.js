@@ -120,7 +120,9 @@ angular.module('qualitaCoreFrontend')
           scope.uploadOptions.flow = flow;
         };
 
-        scope.uploader.flow = scope.uploadOptions.flow;
+        if (scope.uploadOptions) {
+          scope.uploader.flow = scope.uploadOptions.flow;
+        }
         scope.files = [];
         scope.adjuntosBaseURL = baseurl.getPublicBaseUrl();
 
