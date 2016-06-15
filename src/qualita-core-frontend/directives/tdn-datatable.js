@@ -16,7 +16,7 @@ angular.module('qualitaCoreFrontend')
       '<div class="widget-header bordered-top bordered-palegreen" ng-if="!options.hideHeader">' +
         '<span class="widget-caption">{{options.title}}</span>' +
         '<div class="widget-buttons">' +
-          '<a ng-show="canCreate()" ng-click="new()" title="Nuevo">' +
+          '<a href="" ng-show="canCreate()" ng-click="new()" title="Nuevo">' +
             '<i class="glyphicon glyphicon-plus"></i>' +
           '</a>' +
           '<a ng-repeat="menuOption in options.extraMenuOptions" href="" ng-show="menuOption.showCondition()" ng-click="menuOption.action()" title="{{menuOption.title}}">' +
