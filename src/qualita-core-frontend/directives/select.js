@@ -342,15 +342,20 @@ angular.module('qualitaCoreFrontend').controller('dynamicSelectController', ['$s
         return [{value: undefined, name: $scope.form.placeholder}].concat(data);
       }
 
+      var isEdit = false;
       for (var i = 0; i < data.length; i++) {
-
         if (data[i][map.valueProperty] === model[map.valueProperty]) {
+          isEdit = true;
           break;
         }
       }
       var tmp = data[0];
       data[0] = data[i];
       data[i] = tmp;
+
+      if (isEdit) {
+        $scope.select_model.selected = data[0];
+      }
       return data;
     }
   }
@@ -477,7 +482,7 @@ angular.module('qualitaCoreFrontend').controller('dynamicSelectController', ['$s
           if (form.options.multiple) {
             $scope.uiMultiSelectInitInternalModel(getModel(form.options));
           } else {
-            $scope.select_model.selected = form.titleMap[0];
+            //$scope.select_model.selected = form.titleMap[0];
           }
           console.log('asyncCallback items', form.titleMap);
         },

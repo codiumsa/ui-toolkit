@@ -739,15 +739,20 @@ angular.module('qualitaCoreFrontend').controller('dynamicSelectController', ['$s
         return [{value: undefined, name: $scope.form.placeholder}].concat(data);
       }
 
+      var isEdit = false;
       for (var i = 0; i < data.length; i++) {
-
         if (data[i][map.valueProperty] === model[map.valueProperty]) {
+          isEdit = true;
           break;
         }
       }
       var tmp = data[0];
       data[0] = data[i];
       data[i] = tmp;
+
+      if (isEdit) {
+        $scope.select_model.selected = data[0];
+      }
       return data;
     }
   }
@@ -874,7 +879,7 @@ angular.module('qualitaCoreFrontend').controller('dynamicSelectController', ['$s
           if (form.options.multiple) {
             $scope.uiMultiSelectInitInternalModel(getModel(form.options));
           } else {
-            $scope.select_model.selected = form.titleMap[0];
+            //$scope.select_model.selected = form.titleMap[0];
           }
           console.log('asyncCallback items', form.titleMap);
         },
@@ -1257,7 +1262,7 @@ angular.module('qualitaCoreFrontend')
                   }
                 })
           .withOption('createdRow', function(row, data, dataIndex) {
-            console.log(row);
+            //console.log(row);
             $compile(angular.element(row).contents())($scope);
           })
           .withOption('headerCallback', function(header) {
@@ -1444,7 +1449,7 @@ angular.module('qualitaCoreFrontend')
         }
 
         $scope.view = function(itemId) {
-          console.log('view');
+          //console.log('view');
           var pathTemplate = _.template('app.<%= resource %>.view');
           //var params = _.extend($scope.options, {itemId: itemId});
           $state.go(pathTemplate($scope.options), {id: itemId});
@@ -1751,7 +1756,7 @@ angular.module('qualitaCoreFrontend')
           }
 
           if ($scope.options.defaultOrderColumn !== undefined && $scope.options.defaultOrderDir !== undefined) {
-            console.log('order: ' + $scope.options.defaultOrderColumn);
+            //console.log('order: ' + $scope.options.defaultOrderColumn);
             table.order([[$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir]]);
           }
         }

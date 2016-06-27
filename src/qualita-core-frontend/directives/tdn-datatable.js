@@ -263,7 +263,7 @@ angular.module('qualitaCoreFrontend')
                   }
                 })
           .withOption('createdRow', function(row, data, dataIndex) {
-            console.log(row);
+            //console.log(row);
             $compile(angular.element(row).contents())($scope);
           })
           .withOption('headerCallback', function(header) {
@@ -450,7 +450,7 @@ angular.module('qualitaCoreFrontend')
         }
 
         $scope.view = function(itemId) {
-          console.log('view');
+          //console.log('view');
           var pathTemplate = _.template('app.<%= resource %>.view');
           //var params = _.extend($scope.options, {itemId: itemId});
           $state.go(pathTemplate($scope.options), {id: itemId});
@@ -757,7 +757,7 @@ angular.module('qualitaCoreFrontend')
           }
 
           if ($scope.options.defaultOrderColumn !== undefined && $scope.options.defaultOrderDir !== undefined) {
-            console.log('order: ' + $scope.options.defaultOrderColumn);
+            //console.log('order: ' + $scope.options.defaultOrderColumn);
             table.order([[$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir]]);
           }
         }
