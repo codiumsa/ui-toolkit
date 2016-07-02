@@ -2651,6 +2651,20 @@ angular.module('qualitaCoreFrontend')
       downloadURL: function(reportTicket, exportType) {
         console.log('downloadURL');
         return baseurl.getBaseUrl() + '/generar/' + reportTicket + '/' + exportType;
+      },
+
+      downloadCustomReport: function(reportID, exportType, filters) {
+        console.log('dowloadCustomReport');
+        var downloadUrl = baseurl.getBaseUrl() + '/reportes/' + reportID;
+        if (filters) {
+          downloadUrl += "?";
+          _.forEach(filters, function (filter) {
+            //console.log(filter);
+            downloadUrl += filter + "&";
+          });
+          return downloadUrl;
+        }
+        return downloadUrl;
       }
     };
   }]);
