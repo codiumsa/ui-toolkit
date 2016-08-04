@@ -1262,7 +1262,6 @@ angular.module('qualitaCoreFrontend')
                   }
                 })
           .withOption('createdRow', function(row, data, dataIndex) {
-            //console.log(row);
             $compile(angular.element(row).contents())($scope);
           })
           .withOption('headerCallback', function(header) {
@@ -1312,6 +1311,45 @@ angular.module('qualitaCoreFrontend')
           $scope.dtOptions.withColReorderOption('iFixedColumnsLeft', 1);
         }
 
+        /* RENDERS BASICOS */
+        var dateRender =  function(dateFormat) {
+          return function(data) {
+            return moment.utc(data).format(dateFormat);  
+          }
+        };
+
+        var emptyRender =  function(data) {
+          if (data == undefined) return "";
+          else return data;
+        };
+
+        var numberRender =  function(data) {
+          if (data) return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+          else return '';
+        };
+
+        var monedaRender =  function(pathAtt) {
+          return function(data, type, row) {
+            if (data) {
+              var moneda = "Gs. ";
+              if (row[pathAtt]==='dolares') {
+                moneda = "Usd. ";
+                data = parseFloat(data).toFixed(2);
+              } else if(row[pathAtt]==='pesos') {
+                moneda = "Pes. ";
+                data = parseFloat(data).toFixed(2);
+              } else if (row[pathAtt]==='real') {
+                moneda = "Rel. ";
+                data = parseFloat(data).toFixed(2);
+              } else if (row[pathAtt]==='euro') {
+                moneda = "Eur. ";
+                data = parseFloat(data).toFixed(2);
+              }
+              return moneda + data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            } else return "";
+          }
+        };
+
         var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable', 'searchable'];
         _.map($scope.options.columns, function(c, index){
 
@@ -1322,7 +1360,18 @@ angular.module('qualitaCoreFrontend')
 
           if(c.title) column = column.withTitle(c.title);
           if(c.class) column = column.withClass(c.class);
-          if(c.renderWith) column = column.renderWith(c.renderWith);
+          if(c.renderWith) {
+            if(c.renderWith === 'dateRender')
+              column = column.renderWith(dateRender(c.dateFormat));
+            else if (c.renderWith === 'emptyRender')
+              column = column.renderWith(emptyRender);
+            else if (c.renderWith === 'numberRender')
+              column = column.renderWith(numberRender);
+            else if (c.renderWith === 'monedaRender')
+              column = column.renderWith(monedaRender(c.pathAttMoneda));
+            else
+              column = column.renderWith(c.renderWith);
+          } 
           if(c.sortable === false) column = column.notSortable();
 
           //si hay un orden definido y no está dentro de ese orden o si especifica que no es visible
@@ -1437,23 +1486,30 @@ angular.module('qualitaCoreFrontend')
         }
 
         $scope.new = function(){
-          var pathTemplate = _.template('app.<%= resource %>.new');
+          var pathTemplate;
+          if(!$scope.options.customResource)
+            pathTemplate = _.template('app.<%= resource %>.new');
+          else
+            pathTemplate = _.template('app.<%= customResource %>.new');
           $state.go(pathTemplate($scope.options), {});
         }
 
         $scope.edit = function(itemId){
-          var pathTemplate = _.template('app.<%= resource %>.edit');
-          //var params = _.extend($scope.options, {itemId: itemId});
+          var pathTemplate;
+          if(!$scope.options.customResource)
+            pathTemplate = _.template('app.<%= resource %>.edit');
+          else
+            pathTemplate = _.template('app.<%= customResource %>.edit');
           $state.go(pathTemplate($scope.options), {id: itemId});
-          //$location.path(pathTemplate(params));
         }
 
         $scope.view = function(itemId) {
-          //console.log('view');
-          var pathTemplate = _.template('app.<%= resource %>.view');
-          //var params = _.extend($scope.options, {itemId: itemId});
+          var pathTemplate;
+          if(!$scope.options.customResource)
+            pathTemplate = _.template('app.<%= resource %>.view');
+          else
+            pathTemplate = _.template('app.<%= customResource %>.view');
           $state.go(pathTemplate($scope.options), {id: itemId});
-          //$location.path(pathTemplate(params));
         }
 
         $scope.toggleAll = function () {
