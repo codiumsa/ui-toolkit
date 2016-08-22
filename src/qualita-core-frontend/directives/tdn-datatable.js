@@ -70,8 +70,8 @@ angular.module('qualitaCoreFrontend')
         var ajaxRequest = function(data, callback) {
 
           if (table) {
-            $scope.options.tableAjaxParams = table.ajax.params(); 
-            
+            $scope.options.tableAjaxParams = table.ajax.params();
+
             _.forEach(table.colReorder.order(), function(columnIndex, index) {
               if ($scope.customFilters[columnIndex]) {
                 data.columns[index]['type'] = $scope.customFilters[columnIndex].filterType;
@@ -315,7 +315,7 @@ angular.module('qualitaCoreFrontend')
         /* RENDERS BASICOS */
         var dateRender =  function(dateFormat) {
           return function(data) {
-            return moment.utc(data).format(dateFormat);  
+            return moment.utc(data).format(dateFormat);
           }
         };
 
@@ -372,7 +372,7 @@ angular.module('qualitaCoreFrontend')
               column = column.renderWith(monedaRender(c.pathAttMoneda));
             else
               column = column.renderWith(c.renderWith);
-          } 
+          }
           if(c.sortable === false) column = column.notSortable();
 
           //si hay un orden definido y no está dentro de ese orden o si especifica que no es visible
@@ -435,7 +435,14 @@ angular.module('qualitaCoreFrontend')
               _.forEach($scope.options.extraRowOptions, function(menuOpt) {
                 var compilado = _.template(menuOpt.templateToRender);
                 $scope[menuOpt.functionName] = menuOpt.functionDef;
-                basicOpts = basicOpts + compilado({'dataCustom': JSON.stringify(data[menuOpt.customAttribute]) ,'dataId': data.id, '$state': $state, '$scope': $scope});
+                var customAttribute = menuOpt.customAttribute;
+                var compiled = {'dataId': data.id, '$state': $state, '$scope': $scope};
+                if(customAttribute.constructor === Array) {
+                  compiled.dataCustom = JSON.stringify(_.map(customAttribute, function(ca) { return data[ca] }));
+                } else {
+                  compiled.dataCustom = JSON.stringify(data[menuOpt.customAttribute]);
+                }
+                basicOpts = basicOpts + compilado(compiled);
                 $scope[menuOpt.conditionName] = menuOpt.conditionDef;
               });
             }
@@ -552,7 +559,7 @@ angular.module('qualitaCoreFrontend')
           $(".daterangepicker").remove();
           $scope.options.currentColumnOrder = [];
 
-          
+
           _.forEach(table.context[0].aoColumns, function (column) {
             var realIndex = column._ColReorder_iOrigCol;
             var data = column.mData;
@@ -562,7 +569,7 @@ angular.module('qualitaCoreFrontend')
               if (data) {
                 $scope.options.currentColumnOrder.push(data);
               }
-              
+
               var title = column.name;
               if (!name) {
                 title = column.sTitle;
@@ -687,7 +694,7 @@ angular.module('qualitaCoreFrontend')
               $('#' + tableId + ' tfoot tr').append(html);
               //$('[id="filtro_' + table.colReorder.order()[column] + '"]').val(settings.oAjaxData.columns[column].search.value);            }
             }
-            
+
             $compile($('.btn-row-datatable'))($scope);
           });
 
