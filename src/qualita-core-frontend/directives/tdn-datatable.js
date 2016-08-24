@@ -437,7 +437,7 @@ angular.module('qualitaCoreFrontend')
                 $scope[menuOpt.functionName] = menuOpt.functionDef;
                 var customAttribute = menuOpt.customAttribute;
                 var compiled = {'dataId': data.id, '$state': $state, '$scope': $scope};
-                if(customAttribute.constructor === Array) {
+                if(customAttribute && customAttribute.constructor === Array) {
                   compiled.dataCustom = JSON.stringify(_.map(customAttribute, function(ca) { return data[ca] }));
                 } else {
                   compiled.dataCustom = JSON.stringify(data[menuOpt.customAttribute]);
