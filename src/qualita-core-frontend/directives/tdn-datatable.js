@@ -315,7 +315,8 @@ angular.module('qualitaCoreFrontend')
         /* RENDERS BASICOS */
         var dateRender =  function(dateFormat) {
           return function(data) {
-            return moment.utc(data).format(dateFormat);
+            //return moment.utc(data).format(dateFormat);
+            return moment(data).format(dateFormat);
           }
         };
 
