@@ -28,7 +28,7 @@
     "angular-underscore": "~0.5.0",
     "angular-ui-utils": "~0.2.3",
     "oclazyload": "~1.0.2",
-    "angular-ui-router": "~0.2.18",
+    "angular-ui-router": "~0.3.1",
     "angular-breadcrumb": "~0.4.0",
     "ngstorage": "~0.3.7",
     "jstree": "~3.1.1",
