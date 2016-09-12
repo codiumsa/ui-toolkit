@@ -1,0 +1,9 @@
+
+<div class="{{ vm.clases }} has-feedback" ng-class="{ 'has-error' : vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submitedFlag), 'has-success' : !vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submitedFlag)}">
+  <label ng-if="vm.label" for="{{vm.name}}" ng-class="{ 'help-block' : vm.form[vm.name].$invalid &&(vm.form[vm.name].$touched || vm.submitedFlag), 'custom-success': !vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submitedFlag)}">{{vm.label}} </label>
+  <textarea rows="5" id="{{vm.name}}" name="{{vm.name}}" ng-model="vm.model" class="form-control" ng-required="vm.isRequired" ng-maxlength="{{vm.maxLength}}" ng-minlength="{{vm.minLength}}" ng-disabled="vm.isDisabled"></textarea>
+  <span ng-if="vm.form[vm.name].$touched || vm.submitedFlag" class="form-control-feedback glyphicon" ng-class="{'glyphicon': true, 'glyphicon-ok': !vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submitedFlag), 'glyphicon-remove': vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submitedFlag) }" aria-hidden="true"></span>
+  <p ng-show="vm.form[vm.name].$invalid && !vm.form[vm.name].$error.maxlength && !vm.form[vm.name].$error.minlength && (vm.form[vm.name].$touched || vm.submitedFlag)" class="help-block">El campo es obligatorio</p>
+  <p ng-show="vm.form[vm.name].$error.maxlength && (vm.form[vm.name].$touched || vm.submitedFlag)" class="help-block">El valor es muy largo, máximo permitido {{vm.maxLength}} caracteres</p>
+  <p ng-show="vm.form[vm.name].$error.minlength && (vm.form[vm.name].$touched || vm.submitedFlag)" class="help-block">El valor es muy corto, mínimo permitido {{vm.minLength}} caracteres</p>
+</div>

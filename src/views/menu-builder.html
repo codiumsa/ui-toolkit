@@ -1,0 +1,19 @@
+<div>
+    <br>
+    <div class="row" style="padding-bottom:20px;">
+        <div class="col-md-6 col-sm-8 col-xs-8">
+            <button type="button" class="btn btn-success btn-sm" ng-click="nodeCreate();"><i class="glyphicon glyphicon-asterisk"></i> Crear</button>
+            <button type="button" class="btn btn-danger btn-sm" ng-click="nodeDelete();"><i class="glyphicon glyphicon-remove"></i> Borrar </button>
+            <button type="button" class="btn btn-warning btn-sm" ng-click="getMenu();"><i class="glyphicon glyphicon-refresh"></i> Menu JSON </button>
+        </div>
+    </div>
+    <div id="menu-builder"></div>
+    <br>
+    {{menu}}
+    <br>
+    <br>
+    <div custom-menu="" options="options" menu="menu" ng-if="menu[0]">
+        <ul class="nav custom-sidebar-menu"></ul>
+    </div>
+</div>
+

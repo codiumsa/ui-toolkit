@@ -1,0 +1,13 @@
+<div class="{{ vm.clases }} has-feedback" ng-class="{ 'has-error' : vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submitedFlag), 'has-success' : !vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submitedFlag)}">
+  <label ng-if="vm.label" for="{{vm.name}}" ng-class="{ 'help-block' : vm.form[vm.name].$invalid &&(vm.form[vm.name].$touched || vm.submitedFlag), 'custom-success': !vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submitedFlag)}">{{ vm.label }} </label>
+  <ui-select focus-on="{{vm.focusElement}}" id="{{vm.name}}" name="{{vm.name}}" ng-required="vm.isRequired" ng-model="vm.model" on-select="vm.selectListener()" ng-disabled="vm.isDisabled">
+    <ui-select-match>
+      <span ng-bind="vm.getChoice($select.selected)"></span>
+    </ui-select-match>
+    <ui-select-choices repeat="item in (vm.options | filter: vm.getFilter($select.search)) track by item.id">
+      <span ng-bind="vm.getChoice(item)"></span>
+    </ui-select-choices>
+  </ui-select>
+  <span ng-if="vm.form[vm.name].$touched || vm.submitedFlag" class="form-control-feedback glyphicon" ng-class="{'glyphicon': true, 'glyphicon-ok': !vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submitedFlag), 'glyphicon-remove': vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submitedFlag) }" aria-hidden="true"></span>
+  <p ng-show="vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submitedFlag)" class="help-block">El campo es obligatorio</p>
+</div>

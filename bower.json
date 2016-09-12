@@ -45,7 +45,19 @@
     "angular-rangepicker": "nahu/angular-rangepicker#0.1",
     "angular-ui-select": "https://gitlab.com/codium/angular-ui-select.git#master",
     "ng-pickadate": "~0.3.0",
-    "angular-intro.js": "~2.0.1"
+    "angular-intro.js": "~2.0.1",
+    "checklist-model": "~0.6.0",
+    "angular-spinner": "~0.8.1",
+    "angular-ui-tree": ">=2.13.0",
+    "ng-file-upload": "~10.1.7",
+    "ng-tags-input": "~3.0.0",
+    "angular-ladda": "~0.3.1",
+    "angular-i18n": "~1.5.0",
+    "angular-perfect-scrollbar": "~0.0.4",
+    "angular-translate": "~2.10.0",
+    "angular-translate-loader-static-files": "~2.10.0",
+    "angular-translate-loader-partial": "~2.11.0",
+    "jQuery.mmenu": "~5.6.3"
   },
   "devDependencies": {
     "angular-mocks": ">=1.2.0",

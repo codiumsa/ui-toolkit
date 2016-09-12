@@ -1,0 +1,5 @@
+<div class="form-group" style="text-align: right;">
+  <button type="button" class="btn btn-primary" title="{{'SAVE' | translate}}" ng-disabled="$root.isProcessing || !vm.saveEnabledCondition" style="margin-left: 2px;" ng-click="vm.save()" ng-disabled="$root.isProcessing" ng-init="false"><span class="glyphicon glyphicon-floppy-disk"></span> {{ vm.saveTitle ? vm.saveTitle : 'SAVE' | translate}}</button>
+  <button type="button" class="btn btn-default" title="{{'CANCEL' | translate}}" style="margin-left: 2px;" ng-click="vm.cancel()"
+  ng-disabled="$root.isProcessing" ng-init="false"><span class="glyphicon glyphicon-remove"></span> {{'CANCEL' | translate}}</button>
+</div>

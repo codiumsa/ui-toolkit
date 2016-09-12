@@ -49,9 +49,9 @@ gulp.task('build', function() {
 
 gulp.task('views', function() {
   // Any other view files from app/views
-  gulp.src('./views/directives/*')
+  gulp.src('./views/*')
   // Will be put in the dist/views folder
-  .pipe(gulp.dest('dist/views/directives/'));
+  .pipe(gulp.dest('dist/views/'));
 });
 
 /**

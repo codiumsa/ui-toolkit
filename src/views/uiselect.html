@@ -1,5 +1,5 @@
 <div class="form-group"
-     ng-class="{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess(), 'has-feedback': form.feedback !== false}"
+     ng-class="{'has-error': hasError(), 'has-success': hasSuccess(), 'has-feedback': form.feedback !== false}"
      ng-init="selectedOptions=form.titleMap; insideModel=$$value$$;" ng-controller="dynamicSelectController">
   <label class="control-label" ng-show="showTitle()">{{form.title}}</label>
 
@@ -8,7 +8,7 @@
                ng-if="!(form.options.tagging||false)" theme="bootstrap" ng-disabled="form.disabled"
                on-select="$$value$$=$item.value" class="{{form.options.uiClass}}">
       <ui-select-match
-        placeholder="{{form.placeholder || form.schema.placeholder || ('placeholders.select' | translate)}}">
+        placeholder="{{form.placeholder || form.schema.placeholder || ('' | translate)}}">
         {{select_model.selected.name}}
       </ui-select-match>
       <ui-select-choices refresh="populateTitleMap(form, form.options, $select.search)"
@@ -28,7 +28,7 @@
                theme="bootstrap" ng-disabled="form.disabled" on-select="$$value$$=$item.value"
                class="{{form.options.uiClass}}">
       <ui-select-match
-        placeholder="{{form.placeholder || form.schema.placeholder || ('placeholders.select' | translate)}}">
+        placeholder="{{form.placeholder || form.schema.placeholder || ('' | translate)}}">
         {{select_model.selected.name}}&nbsp;
         <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>
       </ui-select-match>
@@ -55,7 +55,7 @@
                theme="bootstrap" ng-disabled="form.disabled" on-select="$$value$$=$item.value"
                class="{{form.options.uiClass}}">
       <ui-select-match
-        placeholder="{{form.placeholder || form.schema.placeholder || ('placeholders.select' | translate)}}">
+        placeholder="{{form.placeholder || form.schema.placeholder || ('' | translate)}}">
         {{select_model.selected.name}}&nbsp;
         <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>
       </ui-select-match>

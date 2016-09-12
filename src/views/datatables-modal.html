@@ -1,0 +1,12 @@
+<div class="widget-header bordered-top bordered-palegreen">
+	<span class="widget-caption">{{vm.options.title}}</span>
+	<div class="widget-buttons">
+    <a ng-click="vm.addAll()" ng-if="vm.multipleSelection" title="Agregar">
+      <i class="glyphicon glyphicon-check"></i>
+    </a>
+		<a ng-click="vm.modalInstance.close() || modalInstance.close()" title="Nuevo">
+			<i class="glyphicon glyphicon-remove"></i>
+		</a>
+	</div>
+</div>
+<div ui-datatable="" options="vm.options" ng-if="vm.options"></div>
