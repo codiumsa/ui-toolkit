@@ -1,7 +1,5 @@
-/**
- * Created by codiumsa on 19/10/15.
- */
-angular.module('qualitaCoreFrontend')
+(function() {
+angular.module('ui')
   .factory('NotificacionesWSFactory', NotificacionesWSFactory);
 NotificacionesWSFactory.$inject = ['$resource', 'baseurl', '$log', '$websocket', '$timeout'];
 
@@ -116,6 +114,5 @@ function NotificacionesWSFactory($resource, baseurl, $log, $websocket, $timeout)
   function save(notificacion) {
     return (notificacion.id) ? notificacion.$update() : notificacion.$save();
   }
-
-
 }
+}());

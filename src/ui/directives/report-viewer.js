@@ -1,12 +1,13 @@
+(function() {
 'use strict';
 
 /**
  * @ngdoc directive
- * @name portalApp.directive:reportViewer
+ * @name ui.directive:reportViewer
  * @description
  * # reportViewer
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .directive('reportViewer', ['$modal', '$sce', function ($modal, $sce) {
     return {
       template: '',
@@ -49,3 +50,4 @@ angular.module('qualitaCoreFrontend')
       }
     };
   }]);
+}());

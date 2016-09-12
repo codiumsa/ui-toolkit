@@ -1,17 +1,15 @@
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.filterFactory
+ * @name ui.filterFactory
  * @description
  * # filterFactory
  * Factory in the qualita.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .factory('filterFactory', function () {
-    // Service logic
-    // ...
-
     var logicalOp = function (type, filters) {
       var result = {
         _inner: {
@@ -68,3 +66,4 @@ angular.module('qualitaCoreFrontend')
       value: value
     };
   });
+}());

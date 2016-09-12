@@ -1,13 +1,13 @@
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.formFactory
+ * @name ui.formFactory
  * @description
  * # formFactory
- * Factory in the qualita.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .factory('formFactory', function ($location, $localForage, notify, $rootScope, AuthorizationService, $q) {
     var hasPermission = AuthorizationService.hasPermission;
 
@@ -217,3 +217,4 @@ angular.module('qualitaCoreFrontend')
       }
     };
   });
+}());

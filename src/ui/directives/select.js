@@ -1,5 +1,4 @@
-
-angular.module('qualitaCoreFrontend').run(["$templateCache", function($templateCache) {
+angular.module('ui').run(["$templateCache", function($templateCache) {
 
 $templateCache.put("views/directives/uiselect.html", "<div class=\"form-group\"\n" +
       "     ng-class=\"{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess(), 'has-feedback': form.feedback !== false}\"\n" +
@@ -108,7 +107,7 @@ $templateCache.put("views/directives/uiselect.html", "<div class=\"form-group\"\
 
 }]);
 
-angular.module('qualitaCoreFrontend').config(
+angular.module('ui').config(
   ['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider',
     function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
 
@@ -299,7 +298,7 @@ angular.module('qualitaCoreFrontend').config(
     };
   });
 
-angular.module('qualitaCoreFrontend').controller('dynamicSelectController', ['$scope', '$http', '$timeout', function ($scope, $http, $timeout) {
+angular.module('ui').controller('dynamicSelectController', ['$scope', '$http', '$timeout', function ($scope, $http, $timeout) {
 
 
   $scope.select_model = {};
@@ -542,7 +541,7 @@ angular.module('qualitaCoreFrontend').controller('dynamicSelectController', ['$s
 
 }]);
 
-angular.module('qualitaCoreFrontend').filter('selectFilter', [function ($filter) {
+angular.module('ui').filter('selectFilter', [function ($filter) {
   return function (inputArray, controller, localModel, strLocalModel) {
     // As the controllers' .model is the global and its form is the local, we need to get the local model as well.
     // We also need tp be able to set it if is undefined after a validation failure,so for that we need
@@ -596,6 +595,4 @@ angular.module('qualitaCoreFrontend').filter('selectFilter', [function ($filter)
     return data;
   };
 }]);
-
-
 

@@ -1,6 +1,7 @@
+(function() {
 'use strict';
 
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .controller('BasicController', ['$rootScope', '$scope', 'formFactory', '$location',
     '$state', '$injector',
     function($rootScope, $scope, formFactory, $location,
@@ -19,14 +20,14 @@ angular.module('qualitaCoreFrontend')
         }
         
         $rootScope.isProcessing = false;
-      }
+      };
 
       function activateNew() {
         if (!formFactory.canCreate($scope.resources)) {
           var notify = $injector.get('notify');
           // error de autorización
           notify({
-            message: "No tiene permiso de creación",
+            message: 'No tiene permiso de creación',
             classes: ['alert-danger'],
             position: 'right'
           });
@@ -43,7 +44,7 @@ angular.module('qualitaCoreFrontend')
           var notify = $injector.get('notify');
           // error de autorización
           notify({
-            message: "No tiene permiso de edición",
+            message: 'No tiene permiso de edición',
             classes: ['alert-danger'],
             position: 'right'
           });
@@ -62,7 +63,7 @@ angular.module('qualitaCoreFrontend')
           var notify = $injector.get('notify');
           // error de autorización
           notify({
-            message: "No tiene permiso de vista",
+            message: 'No tiene permiso de vista',
             classes: ['alert-danger'],
             position: 'right'
           });
@@ -85,6 +86,6 @@ angular.module('qualitaCoreFrontend')
       $scope.cancel = function() {
         $location.path('/' + $scope.resource);
       };
-
     }
   ]);
+}());

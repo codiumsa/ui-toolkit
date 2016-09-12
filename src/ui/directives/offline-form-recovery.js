@@ -1,3 +1,4 @@
+(function() {
 'use strict';
 
 /**
@@ -6,7 +7,7 @@
  * @description
  * # offlineFormRecovery
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .directive('offlineFormRecovery', function ($localForage) {
     return {
       template: '<div class="btn-group" role="group" aria-label="First group">' +
@@ -47,3 +48,4 @@ angular.module('qualitaCoreFrontend')
       }
     };
   });
+}());

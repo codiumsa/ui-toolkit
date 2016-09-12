@@ -1,16 +1,14 @@
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.usuariosFactory
+ * @name ui.usuariosFactory
  * @description
  * # usuariosFactory
- * Factory in the qualita.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .factory('usuariosFactory', function ($resource, filterFactory, baseurl) {
-    // Service logic
-    // ...
 
     var Usuario = $resource(baseurl.getBaseUrl() + '/usuarios/:id', { id: '@id' }, {
       'update': { method: 'PUT' }, // this method issues a PUT request
@@ -45,14 +43,7 @@ angular.module('qualitaCoreFrontend')
 
       remove: function(usuario) {
         return usuario.$remove();
-      }/*,
-
-      schema: function() {
-        return schema;
-      },
-
-      form: function() {
-        return form;
-      }*/
+      }
     };
   });
+}());

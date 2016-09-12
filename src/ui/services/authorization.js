@@ -1,13 +1,13 @@
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.Authorization
+ * @name ui.Authorization
  * @description
  * # Authorization
- * Service in the qualita.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .service('AuthorizationService', function ($rootScope, $resource, $http, baseurl, AuthenticationService) {
     
     var Authorization = $resource(baseurl.getBaseUrl() + '/authorization/:action',
@@ -19,8 +19,6 @@ angular.module('qualitaCoreFrontend')
        * parámetro.
        **/
       hasPermission: function(permission, userToCheck) {
-        /*var permissions = $rootScope.AuthParams.permissions || [];
-        return permissions.indexOf(permission) >= 0;*/
         var user = userToCheck || AuthenticationService.getCurrentUser();
         var permissions = [];
 
@@ -50,7 +48,6 @@ angular.module('qualitaCoreFrontend')
           AuthParams.permissions = response.permisos;
           AuthParams.stamp = response.stamp;
           localStorage.setItem('AUTH_PARAMS', JSON.stringify(AuthParams));
-
           callback(AuthParams);
         });
       },
@@ -88,3 +85,4 @@ angular.module('qualitaCoreFrontend')
         }
     };
   });
+}());

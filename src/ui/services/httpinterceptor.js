@@ -1,13 +1,13 @@
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name acadSvnApp.HttpInterceptor
+ * @name ui.HttpInterceptor
  * @description
  * # HttpInterceptor
- * Factory in the acadSvnApp.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .factory('HttpInterceptor', function ($q, $location, $rootScope,
                                         $cookieStore, $injector) {
 
@@ -79,3 +79,4 @@ angular.module('qualitaCoreFrontend')
       }
     };
   });
+}());

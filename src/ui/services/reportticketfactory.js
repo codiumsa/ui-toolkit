@@ -1,13 +1,13 @@
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name portalApp.ReportTicketFactory
+ * @name ui.ReportTicketFactory
  * @description
  * # ReportTicketFactory
- * Factory in the portalApp.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
   
     var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID?:query&currentColumnOrder=:currentColumnOrder', 
@@ -51,3 +51,4 @@ angular.module('qualitaCoreFrontend')
       }
     };
   }]);
+}());

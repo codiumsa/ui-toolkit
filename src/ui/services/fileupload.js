@@ -1,13 +1,13 @@
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.fileUpload
+ * @name ui.fileUpload
  * @description
  * # fileUpload
- * Service in the qualita.
  */
-angular.module('qualitaCoreFrontend').config(
+angular.module('ui').config(
 ['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider', 'flowFactoryProvider',
   function(schemaFormProvider,  schemaFormDecoratorsProvider, sfPathProvider, flowFactoryProvider) {
 
@@ -24,7 +24,6 @@ angular.module('qualitaCoreFrontend').config(
         return f;
       }
     };
-
     schemaFormProvider.defaults.object.unshift(fileupload);
 
     //Add to the bootstrap directive
@@ -34,3 +33,4 @@ angular.module('qualitaCoreFrontend').config(
                                                  'views/directives/fileupload.html');
   }]).factory('fileupload', function(){
   });
+}());

@@ -1,13 +1,13 @@
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.baseurl
+ * @name ui.baseurl
  * @description
  * # baseurl
- * Provider in the qualita.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .provider('baseurl', function () {
     this.config = {};
 
@@ -24,38 +24,36 @@ angular.module('qualitaCoreFrontend')
           //si es el servidor de homologacion
           if (hostname === Config.serverIp) {
             return 'http://' + hostname + '/' + Config.serverName + '/' + Config.serverAPI;
+          }else{
+            //si es localhost es desarrollo local
+            return 'http://' + hostname + ':' + Config.serverPort + 
+                   '/' + Config.serverName + '/' + Config.serverAPI;
           }
-          //si es localhost es desarrollo local
-          else {
-            return 'http://' + hostname + ':' + Config.serverPort
-                  + '/' + Config.serverName + '/' + Config.serverAPI;
-          }
-
         },
-
 
         getPublicBaseUrl: function () {
           var hostname = window.location.hostname;
 
           //si es el servidor de homologacion
-          if (hostname === Config.serverIp)
+          if (hostname === Config.serverIp){
             return 'http://' + hostname + '/public/';
-          //si es localhost es desarrollo local
-          else
-            return 'http://' + hostname + ':' + Config.serverPort
-                  + '/public/';
+          }else{
+            //si es localhost es desarrollo local
+            return 'http://' + hostname + ':' + Config.serverPort + '/public/';
+          }
         },
 
         getBareServerUrl: function() {
           var hostname = window.location.hostname;
-
           //si es el servidor de homologacion
-          if (hostname === Config.serverIp)
+          if (hostname === Config.serverIp) {
             return 'ws://' + hostname + '/' + Config.serverWSName + '/';
-          //si es localhost es desarrollo local
-          else
+          }else{
+            //si es localhost es desarrollo local
             return 'ws://' + hostname + ':' + Config.serverPort + '/' + Config.serverName + '/';
+          }
         }
-      }
+      };
     };
   });
+}());

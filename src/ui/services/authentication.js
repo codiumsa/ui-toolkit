@@ -1,13 +1,13 @@
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.Authentication
+ * @name ui.Authentication
  * @description
  * # Authentication
- * Service in the qualita.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .service('AuthenticationService', function ($resource, $rootScope, $http, baseurl) {
     var Authentication = $resource(baseurl.getBaseUrl() + '/:action', {action: '@action'});
 
@@ -59,3 +59,4 @@ angular.module('qualitaCoreFrontend')
 
     };
   });
+}());

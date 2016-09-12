@@ -40,10 +40,10 @@ var lintFiles = [
 gulp.task('build', function() {
   gulp.src(sourceFiles)
     .pipe(plumber())
-    .pipe(concat('qualita-core-frontend.js'))
+    .pipe(concat('ui.js'))
     .pipe(gulp.dest('./dist/'))
     .pipe(uglify())
-    .pipe(rename('qualita-core-frontend.min.js'))
+    .pipe(rename('ui.min.js'))
     .pipe(gulp.dest('./dist'));
 });
 

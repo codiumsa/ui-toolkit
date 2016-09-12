@@ -1,56 +1,57 @@
 (function (angular) {
+'use strict';
+// Create all modules and define dependencies to make sure they exist
+// and are loaded in the correct order to satisfy dependency injection
+// before all nested files are concatenated by Gulp
 
-  // Create all modules and define dependencies to make sure they exist
-  // and are loaded in the correct order to satisfy dependency injection
-  // before all nested files are concatenated by Gulp
+// Config
+angular.module('ui.config', [])
+    .value('ui.config', {
+        debug: true
+    });
 
-  // Config
-  angular.module('qualitaCoreFrontend.config', [])
-      .value('qualitaCoreFrontend.config', {
-          debug: true
-      });
-
-  // Modules
-  angular.module('qualitaCoreFrontend.directives', []);
-  angular.module('qualitaCoreFrontend.filters', []);
-  angular.module('qualitaCoreFrontend.services', []);
-  angular.module('qualitaCoreFrontend',
-      [
-          'qualitaCoreFrontend.config',
-          'qualitaCoreFrontend.directives',
-          'qualitaCoreFrontend.filters',
-          'qualitaCoreFrontend.services',
-          'ngResource',
-          'ngCookies',
-          'ngSanitize',
-          'ngTouch',
-          'datatables',
-          'datatables.bootstrap',
-          'schemaForm',
-          'pascalprecht.translate',
-          'cgNotify',
-          'angular-underscore/filters',
-          'flow',
-          'ui.bootstrap',
-          'ui.select',
-          'ui.highlight',
-          'ncy-angular-breadcrumb',
-          'ui.router',
-          'oc.lazyLoad',
-          'ngStorage',
-          'LocalForageModule',
-          'datatables.buttons',
-          'datatables.colreorder',
-          'daterangepicker',
-          'rangepicker',
-          'ngWebSocket',
-          'pickadate'
-      ]);
+// Modules
+angular.module('ui.directives', []);
+angular.module('ui.filters', []);
+angular.module('ui.services', []);
+angular.module('ui',
+    [
+        'ui.config',
+        'ui.directives',
+        'ui.filters',
+        'ui.services',
+        'ngResource',
+        'ngCookies',
+        'ngSanitize',
+        'ngTouch',
+        'datatables',
+        'datatables.bootstrap',
+        'schemaForm',
+        'pascalprecht.translate',
+        'cgNotify',
+        'angular-underscore/filters',
+        'flow',
+        'ui.bootstrap',
+        'ui.select',
+        'ui.highlight',
+        'ncy-angular-breadcrumb',
+        'ui.router',
+        'oc.lazyLoad',
+        'ngStorage',
+        'LocalForageModule',
+        'datatables.buttons',
+        'datatables.colreorder',
+        'daterangepicker',
+        'rangepicker',
+        'ngWebSocket',
+        'pickadate'
+    ]);
 })(angular);
 
+(function() {
 'use strict';
 
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .controller('BasicController', ['$rootScope', '$scope', 'formFactory', '$location',
     '$state', '$injector',
     function($rootScope, $scope, formFactory, $location,
@@ -69,14 +70,14 @@ angular.module('qualitaCoreFrontend')
         }
         
         $rootScope.isProcessing = false;
-      }
+      };
 
       function activateNew() {
         if (!formFactory.canCreate($scope.resources)) {
           var notify = $injector.get('notify');
           // error de autorización
           notify({
-            message: "No tiene permiso de creación",
+            message: 'No tiene permiso de creación',
             classes: ['alert-danger'],
             position: 'right'
           });
@@ -93,7 +94,7 @@ angular.module('qualitaCoreFrontend')
           var notify = $injector.get('notify');
           // error de autorización
           notify({
-            message: "No tiene permiso de edición",
+            message: 'No tiene permiso de edición',
             classes: ['alert-danger'],
             position: 'right'
           });
@@ -112,7 +113,7 @@ angular.module('qualitaCoreFrontend')
           var notify = $injector.get('notify');
           // error de autorización
           notify({
-            message: "No tiene permiso de vista",
+            message: 'No tiene permiso de vista',
             classes: ['alert-danger'],
             position: 'right'
           });
@@ -135,19 +136,19 @@ angular.module('qualitaCoreFrontend')
       $scope.cancel = function() {
         $location.path('/' + $scope.resource);
       };
-
     }
   ]);
-
+}());
+(function() {
 'use strict';
 
 /**
  * @ngdoc directive
- * @name qualita.directive:fileupload
+ * @name ui.directive:fileupload
  * @description
  * # fileupload
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .directive('fileupload', ['$rootScope', 'notify', 'UploadFactory', 'baseurl', function ($rootScope, notify, UploadFactory, baseurl) {
     return {
       template: '<div ng-show="uploadOptions.imageOnly">' +
@@ -224,12 +225,6 @@ angular.module('qualitaCoreFrontend')
       '</div>' +
       '</div>' +
       '<div class="btn-group">' +
-        //'<a class="btn btn-xs btn-warning" ng-click="file.pause()" ng-show="!file.paused && file.isUploading()">' +
-        //  'Pausar' +
-        //'</a>' +
-        //'<a class="btn btn-xs btn-warning" ng-click="file.resume()" ng-show="file.paused">' +
-        //  'Reanudar' +
-        //'</a>' +
       '<a class="btn btn-xs btn-danger" ng-click="file.cancel()">' +
       'Cancelar' +
       '</a>' +
@@ -293,7 +288,9 @@ angular.module('qualitaCoreFrontend')
       }
     };
   }]);
+}());
 
+(function() {
 'use strict';
 
 /**
@@ -302,7 +299,7 @@ angular.module('qualitaCoreFrontend')
  * @description
  * # offlineFormRecovery
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .directive('offlineFormRecovery', function ($localForage) {
     return {
       template: '<div class="btn-group" role="group" aria-label="First group">' +
@@ -343,16 +340,18 @@ angular.module('qualitaCoreFrontend')
       }
     };
   });
+}());
 
+(function() {
 'use strict';
 
 /**
  * @ngdoc directive
- * @name portalApp.directive:reportViewer
+ * @name ui.directive:reportViewer
  * @description
  * # reportViewer
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .directive('reportViewer', ['$modal', '$sce', function ($modal, $sce) {
     return {
       template: '',
@@ -395,8 +394,8 @@ angular.module('qualitaCoreFrontend')
       }
     };
   }]);
-
-angular.module('qualitaCoreFrontend').run(["$templateCache", function($templateCache) {
+}());
+angular.module('ui').run(["$templateCache", function($templateCache) {
 
 $templateCache.put("views/directives/uiselect.html", "<div class=\"form-group\"\n" +
       "     ng-class=\"{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess(), 'has-feedback': form.feedback !== false}\"\n" +
@@ -505,7 +504,7 @@ $templateCache.put("views/directives/uiselect.html", "<div class=\"form-group\"\
 
 }]);
 
-angular.module('qualitaCoreFrontend').config(
+angular.module('ui').config(
   ['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider',
     function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
 
@@ -696,7 +695,7 @@ angular.module('qualitaCoreFrontend').config(
     };
   });
 
-angular.module('qualitaCoreFrontend').controller('dynamicSelectController', ['$scope', '$http', '$timeout', function ($scope, $http, $timeout) {
+angular.module('ui').controller('dynamicSelectController', ['$scope', '$http', '$timeout', function ($scope, $http, $timeout) {
 
 
   $scope.select_model = {};
@@ -939,7 +938,7 @@ angular.module('qualitaCoreFrontend').controller('dynamicSelectController', ['$s
 
 }]);
 
-angular.module('qualitaCoreFrontend').filter('selectFilter', [function ($filter) {
+angular.module('ui').filter('selectFilter', [function ($filter) {
   return function (inputArray, controller, localModel, strLocalModel) {
     // As the controllers' .model is the global and its form is the local, we need to get the local model as well.
     // We also need tp be able to set it if is undefined after a validation failure,so for that we need
@@ -995,17 +994,16 @@ angular.module('qualitaCoreFrontend').filter('selectFilter', [function ($filter)
 }]);
 
 
-
-
+(function() {
 'use strict';
 /**
  * @ngdoc directive
- * @name qualita.directive:tdnDatatable
+ * @name qualita.directive:uiDatatable
  * @description
- * # tdnDatatable
+ * # uiDatatable
  */
-angular.module('qualitaCoreFrontend')
-  .directive('tdnDatatable', function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
+angular.module('ui')
+  .directive('uiDatatable', function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
 
     var hasPermission = AuthorizationService.hasPermission;
 
@@ -1901,17 +1899,18 @@ angular.module('qualitaCoreFrontend')
       }
     };
   });
+}());
 
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.Authentication
+ * @name ui.Authentication
  * @description
  * # Authentication
- * Service in the qualita.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .service('AuthenticationService', function ($resource, $rootScope, $http, baseurl) {
     var Authentication = $resource(baseurl.getBaseUrl() + '/:action', {action: '@action'});
 
@@ -1963,17 +1962,18 @@ angular.module('qualitaCoreFrontend')
 
     };
   });
+}());
 
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.Authorization
+ * @name ui.Authorization
  * @description
  * # Authorization
- * Service in the qualita.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .service('AuthorizationService', function ($rootScope, $resource, $http, baseurl, AuthenticationService) {
     
     var Authorization = $resource(baseurl.getBaseUrl() + '/authorization/:action',
@@ -1985,8 +1985,6 @@ angular.module('qualitaCoreFrontend')
        * parámetro.
        **/
       hasPermission: function(permission, userToCheck) {
-        /*var permissions = $rootScope.AuthParams.permissions || [];
-        return permissions.indexOf(permission) >= 0;*/
         var user = userToCheck || AuthenticationService.getCurrentUser();
         var permissions = [];
 
@@ -2016,7 +2014,6 @@ angular.module('qualitaCoreFrontend')
           AuthParams.permissions = response.permisos;
           AuthParams.stamp = response.stamp;
           localStorage.setItem('AUTH_PARAMS', JSON.stringify(AuthParams));
-
           callback(AuthParams);
         });
       },
@@ -2054,17 +2051,18 @@ angular.module('qualitaCoreFrontend')
         }
     };
   });
+}());
 
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.baseurl
+ * @name ui.baseurl
  * @description
  * # baseurl
- * Provider in the qualita.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .provider('baseurl', function () {
     this.config = {};
 
@@ -2081,52 +2079,50 @@ angular.module('qualitaCoreFrontend')
           //si es el servidor de homologacion
           if (hostname === Config.serverIp) {
             return 'http://' + hostname + '/' + Config.serverName + '/' + Config.serverAPI;
+          }else{
+            //si es localhost es desarrollo local
+            return 'http://' + hostname + ':' + Config.serverPort + 
+                   '/' + Config.serverName + '/' + Config.serverAPI;
           }
-          //si es localhost es desarrollo local
-          else {
-            return 'http://' + hostname + ':' + Config.serverPort
-                  + '/' + Config.serverName + '/' + Config.serverAPI;
-          }
-
         },
-
 
         getPublicBaseUrl: function () {
           var hostname = window.location.hostname;
 
           //si es el servidor de homologacion
-          if (hostname === Config.serverIp)
+          if (hostname === Config.serverIp){
             return 'http://' + hostname + '/public/';
-          //si es localhost es desarrollo local
-          else
-            return 'http://' + hostname + ':' + Config.serverPort
-                  + '/public/';
+          }else{
+            //si es localhost es desarrollo local
+            return 'http://' + hostname + ':' + Config.serverPort + '/public/';
+          }
         },
 
         getBareServerUrl: function() {
           var hostname = window.location.hostname;
-
           //si es el servidor de homologacion
-          if (hostname === Config.serverIp)
+          if (hostname === Config.serverIp) {
             return 'ws://' + hostname + '/' + Config.serverWSName + '/';
-          //si es localhost es desarrollo local
-          else
+          }else{
+            //si es localhost es desarrollo local
             return 'ws://' + hostname + ':' + Config.serverPort + '/' + Config.serverName + '/';
+          }
         }
-      }
+      };
     };
   });
+}());
 
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.fileUpload
+ * @name ui.fileUpload
  * @description
  * # fileUpload
- * Service in the qualita.
  */
-angular.module('qualitaCoreFrontend').config(
+angular.module('ui').config(
 ['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider', 'flowFactoryProvider',
   function(schemaFormProvider,  schemaFormDecoratorsProvider, sfPathProvider, flowFactoryProvider) {
 
@@ -2143,7 +2139,6 @@ angular.module('qualitaCoreFrontend').config(
         return f;
       }
     };
-
     schemaFormProvider.defaults.object.unshift(fileupload);
 
     //Add to the bootstrap directive
@@ -2153,21 +2148,20 @@ angular.module('qualitaCoreFrontend').config(
                                                  'views/directives/fileupload.html');
   }]).factory('fileupload', function(){
   });
+}());
 
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.filterFactory
+ * @name ui.filterFactory
  * @description
  * # filterFactory
  * Factory in the qualita.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .factory('filterFactory', function () {
-    // Service logic
-    // ...
-
     var logicalOp = function (type, filters) {
       var result = {
         _inner: {
@@ -2224,17 +2218,18 @@ angular.module('qualitaCoreFrontend')
       value: value
     };
   });
+}());
 
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.formFactory
+ * @name ui.formFactory
  * @description
  * # formFactory
- * Factory in the qualita.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .factory('formFactory', function ($location, $localForage, notify, $rootScope, AuthorizationService, $q) {
     var hasPermission = AuthorizationService.hasPermission;
 
@@ -2444,17 +2439,18 @@ angular.module('qualitaCoreFrontend')
       }
     };
   });
+}());
 
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name acadSvnApp.HttpInterceptor
+ * @name ui.HttpInterceptor
  * @description
  * # HttpInterceptor
- * Factory in the acadSvnApp.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .factory('HttpInterceptor', function ($q, $location, $rootScope,
                                         $cookieStore, $injector) {
 
@@ -2526,10 +2522,13 @@ angular.module('qualitaCoreFrontend')
       }
     };
   });
+}());
 
-angular.module('qualitaCoreFrontend')
+(function() {
+'use strict';
+
+angular.module('ui')
   .factory('ModelTrimmer', ModelTrimmer);
-
 
 function ModelTrimmer() {
   var service = {
@@ -2570,13 +2569,11 @@ function ModelTrimmer() {
       newModel[fieldName] = model[fieldName];
     }
   }
-
 }
+}());
 
-/**
- * Created by codiumsa on 19/10/15.
- */
-angular.module('qualitaCoreFrontend')
+(function() {
+angular.module('ui')
   .factory('NotificacionesWSFactory', NotificacionesWSFactory);
 NotificacionesWSFactory.$inject = ['$resource', 'baseurl', '$log', '$websocket', '$timeout'];
 
@@ -2691,20 +2688,19 @@ function NotificacionesWSFactory($resource, baseurl, $log, $websocket, $timeout)
   function save(notificacion) {
     return (notificacion.id) ? notificacion.$update() : notificacion.$save();
   }
-
-
 }
+}());
 
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name portalApp.ReportTicketFactory
+ * @name ui.ReportTicketFactory
  * @description
  * # ReportTicketFactory
- * Factory in the portalApp.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
   
     var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID?:query&currentColumnOrder=:currentColumnOrder', 
@@ -2748,15 +2744,16 @@ angular.module('qualitaCoreFrontend')
       }
     };
   }]);
-
+}());
+(function() {
 'use strict';
-/* @ngdoc service
- * @name qualitaCoreFrontend.UploadFactory
+
+/**
+ * @ngdoc service
+ * @name ui.UploadFactory
  * @description
- * # UploadFactory
- * Factory in the qualitaCoreFrontend.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .service('UploadFactory', ['$rootScope', 'baseurl', function ($rootScope, baseurl) {
       var flow;
       var mimeTypeMap = {
@@ -2833,20 +2830,19 @@ angular.module('qualitaCoreFrontend')
         }
       };
   }]);
+}());
 
+(function() {
 'use strict';
 
 /**
  * @ngdoc service
- * @name qualita.usuariosFactory
+ * @name ui.usuariosFactory
  * @description
  * # usuariosFactory
- * Factory in the qualita.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .factory('usuariosFactory', function ($resource, filterFactory, baseurl) {
-    // Service logic
-    // ...
 
     var Usuario = $resource(baseurl.getBaseUrl() + '/usuarios/:id', { id: '@id' }, {
       'update': { method: 'PUT' }, // this method issues a PUT request
@@ -2881,24 +2877,16 @@ angular.module('qualitaCoreFrontend')
 
       remove: function(usuario) {
         return usuario.$remove();
-      }/*,
-
-      schema: function() {
-        return schema;
-      },
-
-      form: function() {
-        return form;
-      }*/
+      }
     };
   });
+}());
 
-/**
- * Created by codiumsa on 4/4/16.
- */
-angular.module('qualitaCoreFrontend')
+(function() {
+'use strict';
+
+angular.module('ui')
   .factory('Util', Util);
-
 
 function Util() {
   var service = {
@@ -2928,3 +2916,4 @@ function Util() {
     return cantidad / multiplicador;
   }
 }
+}());

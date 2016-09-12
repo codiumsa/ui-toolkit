@@ -1,10 +1,16 @@
 {
-  "name": "qualita-core-frontend",
+  "name": "ui",
   "version": "0.1.0",
   "author": {
-    "name": "Verena Ojeda",
-    "email": "vereojeda@gmail.com"
+    "name": "Jorge Ramirez",
+    "email": "jorgeramirez1990@gmail.com"
   },
+  "contributors": [
+    {
+      "name": "Verena Ojeda",
+      "email": "vereojeda@gmail.com"
+    }
+  ],
   "dependencies": {},
   "devDependencies": {
     "abbrev": "^1.0.7",

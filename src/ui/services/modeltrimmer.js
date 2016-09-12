@@ -1,6 +1,8 @@
-angular.module('qualitaCoreFrontend')
-  .factory('ModelTrimmer', ModelTrimmer);
+(function() {
+'use strict';
 
+angular.module('ui')
+  .factory('ModelTrimmer', ModelTrimmer);
 
 function ModelTrimmer() {
   var service = {
@@ -41,5 +43,5 @@ function ModelTrimmer() {
       newModel[fieldName] = model[fieldName];
     }
   }
-
 }
+}());

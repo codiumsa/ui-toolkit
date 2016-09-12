@@ -1,12 +1,12 @@
-
+(function() {
 'use strict';
-/* @ngdoc service
- * @name qualitaCoreFrontend.UploadFactory
+
+/**
+ * @ngdoc service
+ * @name ui.UploadFactory
  * @description
- * # UploadFactory
- * Factory in the qualitaCoreFrontend.
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .service('UploadFactory', ['$rootScope', 'baseurl', function ($rootScope, baseurl) {
       var flow;
       var mimeTypeMap = {
@@ -83,3 +83,4 @@ angular.module('qualitaCoreFrontend')
         }
       };
   }]);
+}());

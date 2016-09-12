@@ -1,14 +1,17 @@
 {
-  "name": "qualita-core-frontend",
+  "name": "ui",
   "version": "1.0.5",
   "authors": [
     {
-      "name": "Verena Ojeda",
+      "name":  "Jorge Ramirez",
+      "email": "jorgeramirez1990@gmail.com"
+    },{
+      "name":  "Verena Ojeda",
       "email": "vereojeda@gmail.com"
     }
   ],
   "main": [
-    "dist/qualita-core-frontend.js"
+    "dist/ui.js"
   ],
   "ignore": [
     "src",
@@ -75,5 +78,5 @@
       ]
     }
   },
-  "moduleName": "qualitaCoreFrontend"
+  "moduleName": "ui"
 }

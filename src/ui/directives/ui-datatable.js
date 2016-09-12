@@ -1,12 +1,13 @@
+(function() {
 'use strict';
 /**
  * @ngdoc directive
- * @name qualita.directive:tdnDatatable
+ * @name qualita.directive:uiDatatable
  * @description
- * # tdnDatatable
+ * # uiDatatable
  */
-angular.module('qualitaCoreFrontend')
-  .directive('tdnDatatable', function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
+angular.module('ui')
+  .directive('uiDatatable', function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
 
     var hasPermission = AuthorizationService.hasPermission;
 
@@ -902,3 +903,4 @@ angular.module('qualitaCoreFrontend')
       }
     };
   });
+}());

@@ -1,9 +1,8 @@
-/**
- * Created by codiumsa on 4/4/16.
- */
-angular.module('qualitaCoreFrontend')
-  .factory('Util', Util);
+(function() {
+'use strict';
 
+angular.module('ui')
+  .factory('Util', Util);
 
 function Util() {
   var service = {
@@ -33,3 +32,4 @@ function Util() {
     return cantidad / multiplicador;
   }
 }
+}());

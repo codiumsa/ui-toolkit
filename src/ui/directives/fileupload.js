@@ -1,13 +1,13 @@
-
+(function() {
 'use strict';
 
 /**
  * @ngdoc directive
- * @name qualita.directive:fileupload
+ * @name ui.directive:fileupload
  * @description
  * # fileupload
  */
-angular.module('qualitaCoreFrontend')
+angular.module('ui')
   .directive('fileupload', ['$rootScope', 'notify', 'UploadFactory', 'baseurl', function ($rootScope, notify, UploadFactory, baseurl) {
     return {
       template: '<div ng-show="uploadOptions.imageOnly">' +
@@ -84,12 +84,6 @@ angular.module('qualitaCoreFrontend')
       '</div>' +
       '</div>' +
       '<div class="btn-group">' +
-        //'<a class="btn btn-xs btn-warning" ng-click="file.pause()" ng-show="!file.paused && file.isUploading()">' +
-        //  'Pausar' +
-        //'</a>' +
-        //'<a class="btn btn-xs btn-warning" ng-click="file.resume()" ng-show="file.paused">' +
-        //  'Reanudar' +
-        //'</a>' +
       '<a class="btn btn-xs btn-danger" ng-click="file.cancel()">' +
       'Cancelar' +
       '</a>' +
@@ -153,3 +147,4 @@ angular.module('qualitaCoreFrontend')
       }
     };
   }]);
+}());
