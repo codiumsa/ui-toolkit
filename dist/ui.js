@@ -797,45 +797,6 @@ angular.module('ui')
 
 (function() {
 'use strict';
-/**
- * AngularJS default filter with the following expression:
- * "person in people | filter: {name: $select.search, age: $select.search}"
- * performs a AND between 'name: $select.search' and 'age: $select.search'.
- * We want to perform an OR.
- */
-angular.module('ui').filter('propsFilter', function() {
-  return function(items, props) {
-    var out = [];
-
-    if (angular.isArray(items)) {
-      var keys = Object.keys(props);
-      items.forEach(function(item) {
-        var itemMatches = false;
-
-        for (var i = 0; i < keys.length; i++) {
-          var prop = keys[i];
-          var text = props[prop].toLowerCase();
-          if (item[prop] && item[prop].toString().toLowerCase().indexOf(text) !== -1) {
-            itemMatches = true;
-            break;
-          }
-        }
-
-        if (itemMatches) {
-          out.push(item);
-        }
-      });
-    } else {
-      // Let the output be the input untouched
-      out = items;
-    }
-    return out;
-  };
-});
-}());
-
-(function() {
-'use strict';
 
 /**
  * @ngdoc directive
@@ -3369,6 +3330,30 @@ angular.module('ui')
 
 /**
  * @ngdoc service
+ * @name ui.ConfigProvider
+ * @description
+ * # ConfigProvider
+ */
+angular.module('ui')
+  .provider('Config', function () {
+
+    var options = {};
+
+    this.config = function (opt) {
+      angular.extend(options, opt);
+    };
+
+    this.$get = [function () {
+      return options;
+    }];
+  });
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc service
  * @name ui.fileUpload
  * @description
  * # fileUpload
@@ -4167,6 +4152,52 @@ function Util() {
     return cantidad / multiplicador;
   }
 }
+}());
+
+/**
+ * Define la funcion bootstrap que permite realizar inicializaciones basicas
+ * de la aplicacion. Es obligatoria la utilizacion de esta funcion.
+ *
+ * @author Jorge Ramirez <jorge@codium.com.py>
+ **/
+(function() {
+  'use strict';
+  
+  window.ui = window.ui || {}; 
+
+  /**
+   * Funcion que realiza inicializaciones basicas de la aplicacion.
+   *
+   * @param callback {Function}: Funcion a ejecutarse en caso de querer realizar inicializaciones
+   *                             adicionales. La funcion recibe los parametros de configuracion.
+   **/
+  function bootstrap(callback) {
+    $.getJSON('config.json', function (config) {
+      angular.module('ui').config(['ConfigProvider', 'flowFactoryProvider', 'baseurlProvider',
+                                          function (ConfigProvider, flowFactoryProvider, baseurlProvider) {
+        flowFactoryProvider.defaults = {
+          method: 'octet',
+          target: config.serverURL + '/adjuntos'
+        };
+        ConfigProvider.config(config);
+        baseurlProvider.setConfig(config);
+      }]);
+      
+      angular.module('ui').constant('CONFIGURATION', {
+        serverName: config.serverName,
+        serverIp: config.serverIp,
+        serverPort: config.serverPort,
+        serverAPI: config.serverAPI
+      });
+
+      if(angular.isFunction(callback)){
+        callback(config);
+      }
+      angular.bootstrap('#' + config.appId, [config.appModule]);
+    });
+  }
+
+  window.ui.bootstrap = bootstrap;
 }());
 
 /*

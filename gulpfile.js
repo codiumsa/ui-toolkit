@@ -7,6 +7,7 @@ var path = require('path');
 var plumber = require('gulp-plumber');
 var runSequence = require('run-sequence');
 var jshint = require('gulp-jshint');
+var sass = require('gulp-sass');
 
 /**
  * File patterns
@@ -31,6 +32,11 @@ var sourceFiles = [
   path.join(sourceDirectory, '/**/*.js')
 ];
 
+var cssFiles = [
+  path.join(sourceDirectory, '/**/*.scss'),
+  path.join(sourceDirectory, '/**/*.css')
+];
+
 var lintFiles = [
   'gulpfile.js',
   // Karma configuration
@@ -44,6 +50,11 @@ gulp.task('build', function() {
     .pipe(gulp.dest('./dist/'))
     .pipe(uglify())
     .pipe(rename('ui.min.js'))
+    .pipe(gulp.dest('./dist'));
+  
+  gulp.src(cssFiles)
+    .pipe(concat('ui.scss'))
+    .pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
     .pipe(gulp.dest('./dist'));
 });
 

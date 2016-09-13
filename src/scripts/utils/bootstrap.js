@@ -33,7 +33,10 @@
         serverPort: config.serverPort,
         serverAPI: config.serverAPI
       });
-      callback(config);
+
+      if(angular.isFunction(callback)){
+        callback(config);
+      }
       angular.bootstrap('#' + config.appId, [config.appModule]);
     });
   }

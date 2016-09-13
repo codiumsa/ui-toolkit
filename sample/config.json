@@ -1,0 +1,9 @@
+{
+  "appId": "uix",
+  "appModule": "uix",
+  "serverName": "localhost",
+  "serverIp": "localhost",
+  "serverPort": "8080",
+  "serverAPI": "rest"
+}
+
