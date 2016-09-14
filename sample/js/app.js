@@ -18,7 +18,14 @@ function config($stateProvider, $urlRouterProvider, $translatePartialLoaderProvi
 
   $stateProvider.state('uix', {
     url: '/',
-    templateUrl: 'views/main.html'
+    templateUrl: 'views/main.html',
+    controller: 'MainCtrl',
+    controllerAs: 'vm',
+    resolve: {
+      translations: function(LangService, tkeys) {
+        return LangService.getTranslations(tkeys.MainCtrl);
+      }
+    }
   })
   .state('uix.step1', {
     url: 'step1',

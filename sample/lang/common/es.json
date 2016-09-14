@@ -1,5 +1,8 @@
 {
   "STEP_ONE": "Paso uno",
   "STEP_TWO": "Paso dos",
-  "STEP_THREE": "Paso tres"
+  "STEP_THREE": "Paso tres",
+  "NOMBRE": "Nombre",
+  "APELLIDO": "Apellido",
+  "CEDULA": "Cedula"
 }
