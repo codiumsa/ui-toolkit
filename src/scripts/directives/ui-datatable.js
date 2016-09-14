@@ -2,7 +2,7 @@
 'use strict';
 /**
  * @ngdoc directive
- * @name qualita.directive:uiDatatable
+ * @name ui.directive:uiDatatable
  * @description
  * # uiDatatable
  */
@@ -82,7 +82,6 @@ angular.module('ui')
             });
           }
           data.rangeSeparator = rangeSeparator;
-          //console.log(data);
 
           var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
             query: {
@@ -91,8 +90,6 @@ angular.module('ui')
           });
 
           xhr.query().$promise.then(function(response) {
-            //console.log("respuesta obtenida: ");
-            //console.log(response);
             var datos = response.data;
             if(datos) {
               datos.forEach(function(registro) {
@@ -108,7 +105,6 @@ angular.module('ui')
             callback(response);
           }).catch(function(response) {
             console.log(response);
-            console.log("error");
           });
         };
         var ajaxConfig = ($scope.options.ajax) ? $scope.options.ajax : ajaxRequest;
@@ -234,12 +230,7 @@ angular.module('ui')
         $scope.rangePickerWidgetsOrder = [];
 
         $scope.dtOptions = DTOptionsBuilder.newOptions()
-          .withOption('ajax', ajaxConfig)
           .withDataProp('data')
-          .withOption('processing', true)
-          .withOption('serverSide', true)
-          //.withOption('order', [[$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir]])
-          //.withOption('order', [])
           .withOption('language', {
                   'sProcessing' : 'Procesando...',
                   'sLengthMenu' : 'Registros _MENU_',
@@ -276,6 +267,15 @@ angular.module('ui')
           .withPaginationType('full_numbers')
           .withButtons(['colvis'])
           .withBootstrap();
+
+        if($scope.options.resource === '@'){
+          // @ indica que es los datos para el datatable son locales
+          $scope.dtOptions.withOption('data', $scope.options.factory.all());
+        }else{
+          $scope.dtOptions.withOption('ajax', ajaxConfig);
+          $scope.dtOptions.withOption('serverSide', true);
+          $scope.dtOptions.withOption('processing', true);
+        }
 
         if($scope.options.detailRows){
           $scope.dtOptions = $scope.dtOptions.withOption('rowCallback', rowCallback);
@@ -318,7 +318,7 @@ angular.module('ui')
           return function(data) {
             //return moment.utc(data).format(dateFormat);
             return moment(data).format(dateFormat);
-          }
+          };
         };
 
         var emptyRender =  function(data) {
@@ -748,29 +748,27 @@ angular.module('ui')
           });
 
           //Texto del boton de visibilidad de columnas
-          //$(".dt-buttons").append("<label class='view-columns'>Vistas&nbsp;</label>");
           $(".dt-button.buttons-colvis").removeClass().addClass("columns-selection").html('<i class="glyphicon glyphicon-th-list"></i>');
 
-          /* Esto se hace por un bug en Angular Datatables,
-          al actualizar hay que revisar */
-          // $scope.dtOptions.reloadData = function(){
-          //   $('#' + tableId).DataTable().ajax.reload();
-          // }
 
           /* funcion para actualizar la tabla manualmente */
           $scope.options.reloadData = function(){
-            updateStaticFilters();
-            $('#' + tableId).DataTable().ajax.reload();
-          }
+
+            if($scope.options.resource !== '@'){
+              updateStaticFilters();
+              $('#' + tableId).DataTable().ajax.reload();
+            }
+          } 
 
           /* whatcher para actualizar la tabla automaticamente cuando los filtros estaticos cambian */
           $scope.$watch(
               "options.staticFilter",
               function handleStaticFilterChange( newValue, oldValue ) {
-                  //console.log( "oldValue", oldValue );
-                  //console.log( "newValue", newValue );
+                
+                if($scope.options.resource !== '@'){
                   updateStaticFilters();
                   $('#' + tableId).DataTable().ajax.reload();
+                }
               }
           );
 
