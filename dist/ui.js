@@ -3090,7 +3090,6 @@ function wizardPane($state) {
       activeIf: '@',
       disabledIf: '=',
       state: '@',
-      parentState: '@' //Por un bug, parentState debe ser necesariamente el nombre completo
     },
     templateUrl: 'views/wizardpane.html',
     controller: controllerFunc,
@@ -3105,11 +3104,17 @@ controllerFunc.$inject =['$state'];
 
 function controllerFunc($state) {
   var vm = this;
-  vm.isActive = isActive;
-
-  function isActive(estado) {
+  
+  vm.isActive = function(estado) {
     return $state.includes(estado);
-  }
+  };
+
+  vm.go = function(dest) {
+    if(vm.disabledIf) {
+      return;
+    }
+    $state.go(dest);
+  };
 }
 }());
 

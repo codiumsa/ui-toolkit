@@ -1,4 +1,4 @@
-<li id="step_{{vm.number}}" ng-class="{'disabled' : vm.disabledIf, 'active': vm.isActive(vm.parentState || vm.state)}">
+<li ng-click="vm.go(vm.state)" id="step_{{vm.number}}" ng-class="{'disabled' : vm.disabledIf, 'active': vm.isActive(vm.state)}">
   <a ui-sref="{{vm.state}}" ng-class="{'disabled' : vm.disabledIf}">
   <span class="step">{{vm.number}}</span>
   {{vm.title}}

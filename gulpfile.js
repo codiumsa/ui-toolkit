@@ -8,6 +8,8 @@ var plumber = require('gulp-plumber');
 var runSequence = require('run-sequence');
 var jshint = require('gulp-jshint');
 var sass = require('gulp-sass');
+var ngHtml2Js = require("gulp-ng-html2js");
+var minifyHtml = require("gulp-minify-html");
 
 /**
  * File patterns
@@ -37,6 +39,10 @@ var cssFiles = [
   path.join(sourceDirectory, '/**/*.css')
 ];
 
+var htmlFiles = [
+  path.join(sourceDirectory, '/views/**/*.html'),
+];
+
 var lintFiles = [
   'gulpfile.js',
   // Karma configuration
@@ -55,6 +61,20 @@ gulp.task('build', function() {
   gulp.src(cssFiles)
     .pipe(concat('ui.scss'))
     .pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
+    .pipe(gulp.dest('./dist'));
+
+  gulp.src(htmlFiles)
+    .pipe(minifyHtml({
+        empty: true,
+        spare: true,
+        quotes: true
+    }))
+    .pipe(ngHtml2Js({
+        moduleName: 'ui',
+        prefix: 'views/'
+    }))
+    .pipe(concat('ui-views.min.js'))
+    .pipe(uglify())
     .pipe(gulp.dest('./dist'));
 });
 

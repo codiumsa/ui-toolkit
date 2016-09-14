@@ -1,0 +1,35 @@
+<div class="container">
+  <div class="row">
+    <h1> UIX </h1>
+    <p>
+      Este es un proyecto que muestra como utilizar el toolkit <a href="https://gitlab.com/codium/ui" target="_blank">UI</a>, 
+      adem&aacute;s de servir como proyecto base para un nuevo desarrollo.
+    </p>
+
+    <section>
+      <h3>Wizard</h3>
+      
+      <p>Un wizard es un componente que define un flujo de multiples pasos. A continuaci&oacute;n se muestra un wizard b&aacute;sico:</p>
+
+
+      <wizard>
+        <wizard-pane title="{{'STEP_ONE' | translate}}" number="1" state="uix.step1">
+        </wizard-pane>
+        <wizard-pane title="{{'STEP_TWO' | translate}}" number="2" state="uix.step2">
+        </wizard-pane>
+        <wizard-pane title="{{'STEP_THREE' | translate}}" number="3" state="uix.step3" disabled-if="true">
+        </wizard-pane>
+      </wizard>
+      <wizard-content>
+        <div class="step-content" id="wizardwidget-steps">
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <h2>Wizard de tres pasos</h2>
+              <div ui-view></div>
+            </div>
+          </div>
+        </div>
+      </wizard-content>
+    </section>
+  </div>
+</div>
