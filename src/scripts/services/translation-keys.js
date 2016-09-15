@@ -31,7 +31,7 @@ function Provider() {
   /**
    * Esta funcion es la que retorna el prototipo del servicio tkeys.
    **/
-  function tkeysFactory($log) {
+  function tkeysFactory() {
     return keysMap;
   }
 }
