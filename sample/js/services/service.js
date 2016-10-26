@@ -10,8 +10,10 @@ PersonaService.$inject = ['Filter'];
 function PersonaService(Filter) {
 
   // tiny Filter test
-  var filters = Filter.path('nombre').eq('Jorge').build();
+  console.log('F1', Filter.path('nombre').like('%Juan%'));
+  var filters = Filter.path('nombre').like('%Jorge%').or(Filter.path('nombre').like('%Juan%'));
   console.log('FILTER TEST', filters);
+  console.log('FILTER TEST encoded', encodeURI(JSON.stringify(filters)));
 
   // esta es la API minima para un factory
   var service = {

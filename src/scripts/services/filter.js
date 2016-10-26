@@ -3,9 +3,9 @@
 
 angular
   .module('ui')
-  .factory('Filter', Filter);
+  .factory('Filter', FilterFactory);
 
-function Filter() {
+function FilterFactory() {
   var FilterTypes =  {
     EQUALS : 'equals',
     NOT_EQUALS : 'notEquals',
@@ -20,114 +20,111 @@ function Filter() {
     IN : 'in'
   };
   
-  // the filter to build
-  var filter;
+  function joinFilters(builder, filters, joinType) {
+    if(!angular.isArray(filters)){
+      filters = [filters];
+    }
 
-  function joinFilters(filters, joinType) {
     angular.forEach(filters, function(f) {
-      filter.booleanJoins.push({
+      builder.booleanJoins.push({
         joinType: joinType,
         filter: f
       });
     });
   }
 
-  function addCondition(condition, other) {
+  function addCondition(builder, condition, other) {
     var cond = {condition: condition};
     
     if(other){
       cond.comparingObject = other;
     }
-    filter.conditions.push(cond);
+    builder.conditions.push(cond);
   }
 
-  return {
-    path: function(filterPath) {
-      filter = {
-        path: filterPath,
-        conditions: [],
-        booleanJoins: []
-      };
-      return this;
-    },
-
+  // Filter class
+  function Filter(path){
+    this.path = path;
+    this.conditions = [];
+    this.booleanJoins = [];
+  }
+  
+  var prototype = {
     or: function(filters) {
-      joinFilters(filters, 'or');
+      joinFilters(this, filters, 'or');
       return this;
     },
 
     and: function(filters) {
-      joinFilters(filters, 'and');
+      joinFilters(this, filters, 'and');
       return this;
     },
    
     eq: function(other) {
-      addCondition(FilterTypes.EQUALS, other);
+      addCondition(this, FilterTypes.EQUALS, other);
       return this;
     },
     
     notEq: function(other) {
-      addCondition(FilterTypes.NOT_EQUALS, other);
+      addCondition(this, FilterTypes.NOT_EQUALS, other);
       return this;
     },
     
     isNull: function() {
-      addCondition(FilterTypes.NULL);
+      addCondition(this, FilterTypes.NULL);
       return this;
     },
     
     notNull: function() {
-      addCondition(FilterTypes.NOT_NULL);
+      addCondition(this, FilterTypes.NOT_NULL);
       return this;
     },
 
     like: function(other) {
-      addCondition(FilterTypes.LIKE, other);
+      addCondition(this, FilterTypes.LIKE, other);
       return this;
     },
     
     notLike: function(other) {
-      addCondition(FilterTypes.NOT_LIKE, other);
+      addCondition(this, FilterTypes.NOT_LIKE, other);
       return this;
     },
 
     gt: function(other) {
-      addCondition(FilterTypes.GT, other);
+      addCondition(this, FilterTypes.GT, other);
       return this;
     },
     
     gte: function(other) {
-      addCondition(FilterTypes.GTE, other);
+      addCondition(this, FilterTypes.GTE, other);
       return this;
     },
     
     lt: function(other) {
-      addCondition(FilterTypes.LT, other);
+      addCondition(this, FilterTypes.LT, other);
       return this;
     },
     
     lte: function(other) {
-      addCondition(FilterTypes.LTE, other);
+      addCondition(this, FilterTypes.LTE, other);
       return this;
     },
-    
+
     /**
      * sql IN
      *
      * @param other{Array} the elements to include
      **/
     in: function(other) {
-      addCondition(FilterTypes.IN, other);
+      addCondition(this, FilterTypes.IN, other);
       return this;
-    },
-    
-    /**
-     * Returns the generated filter.
-     *
-     * @returns {Object}
-     **/
-    build: function() {
-      return filter;
+    }
+  };
+  Filter.prototype = prototype;
+  
+  return {
+    path: function(filterPath) {
+      return new Filter(filterPath);
     }
   };
 }
