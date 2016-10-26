@@ -3,10 +3,16 @@
 
 angular
   .module('uix')
-  .factory('PersonaService', Service);
+  .factory('PersonaService', PersonaService);
 
+PersonaService.$inject = ['Filter'];
 
-function Service() {
+function PersonaService(Filter) {
+
+  // tiny Filter test
+  var filters = Filter.path('nombre').eq('Jorge').build();
+  console.log('FILTER TEST', filters);
+
   // esta es la API minima para un factory
   var service = {
     all: all,

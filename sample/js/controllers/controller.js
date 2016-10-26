@@ -4,13 +4,13 @@
 angular
   .module('uix')
   .config(config)
-  .controller('MainCtrl', Controller);
+  .controller('MainCtrl', MainCtrl);
 
 
 
-Controller.$inject = ['PersonaService', 'translations'];
+MainCtrl.$inject = ['PersonaService', 'translations'];
 
-function Controller(PersonaService, translations) {
+function MainCtrl(PersonaService, translations) {
   var vm = this;
 
   activate();
