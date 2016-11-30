@@ -57,19 +57,19 @@ angular.module('ui', [
 
 angular.module('ui').config(['$provide', function($provide) {
   
-  $provide.decorator('yearpickerDirective', ['$delegate', function($delegate) {
+  $provide.decorator('uibYearpickerDirective', ['$delegate', function($delegate) {
     var directive = $delegate[0];
     directive.templateUrl = 'views/widgets/datepicker/year.html';
     return $delegate;
   }]);
 
-  $provide.decorator('monthpickerDirective', ['$delegate', function($delegate) {
+  $provide.decorator('uibMonthpickerDirective', ['$delegate', function($delegate) {
     var directive = $delegate[0];
     directive.templateUrl = 'views/widgets/datepicker/month.html';
     return $delegate;
   }]);
 
-  $provide.decorator('daypickerDirective', ['$delegate', function($delegate) {
+  $provide.decorator('uibDaypickerDirective', ['$delegate', function($delegate) {
     var directive = $delegate[0];
     directive.templateUrl = 'views/widgets/datepicker/day.html';
     return $delegate;
@@ -1654,7 +1654,7 @@ angular.module('ui')
  * # uiDatatable
  */
 angular.module('ui')
-  .directive('uiDatatable', ['$timeout', '$modal', '$compile', '$state', '$resource', 'AuthorizationService', 'DTOptionsBuilder', 'DTColumnBuilder', 'baseurl', '$rootScope', 
+  .directive('uiDatatable', ['$timeout', '$uibModal', '$compile', '$state', '$resource', 'AuthorizationService', 'DTOptionsBuilder', 'DTColumnBuilder', 'baseurl', '$rootScope', 
     function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
 
     var hasPermission = AuthorizationService.hasPermission;

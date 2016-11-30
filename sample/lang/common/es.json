@@ -4,5 +4,6 @@
   "STEP_THREE": "Paso tres",
   "NOMBRE": "Nombre",
   "APELLIDO": "Apellido",
-  "CEDULA": "Cedula"
+  "CEDULA": "Cedula",
+  "FECHA_NACIMIENTO": "Fecha de nacimiento"
 }

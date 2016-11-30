@@ -24,8 +24,8 @@ function PersonaService(Filter) {
     remove: remove
   };
   var personas = [
-    {id: 1, nombre: 'Carlos', apellido: 'Sanchez', cedula: '121212'},
-    {id: 2, nombre: 'Juan', apellido: 'Ramirez', cedula: '131313'}
+    {id: 1, nombre: 'Carlos', apellido: 'Sanchez', cedula: '121212', fechaNacimiento: '23/04/1990'},
+    {id: 2, nombre: 'Juan', apellido: 'Ramirez', cedula: '131313', fechaNacimiento: '23/04/1991'}
   ];
 
   return service;

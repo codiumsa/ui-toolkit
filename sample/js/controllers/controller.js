@@ -16,7 +16,7 @@ function MainCtrl(PersonaService, translations) {
   activate();
 
   function activate() {
-    var defaultColumnOrder = ['nombre', 'apellido', 'cedula'];
+    var defaultColumnOrder = ['nombre', 'apellido', 'cedula', 'fechaNacimiento'];
     vm.options = {
       resource: '@', // resource '@' significa in-memory
       title: 'Listado de personas',
@@ -27,6 +27,7 @@ function MainCtrl(PersonaService, translations) {
         {data: 'nombre', title: translations.NOMBRE},
         {data: 'apellido', title: translations.APELLIDO},
         {data: 'cedula', title: translations.CEDULA},
+        {data: 'fechaNacimiento', title: translations.FECHA_NACIMIENTO, type: 'date-range'}
       ],
       defaultOrderColumn : 0,
       defaultOrderDir: 'desc'
@@ -35,6 +36,6 @@ function MainCtrl(PersonaService, translations) {
 }
 
 function config(tkeysProvider) {
-  tkeysProvider.addKeys('MainCtrl', ['NOMBRE', 'APELLIDO', 'CEDULA']);
+  tkeysProvider.addKeys('MainCtrl', ['NOMBRE', 'APELLIDO', 'CEDULA', 'FECHA_NACIMIENTO']);
 }
 }());

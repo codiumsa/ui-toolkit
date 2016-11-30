@@ -57,19 +57,19 @@ angular.module('ui', [
 
 angular.module('ui').config(['$provide', function($provide) {
   
-  $provide.decorator('yearpickerDirective', ['$delegate', function($delegate) {
+  $provide.decorator('uibYearpickerDirective', ['$delegate', function($delegate) {
     var directive = $delegate[0];
     directive.templateUrl = 'views/widgets/datepicker/year.html';
     return $delegate;
   }]);
 
-  $provide.decorator('monthpickerDirective', ['$delegate', function($delegate) {
+  $provide.decorator('uibMonthpickerDirective', ['$delegate', function($delegate) {
     var directive = $delegate[0];
     directive.templateUrl = 'views/widgets/datepicker/month.html';
     return $delegate;
   }]);
 
-  $provide.decorator('daypickerDirective', ['$delegate', function($delegate) {
+  $provide.decorator('uibDaypickerDirective', ['$delegate', function($delegate) {
     var directive = $delegate[0];
     directive.templateUrl = 'views/widgets/datepicker/day.html';
     return $delegate;
