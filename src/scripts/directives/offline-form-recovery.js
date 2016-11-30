@@ -8,7 +8,7 @@
  * # offlineFormRecovery
  */
 angular.module('ui')
-  .directive('offlineFormRecovery', function ($localForage) {
+  .directive('offlineFormRecovery', ['$localForage', function ($localForage) {
     return {
       template: '<div class="btn-group" role="group" aria-label="First group">' +
       '<button ng-disabled="!pending.length || position == 0" type="button" class="glyphicon glyphicon-arrow-left btn btn-default btn-recovery" ng-click="previous()"></button>' +
@@ -47,5 +47,5 @@ angular.module('ui')
         }
       }
     };
-  });
+  }]);
 }());

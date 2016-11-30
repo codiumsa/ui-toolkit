@@ -56,32 +56,34 @@ angular.module('ui', [
 ]);
 
 angular.module('ui').config(['$provide', function($provide) {
-  $provide.decorator('yearpickerDirective', function($delegate) {
+  
+  $provide.decorator('yearpickerDirective', ['$delegate', function($delegate) {
     var directive = $delegate[0];
     directive.templateUrl = 'views/widgets/datepicker/year.html';
     return $delegate;
-  });
+  }]);
 
-  $provide.decorator('monthpickerDirective', function($delegate) {
+  $provide.decorator('monthpickerDirective', ['$delegate', function($delegate) {
     var directive = $delegate[0];
     directive.templateUrl = 'views/widgets/datepicker/month.html';
     return $delegate;
-  });
+  }]);
 
-  $provide.decorator('daypickerDirective', function($delegate) {
+  $provide.decorator('daypickerDirective', ['$delegate', function($delegate) {
     var directive = $delegate[0];
     directive.templateUrl = 'views/widgets/datepicker/day.html';
     return $delegate;
-  });
+  }]);
 }]);
 
-angular.module('ui').config(function (flowFactoryProvider, baseurlProvider, CONFIGURATION) {
+angular.module('ui').config(['flowFactoryProvider', 'baseurlProvider', 'CONFIGURATION', 
+  function (flowFactoryProvider, baseurlProvider, CONFIGURATION) {
   baseurlProvider.setConfig(CONFIGURATION);
   flowFactoryProvider.defaults = {
     method: 'octet',
     target: baseurlProvider.$get().getBaseUrl() + '/adjuntos'
   };
-});
+}]);
 
 angular.module('ui').config(['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider',
   function(schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider){
@@ -374,7 +376,7 @@ function AdvancedDatatablesSearchController($log, $scope, $modal, $state) {
 
 angular.module('ui')
 .value('$datepickerSuppressError', true)
-.directive('pickDate', function ($filter) {
+.directive('pickDate', ['$filter', function ($filter) {
   return {
     restrict: 'A',
     require: 'ngModel',
@@ -399,7 +401,7 @@ angular.module('ui')
       });
     }
   };
-});
+}]);
 }());
 
 (function() {
@@ -557,16 +559,15 @@ angular.module('ui')
 'use strict';
 
 angular
-  .module('ui').directive('focusOn', function($timeout) {
+  .module('ui').directive('focusOn', ['$timeout', function($timeout) {
    return function(scope, elem, attrs) {
      scope.$on(attrs.focusOn, function(e) {
        $timeout((function() {
          elem[0].focus();
        }), 10);
      });
-
    };
-});
+}]);
 }());
 
 (function() {
@@ -579,7 +580,7 @@ angular
  * # menuBuilder
  */
 angular.module('ui')
-  .directive('menuBuilder', function ($timeout) {
+  .directive('menuBuilder', ['$timeout', function ($timeout) {
     return {
       templateUrl: 'views/menu-builder.html',
       restrict: 'EA',
@@ -692,7 +693,7 @@ angular.module('ui')
         });
       }
     };
-  });
+  }]);
 }());
 
 (function() {
@@ -753,7 +754,7 @@ angular.module('ui')
  * # offlineFormRecovery
  */
 angular.module('ui')
-  .directive('offlineFormRecovery', function ($localForage) {
+  .directive('offlineFormRecovery', ['$localForage', function ($localForage) {
     return {
       template: '<div class="btn-group" role="group" aria-label="First group">' +
       '<button ng-disabled="!pending.length || position == 0" type="button" class="glyphicon glyphicon-arrow-left btn btn-default btn-recovery" ng-click="previous()"></button>' +
@@ -792,7 +793,7 @@ angular.module('ui')
         }
       }
     };
-  });
+  }]);
 }());
 
 (function() {
@@ -852,7 +853,7 @@ angular.module('ui')
 'use strict';
 
 angular
-  .module('ui').directive('resize', function($window){
+  .module('ui').directive('resize', ['$window', function($window){
   return{
     link: function(scope, element, attrs){
       var w = angular.element($window);
@@ -886,7 +887,7 @@ angular
       });
     }
   };
-});
+}]);
 }());
 
 angular.module('ui').run(["$templateCache", function($templateCache) {
@@ -1509,7 +1510,7 @@ angular.module('ui')
 	};
 })
 
-.directive('timeFormat', function($filter) {
+.directive('timeFormat', ['$filter', function($filter) {
   return {
     restrict : 'A',
     require : 'ngModel',
@@ -1570,9 +1571,9 @@ angular.module('ui')
       });
     }
   };
-})
+}])
 
-.directive('timepickerPop', function($document, timepickerState) {
+.directive('timepickerPop', ['$document', 'timepickerState', function($document, timepickerState) {
       return {
         restrict : 'E',
         transclude : false,
@@ -1642,7 +1643,7 @@ angular.module('ui')
             + "            <timepicker ng-model='inputTime' show-meridian='showMeridian' style='margin-left: 15%;'></timepicker> "
             + "           </div> " + "  </div>"
       };
-});
+}]);
 }());
 (function() {
 'use strict';
@@ -1653,7 +1654,8 @@ angular.module('ui')
  * # uiDatatable
  */
 angular.module('ui')
-  .directive('uiDatatable', function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
+  .directive('uiDatatable', ['$timeout', '$modal', '$compile', '$state', '$resource', 'AuthorizationService', 'DTOptionsBuilder', 'DTColumnBuilder', 'baseurl', '$rootScope', 
+    function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
 
     var hasPermission = AuthorizationService.hasPermission;
 
@@ -2546,7 +2548,7 @@ angular.module('ui')
 
       }
     };
-  });
+  }]);
 }());
 
 (function() {
@@ -3077,6 +3079,8 @@ function linkFunc(scope, element, attrs) {
 angular
   .module('ui')
   .directive('wizardPane', wizardPane);
+
+wizardPane.$inject = ['$state'];
 
 function wizardPane($state) {
   var directive = {

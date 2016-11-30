@@ -3,7 +3,7 @@
 
 angular.module('ui')
 .value('$datepickerSuppressError', true)
-.directive('pickDate', function ($filter) {
+.directive('pickDate', ['$filter', function ($filter) {
   return {
     restrict: 'A',
     require: 'ngModel',
@@ -28,5 +28,5 @@ angular.module('ui')
       });
     }
   };
-});
+}]);
 }());

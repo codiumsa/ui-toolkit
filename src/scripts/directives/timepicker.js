@@ -19,7 +19,7 @@ angular.module('ui')
 	};
 })
 
-.directive('timeFormat', function($filter) {
+.directive('timeFormat', ['$filter', function($filter) {
   return {
     restrict : 'A',
     require : 'ngModel',
@@ -80,9 +80,9 @@ angular.module('ui')
       });
     }
   };
-})
+}])
 
-.directive('timepickerPop', function($document, timepickerState) {
+.directive('timepickerPop', ['$document', 'timepickerState', function($document, timepickerState) {
       return {
         restrict : 'E',
         transclude : false,
@@ -152,5 +152,5 @@ angular.module('ui')
             + "            <timepicker ng-model='inputTime' show-meridian='showMeridian' style='margin-left: 15%;'></timepicker> "
             + "           </div> " + "  </div>"
       };
-});
+}]);
 }());

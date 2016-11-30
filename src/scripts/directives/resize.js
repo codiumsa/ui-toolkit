@@ -2,7 +2,7 @@
 'use strict';
 
 angular
-  .module('ui').directive('resize', function($window){
+  .module('ui').directive('resize', ['$window', function($window){
   return{
     link: function(scope, element, attrs){
       var w = angular.element($window);
@@ -36,5 +36,5 @@ angular
       });
     }
   };
-});
+}]);
 }());

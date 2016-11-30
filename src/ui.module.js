@@ -56,32 +56,34 @@ angular.module('ui', [
 ]);
 
 angular.module('ui').config(['$provide', function($provide) {
-  $provide.decorator('yearpickerDirective', function($delegate) {
+  
+  $provide.decorator('yearpickerDirective', ['$delegate', function($delegate) {
     var directive = $delegate[0];
     directive.templateUrl = 'views/widgets/datepicker/year.html';
     return $delegate;
-  });
+  }]);
 
-  $provide.decorator('monthpickerDirective', function($delegate) {
+  $provide.decorator('monthpickerDirective', ['$delegate', function($delegate) {
     var directive = $delegate[0];
     directive.templateUrl = 'views/widgets/datepicker/month.html';
     return $delegate;
-  });
+  }]);
 
-  $provide.decorator('daypickerDirective', function($delegate) {
+  $provide.decorator('daypickerDirective', ['$delegate', function($delegate) {
     var directive = $delegate[0];
     directive.templateUrl = 'views/widgets/datepicker/day.html';
     return $delegate;
-  });
+  }]);
 }]);
 
-angular.module('ui').config(function (flowFactoryProvider, baseurlProvider, CONFIGURATION) {
+angular.module('ui').config(['flowFactoryProvider', 'baseurlProvider', 'CONFIGURATION', 
+  function (flowFactoryProvider, baseurlProvider, CONFIGURATION) {
   baseurlProvider.setConfig(CONFIGURATION);
   flowFactoryProvider.defaults = {
     method: 'octet',
     target: baseurlProvider.$get().getBaseUrl() + '/adjuntos'
   };
-});
+}]);
 
 angular.module('ui').config(['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider',
   function(schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider){

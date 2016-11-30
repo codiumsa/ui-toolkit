@@ -5,6 +5,8 @@ angular
   .module('ui')
   .directive('wizardPane', wizardPane);
 
+wizardPane.$inject = ['$state'];
+
 function wizardPane($state) {
   var directive = {
     required: '^^wizard',

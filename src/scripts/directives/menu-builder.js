@@ -8,7 +8,7 @@
  * # menuBuilder
  */
 angular.module('ui')
-  .directive('menuBuilder', function ($timeout) {
+  .directive('menuBuilder', ['$timeout', function ($timeout) {
     return {
       templateUrl: 'views/menu-builder.html',
       restrict: 'EA',
@@ -121,5 +121,5 @@ angular.module('ui')
         });
       }
     };
-  });
+  }]);
 }());

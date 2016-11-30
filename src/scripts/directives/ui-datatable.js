@@ -7,7 +7,8 @@
  * # uiDatatable
  */
 angular.module('ui')
-  .directive('uiDatatable', function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
+  .directive('uiDatatable', ['$timeout', '$modal', '$compile', '$state', '$resource', 'AuthorizationService', 'DTOptionsBuilder', 'DTColumnBuilder', 'baseurl', '$rootScope', 
+    function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
 
     var hasPermission = AuthorizationService.hasPermission;
 
@@ -900,5 +901,5 @@ angular.module('ui')
 
       }
     };
-  });
+  }]);
 }());
