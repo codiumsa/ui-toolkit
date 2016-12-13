@@ -86,8 +86,8 @@ angular.module('ui')
 
           var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
             query: {
-              isArray: false
-            }
+              isArray: false,
+              method: 'POST'            }
           });
 
           xhr.query().$promise.then(function(response) {
