@@ -84,13 +84,14 @@ angular.module('ui')
           }
           data.rangeSeparator = rangeSeparator;
 
-          var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
+          var xhr = $resource(urlTemplate($scope.options), {}, {
             query: {
               isArray: false,
-              method: 'POST'            }
+              method: 'POST'
+            }
           });
 
-          xhr.query().$promise.then(function(response) {
+          xhr.query(data).$promise.then(function(response) {
             var datos = response.data;
             if(datos) {
               datos.forEach(function(registro) {

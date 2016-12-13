@@ -1731,13 +1731,14 @@ angular.module('ui')
           }
           data.rangeSeparator = rangeSeparator;
 
-          var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
+          var xhr = $resource(urlTemplate($scope.options), {}, {
             query: {
               isArray: false,
-              method: 'POST'            }
+              method: 'POST'
+            }
           });
 
-          xhr.query().$promise.then(function(response) {
+          xhr.query(data).$promise.then(function(response) {
             var datos = response.data;
             if(datos) {
               datos.forEach(function(registro) {
@@ -3117,6 +3118,1253 @@ function controllerFunc($state) {
     }
     $state.go(dest);
   };
+}
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc service
+ * @name ui.Authentication
+ * @description
+ * # Authentication
+ */
+angular.module('ui')
+  .service('AuthenticationService', function ($resource, $rootScope, $http, baseurl) {
+    var Authentication = $resource(baseurl.getBaseUrl() + '/:action', {action: '@action'});
+
+    return {
+
+      login: function (username, password) {
+        $rootScope.auxiliarUsername = username;
+        var auth = new Authentication({username: username, password: password});
+        return auth.$save({action: 'login'});
+      },
+
+      postLogin: function(authParams) {
+        return new Authentication.save({action: 'loginApp'}, {username: authParams.username});
+      },
+
+      token: function (authParams) {
+        var auth = new Authentication({
+          username: authParams.username,
+          accessToken: authParams.accessToken,
+          requestToken: authParams.requestToken
+        });
+        return auth.$save({action: 'token'});
+      },
+
+      logout: function () {
+        var authParams = this.getCurrentUser();
+        var auth = new Authentication({
+          username: authParams.username,
+          accessToken: authParams.accessToken
+        });
+        $rootScope.AuthParams = {};
+        localStorage.removeItem('AUTH_PARAMS');
+
+        return auth.$save({action: 'logout'});
+      },
+
+      getCurrentUser: function () {
+        var user = $rootScope.AuthParams;
+
+        if (!user || Object.keys(user).length === 0) {
+          user = JSON.parse(localStorage.getItem('AUTH_PARAMS')) || undefined;
+
+          if (user) {
+            $http.defaults.headers.common.Authorization = 'Bearer ' + user.accessToken;
+          }
+        }
+        return user;
+      }
+
+    };
+  });
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc service
+ * @name ui.Authorization
+ * @description
+ * # Authorization
+ */
+angular.module('ui')
+  .service('AuthorizationService', function ($rootScope, $resource, $http, baseurl, AuthenticationService) {
+    
+    var Authorization = $resource(baseurl.getBaseUrl() + '/authorization/:action',
+                                  {action: '@action'});
+
+    return {
+      /**
+       * Retorna true si el usuario actual de la aplicación posee el permiso dado como
+       * parámetro.
+       **/
+      hasPermission: function(permission, userToCheck) {
+        var user = userToCheck || AuthenticationService.getCurrentUser();
+        var permissions = [];
+
+        if (user) {
+          permissions = user.permissions || [];
+        }
+        return permissions.indexOf(permission) >= 0;
+      },
+
+      principal: function() {
+        return Authorization.get({action: 'principal'}).$promise;
+      },
+
+      setupCredentials: function(username, requestToken, accessToken, callback) {
+        
+        var AuthParams = {
+          username: username,
+          requestToken: requestToken,
+          accessToken: accessToken
+        };
+
+        $rootScope.AuthParams = AuthParams;
+        localStorage.setItem('AUTH_PARAMS', JSON.stringify(AuthParams));
+        $http.defaults.headers.common.Authorization = 'Bearer ' + accessToken;
+        // cargamos los permisos del usuario
+        this.principal().then(function(response) {
+          AuthParams.permissions = response.permisos;
+          AuthParams.stamp = response.stamp;
+          localStorage.setItem('AUTH_PARAMS', JSON.stringify(AuthParams));
+          callback(AuthParams);
+        });
+      },
+
+      cleanupCredentials: function() {        
+        localStorage.removeItem('AUTH_PARAMS');
+      },
+
+      authorize: function (loginRequired, requiredPermissions) {
+          var user = AuthenticationService.getCurrentUser();
+
+          if (loginRequired === true && user === undefined) {
+            return this.enums.LOGIN_REQUIRED;
+          } else if ((loginRequired && user !== undefined) &&
+            (requiredPermissions === undefined || requiredPermissions.length === 0)) {
+            return this.enums.AUTHORIZED;
+          } else if (requiredPermissions) {
+            var isAuthorized = true;
+
+            for (var i = 0; i < requiredPermissions.length; i++) {
+              isAuthorized = this.hasPermission(requiredPermissions[i], user);
+
+              if (isAuthorized === false) {
+                break;
+              }
+            }
+            return isAuthorized ? this.enums.AUTHORIZED : this.enums.NOT_AUTHORIZED;
+          }
+        },
+
+        enums: {
+          LOGIN_REQUIRED: 'loginRequired',
+          NOT_AUTHORIZED: 'notAuthorized',
+          AUTHORIZED: 'authorized'
+        }
+    };
+  });
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc service
+ * @name ui.baseurl
+ * @description
+ * # baseurl
+ */
+angular.module('ui')
+  .provider('baseurl', function () {
+    this.config = {};
+
+    this.setConfig = function(config) {
+        this.config = config;
+    };
+
+    this.$get = function() {
+      var Config = this.config;
+      return {
+        getBaseUrl: function () {
+          var hostname = window.location.hostname;
+
+          //si es el servidor de homologacion
+          if (hostname === Config.serverIp) {
+            return 'http://' + hostname + '/' + Config.serverName + '/' + Config.serverAPI;
+          }else{
+            //si es localhost es desarrollo local
+            return 'http://' + hostname + ':' + Config.serverPort + 
+                   '/' + Config.serverName + '/' + Config.serverAPI;
+          }
+        },
+
+        getPublicBaseUrl: function () {
+          var hostname = window.location.hostname;
+
+          //si es el servidor de homologacion
+          if (hostname === Config.serverIp){
+            return 'http://' + hostname + '/public/';
+          }else{
+            //si es localhost es desarrollo local
+            return 'http://' + hostname + ':' + Config.serverPort + '/public/';
+          }
+        },
+
+        getBareServerUrl: function() {
+          var hostname = window.location.hostname;
+          //si es el servidor de homologacion
+          if (hostname === Config.serverIp) {
+            return 'ws://' + hostname + '/' + Config.serverWSName + '/';
+          }else{
+            //si es localhost es desarrollo local
+            return 'ws://' + hostname + ':' + Config.serverPort + '/' + Config.serverName + '/';
+          }
+        }
+      };
+    };
+  });
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc service
+ * @name ui.ConfigProvider
+ * @description
+ * # ConfigProvider
+ */
+angular.module('ui')
+  .provider('Config', function () {
+
+    var options = {};
+
+    this.config = function (opt) {
+      angular.extend(options, opt);
+    };
+
+    this.$get = [function () {
+      return options;
+    }];
+  });
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc service
+ * @name ui.fileUpload
+ * @description
+ * # fileUpload
+ */
+angular.module('ui').config(
+['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider', 'flowFactoryProvider',
+  function(schemaFormProvider,  schemaFormDecoratorsProvider, sfPathProvider, flowFactoryProvider) {
+
+    flowFactoryProvider.defaults = {
+      method: 'octet'
+    };
+
+    var fileupload = function(name, schema, options) {
+      if (schema.type === 'object' && schema.format === 'fileupload') {
+        var f = schemaFormProvider.stdFormObj(name, schema, options);
+        f.key  = options.path;
+        f.type = 'fileupload';
+        options.lookup[sfPathProvider.stringify(options.path)] = f;
+        return f;
+      }
+    };
+    schemaFormProvider.defaults.object.unshift(fileupload);
+
+    //Add to the bootstrap directive
+    schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'fileupload',
+                                            'views/directives/fileupload.html');
+    schemaFormDecoratorsProvider.createDirective('fileupload',
+                                                 'views/directives/fileupload.html');
+  }]).factory('fileupload', function(){
+  });
+}());
+
+(function() {
+'use strict';
+
+angular
+  .module('ui')
+  .factory('Filter', FilterFactory);
+
+function FilterFactory() {
+  var FilterTypes =  {
+    EQUALS : 'equals',
+    NOT_EQUALS : 'notEquals',
+    NULL : 'null',
+    NOT_NULL : 'notNull',
+    LIKE : 'like',
+    NOT_LIKE : 'notLike',
+    GT : 'gt',
+    GTE : 'gte',
+    LT : 'lt',
+    LTE : 'lte',
+    IN : 'in'
+  };
+  
+  function joinFilters(builder, filters, joinType) {
+    if(!angular.isArray(filters)){
+      filters = [filters];
+    }
+
+    angular.forEach(filters, function(f) {
+      builder.booleanJoins.push({
+        joinType: joinType,
+        filter: f
+      });
+    });
+  }
+
+  function addCondition(builder, condition, other) {
+    var cond = {condition: condition};
+    
+    if(other){
+      cond.comparingObject = other;
+    }
+    builder.conditions.push(cond);
+  }
+
+  // Filter class
+  function Filter(path){
+    this.path = path;
+    this.conditions = [];
+    this.booleanJoins = [];
+  }
+  
+  var prototype = {
+    or: function(filters) {
+      joinFilters(this, filters, 'or');
+      return this;
+    },
+
+    and: function(filters) {
+      joinFilters(this, filters, 'and');
+      return this;
+    },
+   
+    eq: function(other) {
+      addCondition(this, FilterTypes.EQUALS, other);
+      return this;
+    },
+    
+    notEq: function(other) {
+      addCondition(this, FilterTypes.NOT_EQUALS, other);
+      return this;
+    },
+    
+    isNull: function() {
+      addCondition(this, FilterTypes.NULL);
+      return this;
+    },
+    
+    notNull: function() {
+      addCondition(this, FilterTypes.NOT_NULL);
+      return this;
+    },
+
+    like: function(other) {
+      addCondition(this, FilterTypes.LIKE, other);
+      return this;
+    },
+    
+    notLike: function(other) {
+      addCondition(this, FilterTypes.NOT_LIKE, other);
+      return this;
+    },
+
+    gt: function(other) {
+      addCondition(this, FilterTypes.GT, other);
+      return this;
+    },
+    
+    gte: function(other) {
+      addCondition(this, FilterTypes.GTE, other);
+      return this;
+    },
+    
+    lt: function(other) {
+      addCondition(this, FilterTypes.LT, other);
+      return this;
+    },
+    
+    lte: function(other) {
+      addCondition(this, FilterTypes.LTE, other);
+      return this;
+    },
+
+    /**
+     * sql IN
+     *
+     * @param other{Array} the elements to include
+     **/
+    in: function(other) {
+      addCondition(this, FilterTypes.IN, other);
+      return this;
+    }
+  };
+  Filter.prototype = prototype;
+  
+  return {
+    path: function(filterPath) {
+      return new Filter(filterPath);
+    }
+  };
+}
+}());
+(function() {
+'use strict';
+
+/**
+ * @ngdoc service
+ * @name ui.filterFactory
+ * @description
+ * # filterFactory
+ * Factory in the qualita.
+ */
+angular.module('ui')
+  .factory('filterFactory', function () {
+    var logicalOp = function (type, filters) {
+      var result = {
+        _inner: {
+          type: type
+        }
+      };
+
+      if (filters.constructor !== Array) {
+        filters = [filters];
+      }
+
+      result._inner.filters = (this && this._inner) ? [this._inner, filters] : filters;
+      if (!result.or && type === 'and') result.or = or;
+      if (!result.value) result.value = value;
+      if (!result.add) result.add = add;
+      result.paginate = paginate;
+      return result;
+    };
+
+    var and = function (filters) {
+      return logicalOp.call(this, 'and', filters);
+    };
+
+    var or = function (filters) {
+      return logicalOp.call(this, 'or', filters);
+    };
+
+    var add = function (filter) {
+      this._inner.filters.push(filter);
+      return this;
+    };
+
+    var single = function (filter) {
+      return and([filter]);
+    };
+
+    var value = function () {
+      return this._inner;
+    };
+
+    var paginate = function (limit, offset) {
+      this._inner.limit = limit;
+      this._inner.offset = offset;
+      return this;
+    };
+
+
+    // Public API here
+    return {
+      and: and,
+      or: or,
+      add: add,
+      single: single,
+      value: value
+    };
+  });
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc service
+ * @name ui.formFactory
+ * @description
+ * # formFactory
+ */
+angular.module('ui')
+  .factory('formFactory', function ($location, $localForage, notify, $rootScope, AuthorizationService, $q) {
+    var hasPermission = AuthorizationService.hasPermission;
+
+    // Public API here
+    return {
+      defaultForm: function () {
+        return [
+          '*',
+          {
+            type: 'submit',
+            title: 'Guardar',
+            htmlClass: 'pull-right'
+          }
+        ];
+      },
+      defaultOptions: function() {
+        return {
+          formDefaults: {
+            ngModelOptions: {
+             updateOn: 'blur'
+            },
+            disabled: false,
+            disableSuccessState: false,
+            disableErrorState: false,
+            feedback: true
+          },
+          validationMessage: {
+            302: 'El campo es obligatorio'
+          }
+        };
+      },
+      defaultViewOptions: function() {
+        return {
+          formDefaults: {
+            disabled: true,
+            disableSuccessState: true,
+            disableErrorState: true,
+            feedback: false            
+          }
+        };
+      },
+      defaultSubmit: function(resource, scope, form, factory, vm, errorHandler) {
+        var backEndValidatedField = [];
+
+        _.each(form.$error, function (error, errorKey) {
+
+          if (_.contains(scope.schema.backEndValidatedErrors, errorKey)) {
+            _.each(error, function (field, index) {
+              var fieldName = 'schemaForm.error.' + field.$name;
+              backEndValidatedField.push(fieldName);
+              console.log('schemaForm.error.' + field.$name + ' error: ' + errorKey);
+              scope.$broadcast(fieldName, errorKey.toString(), true, true);
+            });
+
+          }
+
+          _.each(backEndValidatedField, function (fieldName, index) {
+            console.log(fieldName + ' error: ' + index);
+            scope.$broadcast(fieldName, 'schemaForm', true, true);
+          });
+
+        });
+
+
+        // First we broadcast an event so all fields validate themselves
+        scope.$broadcast('schemaFormValidate');
+
+
+        // Then we check if the form is valid
+        if (form.$valid && !$rootScope.isProcessing) {
+          $rootScope.isProcessing = true;
+          // ... do whatever you need to do with your data.
+          if(scope.model) {
+            var model = factory.create(scope.model);
+          } else {
+            //si se usa controllerAs, se busca el modelo dentro del vm especificado
+            var model = factory.create(vm.model);
+          }
+
+          //se convierten los campos de fecha desde string a date
+          if(scope.schema) {
+            var schema = scope.schema;
+          } else {
+            var schema = vm.schema;
+          }
+          _.each(schema.properties, function (field, fieldName) {
+            if (field.format && (field.format === 'date' || field.format === 'date-time')) {
+              if(model[fieldName] && typeof model[fieldName] === 'string') {
+                //console.log(field.formatDate);
+                model[fieldName] = new moment(model[fieldName], field.formatDate || 'DD/MM/YYYY').toDate();
+              }
+            }
+          });
+
+          factory.save(model).then(function(){
+            $location.path('/' + resource);
+          })
+          .catch(function(e) {
+            console.log(e);
+            $rootScope.isProcessing = false;
+
+            if (errorHandler) {
+              errorHandler(e);
+              return;
+            }
+
+            //se convierten los campos de fecha desde date a string
+              if(scope.schema) {
+                var schema = scope.schema;
+              } else {
+                var schema = vm.schema;
+              }
+            _.each(schema.properties, function (field, fieldName) {
+              if (field.format && (field.format === 'date' || field.format === 'date-time')) {
+                if(scope.model[fieldName] && scope.model[fieldName] instanceof Date) {
+                  scope.model[fieldName] = currentForm[fieldName].$viewValue;//.to('dd/MM/yyyy');
+                }
+              }
+            });
+
+            //se establecen los errores del backend
+            if ((e.constructor === Array && e.data[0].constraint)) {
+              scope.$broadcast('schemaForm.error.' + e.data[0].constraint, e.data[0].codigoError.toString(), false);
+            }
+
+            if(e.data && e.data.code !== 403) {
+              var msg = 'Error al persistir la operación.';
+              if(!scope.model.id) msg += '\n\nGuardando localmente, reintente más tarde.'
+                notify({ message: msg, classes: 'alert-danger', position: 'right' });
+                $localForage.getItem(resource).then(function(value) {
+                  value = value || [];
+                  value.unshift(scope.model);
+                  if(!scope.model.id) $localForage.setItem(resource, value);
+                });
+            }
+
+            // manejo general de errores
+            else if(e && e.status === 500) {
+              var msg = '';
+              _.forEach(e.data, function(error) {
+                msg += '\n\n' + error.message + '.'
+              });
+              notify({ message: msg, classes: 'alert-danger', position: 'right' });
+              // guardar en local storage
+              deferred.reject(msg);
+            }
+
+          });
+        }
+      },
+      defaultNSFSubmit: function(form, factory, resourceModel, errorHandler) {
+        var deferred = $q.defer();
+        // Then we check if the form is valid
+        if (form.$valid && !$rootScope.isProcessing) {
+          $rootScope.isProcessing = true;
+          // ... do whatever you need to do with your data.
+          var model = factory.create(resourceModel);
+
+          //se convierten los campos de fecha desde string a date
+          factory.save(model).then(function(response){
+            // la redireccion se deja a cargo del controller
+            // $location.path('/' + resource);
+            deferred.resolve(response);
+          })
+          .catch(function(e) {
+            console.log(e);
+            $rootScope.isProcessing = false;
+
+            if (errorHandler) {
+              errorHandler(e);
+              deferred.reject(msg);
+            } else {
+              //se establecen los errores del backend
+              if(e && e.status === 500) {
+                var msg = '';
+                _.forEach(e.data, function(error) {
+                  msg += '\n\n' + error.message + '.'
+                });
+                notify({ message: msg, classes: 'alert-danger', position: 'right' });
+                // guardar en local storage
+                deferred.reject(msg);
+              }
+            }
+          });
+        }
+        return deferred.promise;
+      },
+
+      canEdit : function(resource) {
+          var permission = hasPermission('update_' + resource);
+          return permission;
+      },
+
+      canList : function(resource) {
+        var permission = hasPermission('index_' + resource);
+        return permission;
+      },
+
+      canRemove : function(resource) {
+          var permission = hasPermission('delete_' + resource);
+          return permission;
+      },
+
+      canCreate : function(resource) {
+          var permission = hasPermission('create_' + resource);
+          return permission;
+      }
+    };
+  });
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc service
+ * @name ui.HttpInterceptor
+ * @description
+ * # HttpInterceptor
+ */
+angular.module('ui')
+  .factory('HttpInterceptor', function ($q, $location, $rootScope,
+                                        $cookieStore, $injector) {
+
+    return {
+      request: function(config) {
+
+        if($location.path() !== '/login') {
+          config.headers.Authorization = 'Bearer ' + $rootScope.AuthParams.accessToken;
+        }
+        return config;
+      },
+
+      requestError: function(rejection) {
+
+        if(rejection.status === 401) {
+          $location.path('/login');
+        }
+        return $q.reject(rejection);
+      },
+
+
+      response: function(response) {
+        return response;
+      },
+
+      responseError: function(rejection) {
+        console.log('responseError 401');
+        var notify = $injector.get('notify');
+        if(rejection.status === 401) {
+          if(rejection.data && rejection.data.code === 403) {
+            // error de autorización
+            notify({
+              message: rejection.data.error,
+              classes: ['alert-danger'],
+              position: 'right'
+            });
+            $location.path('/');
+            return $q.reject(rejection);
+          }
+
+          if($location.path() === "/login") {
+            return $q.reject(rejection);
+          }
+
+
+          var deferred = $q.defer();
+          var AuthenticationService = $injector.get('AuthenticationService');
+          var $http = $injector.get('$http');
+          var auth = AuthenticationService.token($rootScope.AuthParams);
+
+          auth.then(function(response) {
+            $rootScope.AuthParams.accessToken = response.accessToken;
+            localStorage.setItem('AUTH_PARAMS', JSON.stringify($rootScope.AuthParams));
+            $http.defaults.headers.common.Authorization = 'Bearer ' + response.accessToken;
+            AuthenticationService.postLogin($rootScope.AuthParams).$promise.then(function (data){
+              $rootScope.AuthParams.accesoSistema = data;
+              console.log("se ejecutó el response error");
+              $http.defaults.headers.common['X-Access'] = $rootScope.AuthParams.accesoSistema.accesosSistema[0].locacion.id;
+            });
+          }).then(deferred.resolve, deferred.reject);
+
+          return deferred.promise.then(function() {
+              //$http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.AuthParams.accessToken;
+              rejection.config.headers.Authorization = 'Bearer ' + $rootScope.AuthParams.accessToken;
+              return $http(rejection.config);
+          });
+        }
+        return $q.reject(rejection);
+      }
+    };
+  });
+}());
+
+(function() {
+'use strict';
+
+angular
+  .module('ui')
+  .factory('LangService', Service);
+
+Service.$inject = ['$translate', '$translatePartialLoader'];
+
+function Service($translate, $translatePartialLoader) {
+
+  var service = {
+    getTranslations: getTranslations
+  };
+  
+  return service;
+
+  /**
+   * Metodo que retorna un objeto con las traducciones para
+   * los keys dados como parametro.
+   *
+   * @param translationKeys {Array} claves para la traduccion.
+   * @param module {String} (opcional) nombre del modulo que contiene las traducciones.
+   **/
+  function getTranslations(translationKeys, module) {
+
+    if(module){
+      $translatePartialLoader.addPart(module);
+    }
+    return $translate.refresh().then(function () {
+      return $translate(translationKeys);
+    });
+  }
+}
+}());
+
+(function() {
+'use strict';
+
+angular.module('ui')
+  .factory('ModelTrimmer', ModelTrimmer);
+
+function ModelTrimmer() {
+  var service = {
+    trimDetails: trimDetails
+  };
+
+  return service;
+
+  function trimDetails(model, ignoredFields) {
+    var response = {};
+    var keys = _.keys(model);
+
+    _.forEach(keys, function(key) {
+      var ignoredIndex = _.findIndex(ignoredFields, function(elem) { return elem == key; } );
+      if(ignoredFields &&  ignoredIndex !== -1) {
+        response[key] = model[key];
+        return;
+      }
+
+      if(_.isArray(model[key]) == true) {
+        response[key] = [];
+        _.forEach(model[key], function (elem, index) {
+          //no se hace recursivo porque solo se debería de necesitar comprobar en primer nivel
+          fieldTrimmer(model[key], response[key], index, ignoredFields);
+        });
+
+      } else {
+        fieldTrimmer(model, response, key, ignoredFields);
+      }
+    });
+    return response;
+  }
+
+  function fieldTrimmer(model, newModel, fieldName, ignoredFields) {
+    if(_.isObject(model[fieldName]) && model[fieldName].hasOwnProperty("id")) {
+      newModel[fieldName] = model[fieldName].id;
+    } else {
+      newModel[fieldName] = model[fieldName];
+    }
+  }
+}
+}());
+
+(function() {
+angular.module('ui')
+  .factory('NotificacionesWSFactory', NotificacionesWSFactory);
+NotificacionesWSFactory.$inject = ['$resource', 'baseurl', '$log', '$websocket', '$timeout'];
+
+function NotificacionesWSFactory($resource, baseurl, $log, $websocket, $timeout) {
+  var service = {
+    all: all,
+    close: close,
+    create: create,
+    get: get,
+    getLatest: getLatest,
+    init: init,
+    remove: remove,
+    save: save,
+    sendAction: sendAction,
+    registerMessageObserver: registerMessageObserver
+  };
+
+  var notificaciones = $resource( baseurl.getBaseUrl() + "/notificaciones/:id", {id: '@id'}, {
+    update: {
+      method: 'PUT'
+    }
+  });
+
+  var closedByUser = false;
+
+  var retries = 0;
+
+  var websocket = undefined;
+
+  return service;
+
+  function all(params) {
+    return notificaciones.query(params);
+  }
+
+  function close(forceClose) {
+    closedByUser = true;
+    var forzar = false;
+    if(forceClose) {
+      forzar = forceClose;
+    }
+
+    websocket.close(forzar);
+  }
+
+  function create(attrs) {
+    return new notificaciones(attrs);
+  }
+
+  function get(id) {
+    return notificaciones.get({id: id});
+  }
+
+  function getLatest(offset, limit) {
+    var obj = {
+      action: "get",
+      offset: offset,
+      limit: limit
+    };
+    websocket.send(JSON.stringify(obj));
+  }
+
+  function init(username) {
+    websocket = $websocket(baseurl.getBareServerUrl() + "wsnotificaciones");
+    var obj = {
+      action: "init",
+      username: username
+    };
+    websocket.onOpen(function() {
+      console.log("Socket abierto");
+      retries = 0;
+    });
+
+    websocket.onClose(function() {
+      console.log("Socket cerrado");
+      if(!closedByUser) {
+        if(retries < 4) {
+          retries = retries + 1;
+          $timeout(function() { init(username) }, (1000 * retries));
+        } else {
+          console.error("Tras 4 intentos no se pudo reestablecer conexion con websocket de notificaciones.");
+        }
+      } else {
+        closedByUser = false;
+      }
+    });
+    console.log(websocket);
+    websocket.send(JSON.stringify(obj));
+  }
+
+  function sendAction(accion, notificacion) {
+    var obj = {
+      action: accion,
+      notificacion: notificacion.id
+    };
+    $log.info("mensaje a mandar: ");
+    $log.info(obj);
+    websocket.send(JSON.stringify(obj));
+  }
+
+  function registerMessageObserver(functionHandler) {
+    if(!websocket) {
+      websocket = $websocket(baseurl.getBareServerUrl() + "wsnotificaciones");
+    }
+    websocket.onMessage(functionHandler);
+  }
+
+  function remove(notificacion) {
+    return notificacion.$remove();
+  }
+
+  function save(notificacion) {
+    return (notificacion.id) ? notificacion.$update() : notificacion.$save();
+  }
+}
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc service
+ * @name ui.ReportTicketFactory
+ * @description
+ * # ReportTicketFactory
+ */
+angular.module('ui')
+  .factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
+  
+    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID?:query&currentColumnOrder=:currentColumnOrder', 
+      {
+        action: '@reportID'
+      });
+
+    return {
+      ticket: function(reportID, filters, searchParams, currentColumnOrder) {
+        var report = new ReportTicket(filters);
+        var params = {reportID: reportID}; 
+
+        if (searchParams) {
+          params.query = decodeURIComponent($.param(searchParams));
+        }
+
+        if (currentColumnOrder) {
+          params.currentColumnOrder = currentColumnOrder;
+        }
+        
+        return report.$save(params);
+      },
+
+      downloadURL: function(reportTicket, exportType) {
+        console.log('downloadURL');
+        return baseurl.getBaseUrl() + '/generar/' + reportTicket + '/' + exportType;
+      },
+
+      downloadCustomReport: function(reportID, exportType, filters) {
+        console.log('dowloadCustomReport');
+        var downloadUrl = baseurl.getBaseUrl() + '/reportes/' + reportID;
+        if (filters) {
+          downloadUrl += "?";
+          _.forEach(filters, function (filter) {
+            //console.log(filter);
+            downloadUrl += filter + "&";
+          });
+          return downloadUrl;
+        }
+        return downloadUrl;
+      }
+    };
+  }]);
+}());
+(function() {
+'use strict';
+
+/**
+ * Provider que permite:
+ *
+ * 1) Que un controller/service pueda definir las claves de traduccion que necesita.
+ * 2) Que un controller/service pueda recuperar las claves de traduccion registradas por un modulo.
+ *
+ * @author Jorge Ramirez <jorge@codium.com.py>
+ **/
+angular
+  .module('ui')
+  .provider('tkeys', Provider);
+
+function Provider() {
+  var keysMap = {};
+  this.addKeys = addKeys;
+  this.$get = [tkeysFactory];
+
+  /**
+   * Agrega la lista de claves de traduccion que el modulo va a necesitar
+   *
+   * @param module {String}: identificador del modulo.
+   * @param keys {Array}
+   **/
+  function addKeys(module, keys) {
+    keysMap[module] = keys;
+  }
+  
+  /**
+   * Esta funcion es la que retorna el prototipo del servicio tkeys.
+   **/
+  function tkeysFactory() {
+    return keysMap;
+  }
+}
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc service
+ * @name ui.UploadFactory
+ * @description
+ */
+angular.module('ui')
+  .service('UploadFactory', ['$rootScope', 'baseurl', function ($rootScope, baseurl) {
+      var flow;
+      var mimeTypeMap = {
+        jpg: 'image/jpg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        gif: 'image/gif'
+      };
+     
+      function setFlow(uploadOptions) {
+        flow = uploadOptions.flow;
+      }
+
+      // Public API here
+      return {
+        getCurrentFiles: function(uploadOptions) {
+          var self = this;
+          setFlow(uploadOptions);
+
+          if(!flow) {
+            return;
+          }
+          var flowFiles = flow.files;
+          var files = []; // Lista de objetos de tipo { path: '' }
+
+          if (flowFiles.length > 0){
+            angular.forEach(flowFiles, function(file) {
+              files.push({
+                path: self.getFilename(file)
+              });
+            });
+          }
+          return files;
+        },
+
+        clearCurrentFiles: function() {
+          $rootScope.flow.files = [];
+        },
+
+        /**
+         * Se encarga de cargar en el objeto flow el array de imagenes.
+         **/
+        addFiles: function(images) {
+          setFlow();
+          
+          if(!flow) {
+            return;
+          }
+          
+          angular.forEach(images, function(img) {
+            var contentType = mimeTypeMap[img.path.toLowerCase().substring(_.lastIndexOf(img.path, '.') + 1)];
+            var blob = new Blob(['pre_existing_image'], {type: contentType});
+            blob.name = img.path;
+            blob.image_url = baseurl.getPublicBaseUrl() + img.path;
+            var file = new Flow.FlowFile(flow, blob);
+            file.fromServer = true; // el archivo ya se encuentra en el servidor, no hay que procesar de vuelta.
+            flow.files.push(file);
+          });
+        },
+        
+        /**
+         * Retorna el nombre del archivo. Esto se corresponde con la logica en el backend
+         **/
+        getFilename: function(file) {
+          
+          if(file.fromServer) {
+            return file.name;
+          }
+          var basename = file.size + '-' + file.name;
+          // se corresponde con el backend
+          basename = basename.replace(/[^a-zA-Z/-_\\.0-9]+/g, '');
+          basename = basename.replace(/\s/g, '');
+          return basename;
+        }
+      };
+  }]);
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc service
+ * @name ui.usuariosFactory
+ * @description
+ * # usuariosFactory
+ */
+angular.module('ui')
+  .factory('usuariosFactory', function ($resource, filterFactory, baseurl) {
+
+    var Usuario = $resource(baseurl.getBaseUrl() + '/usuarios/:id', { id: '@id' }, {
+      'update': { method: 'PUT' }, // this method issues a PUT request
+    });
+
+    // Public API here
+    return {
+      all: function(params) {
+        return Usuario.query(params);
+      },
+
+      get: function(id) {
+        return Usuario.get({id: id});
+      },
+
+      getByUsername: function(username) {
+        var params = {};
+        params.search = filterFactory.single({
+                        path: 'username',
+                        equals: username
+                      }).value();
+        return Usuario.query(params);
+      },
+
+      create: function(attrs) {
+        return new Usuario(attrs);
+      },
+
+      save: function(usuario) {
+        return (usuario.id) ? usuario.$update() : usuario.$save();
+      },
+
+      remove: function(usuario) {
+        return usuario.$remove();
+      }
+    };
+  });
+}());
+
+(function() {
+'use strict';
+
+angular.module('ui')
+  .factory('Util', Util);
+
+function Util() {
+  var service = {
+    toUnidadMedidaBase: toUnidadMedidaBase,
+    fromUnidadMedidaBase: fromUnidadMedidaBase
+  };
+
+  return service;
+
+  function toUnidadMedidaBase(cantidad, unidadMedida) {
+      var multiplicador=1;
+      var unidadActual = unidadMedida;
+      while(!unidadActual.esBase){
+        multiplicador=multiplicador*unidadActual.cantidad;
+        unidadActual=unidadActual.unidadContenida;
+      }
+      return cantidad * multiplicador;
+  }
+
+  function fromUnidadMedidaBase(cantidad, unidadObjetivo) {
+    var multiplicador = 1;
+    var unidadActual = unidadObjetivo;
+    while (!unidadActual.esBase) {
+      multiplicador = multiplicador * unidadActual.cantidad;
+      unidadActual = unidadActual.unidadContenida;
+    }
+    return cantidad / multiplicador;
+  }
 }
 }());
 
@@ -6761,1250 +8009,3 @@ the specific language governing permissions and limitations under the Apache Lic
 
     $.extend($.fn.select2.defaults, $.fn.select2.locales['es']);
 })(jQuery);
-
-(function() {
-'use strict';
-
-/**
- * @ngdoc service
- * @name ui.Authentication
- * @description
- * # Authentication
- */
-angular.module('ui')
-  .service('AuthenticationService', function ($resource, $rootScope, $http, baseurl) {
-    var Authentication = $resource(baseurl.getBaseUrl() + '/:action', {action: '@action'});
-
-    return {
-
-      login: function (username, password) {
-        $rootScope.auxiliarUsername = username;
-        var auth = new Authentication({username: username, password: password});
-        return auth.$save({action: 'login'});
-      },
-
-      postLogin: function(authParams) {
-        return new Authentication.save({action: 'loginApp'}, {username: authParams.username});
-      },
-
-      token: function (authParams) {
-        var auth = new Authentication({
-          username: authParams.username,
-          accessToken: authParams.accessToken,
-          requestToken: authParams.requestToken
-        });
-        return auth.$save({action: 'token'});
-      },
-
-      logout: function () {
-        var authParams = this.getCurrentUser();
-        var auth = new Authentication({
-          username: authParams.username,
-          accessToken: authParams.accessToken
-        });
-        $rootScope.AuthParams = {};
-        localStorage.removeItem('AUTH_PARAMS');
-
-        return auth.$save({action: 'logout'});
-      },
-
-      getCurrentUser: function () {
-        var user = $rootScope.AuthParams;
-
-        if (!user || Object.keys(user).length === 0) {
-          user = JSON.parse(localStorage.getItem('AUTH_PARAMS')) || undefined;
-
-          if (user) {
-            $http.defaults.headers.common.Authorization = 'Bearer ' + user.accessToken;
-          }
-        }
-        return user;
-      }
-
-    };
-  });
-}());
-
-(function() {
-'use strict';
-
-/**
- * @ngdoc service
- * @name ui.Authorization
- * @description
- * # Authorization
- */
-angular.module('ui')
-  .service('AuthorizationService', function ($rootScope, $resource, $http, baseurl, AuthenticationService) {
-    
-    var Authorization = $resource(baseurl.getBaseUrl() + '/authorization/:action',
-                                  {action: '@action'});
-
-    return {
-      /**
-       * Retorna true si el usuario actual de la aplicación posee el permiso dado como
-       * parámetro.
-       **/
-      hasPermission: function(permission, userToCheck) {
-        var user = userToCheck || AuthenticationService.getCurrentUser();
-        var permissions = [];
-
-        if (user) {
-          permissions = user.permissions || [];
-        }
-        return permissions.indexOf(permission) >= 0;
-      },
-
-      principal: function() {
-        return Authorization.get({action: 'principal'}).$promise;
-      },
-
-      setupCredentials: function(username, requestToken, accessToken, callback) {
-        
-        var AuthParams = {
-          username: username,
-          requestToken: requestToken,
-          accessToken: accessToken
-        };
-
-        $rootScope.AuthParams = AuthParams;
-        localStorage.setItem('AUTH_PARAMS', JSON.stringify(AuthParams));
-        $http.defaults.headers.common.Authorization = 'Bearer ' + accessToken;
-        // cargamos los permisos del usuario
-        this.principal().then(function(response) {
-          AuthParams.permissions = response.permisos;
-          AuthParams.stamp = response.stamp;
-          localStorage.setItem('AUTH_PARAMS', JSON.stringify(AuthParams));
-          callback(AuthParams);
-        });
-      },
-
-      cleanupCredentials: function() {        
-        localStorage.removeItem('AUTH_PARAMS');
-      },
-
-      authorize: function (loginRequired, requiredPermissions) {
-          var user = AuthenticationService.getCurrentUser();
-
-          if (loginRequired === true && user === undefined) {
-            return this.enums.LOGIN_REQUIRED;
-          } else if ((loginRequired && user !== undefined) &&
-            (requiredPermissions === undefined || requiredPermissions.length === 0)) {
-            return this.enums.AUTHORIZED;
-          } else if (requiredPermissions) {
-            var isAuthorized = true;
-
-            for (var i = 0; i < requiredPermissions.length; i++) {
-              isAuthorized = this.hasPermission(requiredPermissions[i], user);
-
-              if (isAuthorized === false) {
-                break;
-              }
-            }
-            return isAuthorized ? this.enums.AUTHORIZED : this.enums.NOT_AUTHORIZED;
-          }
-        },
-
-        enums: {
-          LOGIN_REQUIRED: 'loginRequired',
-          NOT_AUTHORIZED: 'notAuthorized',
-          AUTHORIZED: 'authorized'
-        }
-    };
-  });
-}());
-
-(function() {
-'use strict';
-
-/**
- * @ngdoc service
- * @name ui.baseurl
- * @description
- * # baseurl
- */
-angular.module('ui')
-  .provider('baseurl', function () {
-    this.config = {};
-
-    this.setConfig = function(config) {
-        this.config = config;
-    };
-
-    this.$get = function() {
-      var Config = this.config;
-      return {
-        getBaseUrl: function () {
-          var hostname = window.location.hostname;
-
-          //si es el servidor de homologacion
-          if (hostname === Config.serverIp) {
-            return 'http://' + hostname + '/' + Config.serverName + '/' + Config.serverAPI;
-          }else{
-            //si es localhost es desarrollo local
-            return 'http://' + hostname + ':' + Config.serverPort + 
-                   '/' + Config.serverName + '/' + Config.serverAPI;
-          }
-        },
-
-        getPublicBaseUrl: function () {
-          var hostname = window.location.hostname;
-
-          //si es el servidor de homologacion
-          if (hostname === Config.serverIp){
-            return 'http://' + hostname + '/public/';
-          }else{
-            //si es localhost es desarrollo local
-            return 'http://' + hostname + ':' + Config.serverPort + '/public/';
-          }
-        },
-
-        getBareServerUrl: function() {
-          var hostname = window.location.hostname;
-          //si es el servidor de homologacion
-          if (hostname === Config.serverIp) {
-            return 'ws://' + hostname + '/' + Config.serverWSName + '/';
-          }else{
-            //si es localhost es desarrollo local
-            return 'ws://' + hostname + ':' + Config.serverPort + '/' + Config.serverName + '/';
-          }
-        }
-      };
-    };
-  });
-}());
-
-(function() {
-'use strict';
-
-/**
- * @ngdoc service
- * @name ui.ConfigProvider
- * @description
- * # ConfigProvider
- */
-angular.module('ui')
-  .provider('Config', function () {
-
-    var options = {};
-
-    this.config = function (opt) {
-      angular.extend(options, opt);
-    };
-
-    this.$get = [function () {
-      return options;
-    }];
-  });
-}());
-
-(function() {
-'use strict';
-
-/**
- * @ngdoc service
- * @name ui.fileUpload
- * @description
- * # fileUpload
- */
-angular.module('ui').config(
-['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider', 'flowFactoryProvider',
-  function(schemaFormProvider,  schemaFormDecoratorsProvider, sfPathProvider, flowFactoryProvider) {
-
-    flowFactoryProvider.defaults = {
-      method: 'octet'
-    };
-
-    var fileupload = function(name, schema, options) {
-      if (schema.type === 'object' && schema.format === 'fileupload') {
-        var f = schemaFormProvider.stdFormObj(name, schema, options);
-        f.key  = options.path;
-        f.type = 'fileupload';
-        options.lookup[sfPathProvider.stringify(options.path)] = f;
-        return f;
-      }
-    };
-    schemaFormProvider.defaults.object.unshift(fileupload);
-
-    //Add to the bootstrap directive
-    schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'fileupload',
-                                            'views/directives/fileupload.html');
-    schemaFormDecoratorsProvider.createDirective('fileupload',
-                                                 'views/directives/fileupload.html');
-  }]).factory('fileupload', function(){
-  });
-}());
-
-(function() {
-'use strict';
-
-angular
-  .module('ui')
-  .factory('Filter', FilterFactory);
-
-function FilterFactory() {
-  var FilterTypes =  {
-    EQUALS : 'equals',
-    NOT_EQUALS : 'notEquals',
-    NULL : 'null',
-    NOT_NULL : 'notNull',
-    LIKE : 'like',
-    NOT_LIKE : 'notLike',
-    GT : 'gt',
-    GTE : 'gte',
-    LT : 'lt',
-    LTE : 'lte',
-    IN : 'in'
-  };
-  
-  function joinFilters(builder, filters, joinType) {
-    if(!angular.isArray(filters)){
-      filters = [filters];
-    }
-
-    angular.forEach(filters, function(f) {
-      builder.booleanJoins.push({
-        joinType: joinType,
-        filter: f
-      });
-    });
-  }
-
-  function addCondition(builder, condition, other) {
-    var cond = {condition: condition};
-    
-    if(other){
-      cond.comparingObject = other;
-    }
-    builder.conditions.push(cond);
-  }
-
-  // Filter class
-  function Filter(path){
-    this.path = path;
-    this.conditions = [];
-    this.booleanJoins = [];
-  }
-  
-  var prototype = {
-    or: function(filters) {
-      joinFilters(this, filters, 'or');
-      return this;
-    },
-
-    and: function(filters) {
-      joinFilters(this, filters, 'and');
-      return this;
-    },
-   
-    eq: function(other) {
-      addCondition(this, FilterTypes.EQUALS, other);
-      return this;
-    },
-    
-    notEq: function(other) {
-      addCondition(this, FilterTypes.NOT_EQUALS, other);
-      return this;
-    },
-    
-    isNull: function() {
-      addCondition(this, FilterTypes.NULL);
-      return this;
-    },
-    
-    notNull: function() {
-      addCondition(this, FilterTypes.NOT_NULL);
-      return this;
-    },
-
-    like: function(other) {
-      addCondition(this, FilterTypes.LIKE, other);
-      return this;
-    },
-    
-    notLike: function(other) {
-      addCondition(this, FilterTypes.NOT_LIKE, other);
-      return this;
-    },
-
-    gt: function(other) {
-      addCondition(this, FilterTypes.GT, other);
-      return this;
-    },
-    
-    gte: function(other) {
-      addCondition(this, FilterTypes.GTE, other);
-      return this;
-    },
-    
-    lt: function(other) {
-      addCondition(this, FilterTypes.LT, other);
-      return this;
-    },
-    
-    lte: function(other) {
-      addCondition(this, FilterTypes.LTE, other);
-      return this;
-    },
-
-    /**
-     * sql IN
-     *
-     * @param other{Array} the elements to include
-     **/
-    in: function(other) {
-      addCondition(this, FilterTypes.IN, other);
-      return this;
-    }
-  };
-  Filter.prototype = prototype;
-  
-  return {
-    path: function(filterPath) {
-      return new Filter(filterPath);
-    }
-  };
-}
-}());
-(function() {
-'use strict';
-
-/**
- * @ngdoc service
- * @name ui.filterFactory
- * @description
- * # filterFactory
- * Factory in the qualita.
- */
-angular.module('ui')
-  .factory('filterFactory', function () {
-    var logicalOp = function (type, filters) {
-      var result = {
-        _inner: {
-          type: type
-        }
-      };
-
-      if (filters.constructor !== Array) {
-        filters = [filters];
-      }
-
-      result._inner.filters = (this && this._inner) ? [this._inner, filters] : filters;
-      if (!result.or && type === 'and') result.or = or;
-      if (!result.value) result.value = value;
-      if (!result.add) result.add = add;
-      result.paginate = paginate;
-      return result;
-    };
-
-    var and = function (filters) {
-      return logicalOp.call(this, 'and', filters);
-    };
-
-    var or = function (filters) {
-      return logicalOp.call(this, 'or', filters);
-    };
-
-    var add = function (filter) {
-      this._inner.filters.push(filter);
-      return this;
-    };
-
-    var single = function (filter) {
-      return and([filter]);
-    };
-
-    var value = function () {
-      return this._inner;
-    };
-
-    var paginate = function (limit, offset) {
-      this._inner.limit = limit;
-      this._inner.offset = offset;
-      return this;
-    };
-
-
-    // Public API here
-    return {
-      and: and,
-      or: or,
-      add: add,
-      single: single,
-      value: value
-    };
-  });
-}());
-
-(function() {
-'use strict';
-
-/**
- * @ngdoc service
- * @name ui.formFactory
- * @description
- * # formFactory
- */
-angular.module('ui')
-  .factory('formFactory', function ($location, $localForage, notify, $rootScope, AuthorizationService, $q) {
-    var hasPermission = AuthorizationService.hasPermission;
-
-    // Public API here
-    return {
-      defaultForm: function () {
-        return [
-          '*',
-          {
-            type: 'submit',
-            title: 'Guardar',
-            htmlClass: 'pull-right'
-          }
-        ];
-      },
-      defaultOptions: function() {
-        return {
-          formDefaults: {
-            ngModelOptions: {
-             updateOn: 'blur'
-            },
-            disabled: false,
-            disableSuccessState: false,
-            disableErrorState: false,
-            feedback: true
-          },
-          validationMessage: {
-            302: 'El campo es obligatorio'
-          }
-        };
-      },
-      defaultViewOptions: function() {
-        return {
-          formDefaults: {
-            disabled: true,
-            disableSuccessState: true,
-            disableErrorState: true,
-            feedback: false            
-          }
-        };
-      },
-      defaultSubmit: function(resource, scope, form, factory, vm, errorHandler) {
-        var backEndValidatedField = [];
-
-        _.each(form.$error, function (error, errorKey) {
-
-          if (_.contains(scope.schema.backEndValidatedErrors, errorKey)) {
-            _.each(error, function (field, index) {
-              var fieldName = 'schemaForm.error.' + field.$name;
-              backEndValidatedField.push(fieldName);
-              console.log('schemaForm.error.' + field.$name + ' error: ' + errorKey);
-              scope.$broadcast(fieldName, errorKey.toString(), true, true);
-            });
-
-          }
-
-          _.each(backEndValidatedField, function (fieldName, index) {
-            console.log(fieldName + ' error: ' + index);
-            scope.$broadcast(fieldName, 'schemaForm', true, true);
-          });
-
-        });
-
-
-        // First we broadcast an event so all fields validate themselves
-        scope.$broadcast('schemaFormValidate');
-
-
-        // Then we check if the form is valid
-        if (form.$valid && !$rootScope.isProcessing) {
-          $rootScope.isProcessing = true;
-          // ... do whatever you need to do with your data.
-          if(scope.model) {
-            var model = factory.create(scope.model);
-          } else {
-            //si se usa controllerAs, se busca el modelo dentro del vm especificado
-            var model = factory.create(vm.model);
-          }
-
-          //se convierten los campos de fecha desde string a date
-          if(scope.schema) {
-            var schema = scope.schema;
-          } else {
-            var schema = vm.schema;
-          }
-          _.each(schema.properties, function (field, fieldName) {
-            if (field.format && (field.format === 'date' || field.format === 'date-time')) {
-              if(model[fieldName] && typeof model[fieldName] === 'string') {
-                //console.log(field.formatDate);
-                model[fieldName] = new moment(model[fieldName], field.formatDate || 'DD/MM/YYYY').toDate();
-              }
-            }
-          });
-
-          factory.save(model).then(function(){
-            $location.path('/' + resource);
-          })
-          .catch(function(e) {
-            console.log(e);
-            $rootScope.isProcessing = false;
-
-            if (errorHandler) {
-              errorHandler(e);
-              return;
-            }
-
-            //se convierten los campos de fecha desde date a string
-              if(scope.schema) {
-                var schema = scope.schema;
-              } else {
-                var schema = vm.schema;
-              }
-            _.each(schema.properties, function (field, fieldName) {
-              if (field.format && (field.format === 'date' || field.format === 'date-time')) {
-                if(scope.model[fieldName] && scope.model[fieldName] instanceof Date) {
-                  scope.model[fieldName] = currentForm[fieldName].$viewValue;//.to('dd/MM/yyyy');
-                }
-              }
-            });
-
-            //se establecen los errores del backend
-            if ((e.constructor === Array && e.data[0].constraint)) {
-              scope.$broadcast('schemaForm.error.' + e.data[0].constraint, e.data[0].codigoError.toString(), false);
-            }
-
-            if(e.data && e.data.code !== 403) {
-              var msg = 'Error al persistir la operación.';
-              if(!scope.model.id) msg += '\n\nGuardando localmente, reintente más tarde.'
-                notify({ message: msg, classes: 'alert-danger', position: 'right' });
-                $localForage.getItem(resource).then(function(value) {
-                  value = value || [];
-                  value.unshift(scope.model);
-                  if(!scope.model.id) $localForage.setItem(resource, value);
-                });
-            }
-
-            // manejo general de errores
-            else if(e && e.status === 500) {
-              var msg = '';
-              _.forEach(e.data, function(error) {
-                msg += '\n\n' + error.message + '.'
-              });
-              notify({ message: msg, classes: 'alert-danger', position: 'right' });
-              // guardar en local storage
-              deferred.reject(msg);
-            }
-
-          });
-        }
-      },
-      defaultNSFSubmit: function(form, factory, resourceModel, errorHandler) {
-        var deferred = $q.defer();
-        // Then we check if the form is valid
-        if (form.$valid && !$rootScope.isProcessing) {
-          $rootScope.isProcessing = true;
-          // ... do whatever you need to do with your data.
-          var model = factory.create(resourceModel);
-
-          //se convierten los campos de fecha desde string a date
-          factory.save(model).then(function(response){
-            // la redireccion se deja a cargo del controller
-            // $location.path('/' + resource);
-            deferred.resolve(response);
-          })
-          .catch(function(e) {
-            console.log(e);
-            $rootScope.isProcessing = false;
-
-            if (errorHandler) {
-              errorHandler(e);
-              deferred.reject(msg);
-            } else {
-              //se establecen los errores del backend
-              if(e && e.status === 500) {
-                var msg = '';
-                _.forEach(e.data, function(error) {
-                  msg += '\n\n' + error.message + '.'
-                });
-                notify({ message: msg, classes: 'alert-danger', position: 'right' });
-                // guardar en local storage
-                deferred.reject(msg);
-              }
-            }
-          });
-        }
-        return deferred.promise;
-      },
-
-      canEdit : function(resource) {
-          var permission = hasPermission('update_' + resource);
-          return permission;
-      },
-
-      canList : function(resource) {
-        var permission = hasPermission('index_' + resource);
-        return permission;
-      },
-
-      canRemove : function(resource) {
-          var permission = hasPermission('delete_' + resource);
-          return permission;
-      },
-
-      canCreate : function(resource) {
-          var permission = hasPermission('create_' + resource);
-          return permission;
-      }
-    };
-  });
-}());
-
-(function() {
-'use strict';
-
-/**
- * @ngdoc service
- * @name ui.HttpInterceptor
- * @description
- * # HttpInterceptor
- */
-angular.module('ui')
-  .factory('HttpInterceptor', function ($q, $location, $rootScope,
-                                        $cookieStore, $injector) {
-
-    return {
-      request: function(config) {
-
-        if($location.path() !== '/login') {
-          config.headers.Authorization = 'Bearer ' + $rootScope.AuthParams.accessToken;
-        }
-        return config;
-      },
-
-      requestError: function(rejection) {
-
-        if(rejection.status === 401) {
-          $location.path('/login');
-        }
-        return $q.reject(rejection);
-      },
-
-
-      response: function(response) {
-        return response;
-      },
-
-      responseError: function(rejection) {
-        console.log('responseError 401');
-        var notify = $injector.get('notify');
-        if(rejection.status === 401) {
-          if(rejection.data && rejection.data.code === 403) {
-            // error de autorización
-            notify({
-              message: rejection.data.error,
-              classes: ['alert-danger'],
-              position: 'right'
-            });
-            $location.path('/');
-            return $q.reject(rejection);
-          }
-
-          if($location.path() === "/login") {
-            return $q.reject(rejection);
-          }
-
-
-          var deferred = $q.defer();
-          var AuthenticationService = $injector.get('AuthenticationService');
-          var $http = $injector.get('$http');
-          var auth = AuthenticationService.token($rootScope.AuthParams);
-
-          auth.then(function(response) {
-            $rootScope.AuthParams.accessToken = response.accessToken;
-            localStorage.setItem('AUTH_PARAMS', JSON.stringify($rootScope.AuthParams));
-            $http.defaults.headers.common.Authorization = 'Bearer ' + response.accessToken;
-            AuthenticationService.postLogin($rootScope.AuthParams).$promise.then(function (data){
-              $rootScope.AuthParams.accesoSistema = data;
-              console.log("se ejecutó el response error");
-              $http.defaults.headers.common['X-Access'] = $rootScope.AuthParams.accesoSistema.accesosSistema[0].locacion.id;
-            });
-          }).then(deferred.resolve, deferred.reject);
-
-          return deferred.promise.then(function() {
-              //$http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.AuthParams.accessToken;
-              rejection.config.headers.Authorization = 'Bearer ' + $rootScope.AuthParams.accessToken;
-              return $http(rejection.config);
-          });
-        }
-        return $q.reject(rejection);
-      }
-    };
-  });
-}());
-
-(function() {
-'use strict';
-
-angular
-  .module('ui')
-  .factory('LangService', Service);
-
-Service.$inject = ['$translate', '$translatePartialLoader'];
-
-function Service($translate, $translatePartialLoader) {
-
-  var service = {
-    getTranslations: getTranslations
-  };
-  
-  return service;
-
-  /**
-   * Metodo que retorna un objeto con las traducciones para
-   * los keys dados como parametro.
-   *
-   * @param translationKeys {Array} claves para la traduccion.
-   * @param module {String} (opcional) nombre del modulo que contiene las traducciones.
-   **/
-  function getTranslations(translationKeys, module) {
-
-    if(module){
-      $translatePartialLoader.addPart(module);
-    }
-    return $translate.refresh().then(function () {
-      return $translate(translationKeys);
-    });
-  }
-}
-}());
-
-(function() {
-'use strict';
-
-angular.module('ui')
-  .factory('ModelTrimmer', ModelTrimmer);
-
-function ModelTrimmer() {
-  var service = {
-    trimDetails: trimDetails
-  };
-
-  return service;
-
-  function trimDetails(model, ignoredFields) {
-    var response = {};
-    var keys = _.keys(model);
-
-    _.forEach(keys, function(key) {
-      var ignoredIndex = _.findIndex(ignoredFields, function(elem) { return elem == key; } );
-      if(ignoredFields &&  ignoredIndex !== -1) {
-        response[key] = model[key];
-        return;
-      }
-
-      if(_.isArray(model[key]) == true) {
-        response[key] = [];
-        _.forEach(model[key], function (elem, index) {
-          //no se hace recursivo porque solo se debería de necesitar comprobar en primer nivel
-          fieldTrimmer(model[key], response[key], index, ignoredFields);
-        });
-
-      } else {
-        fieldTrimmer(model, response, key, ignoredFields);
-      }
-    });
-    return response;
-  }
-
-  function fieldTrimmer(model, newModel, fieldName, ignoredFields) {
-    if(_.isObject(model[fieldName]) && model[fieldName].hasOwnProperty("id")) {
-      newModel[fieldName] = model[fieldName].id;
-    } else {
-      newModel[fieldName] = model[fieldName];
-    }
-  }
-}
-}());
-
-(function() {
-angular.module('ui')
-  .factory('NotificacionesWSFactory', NotificacionesWSFactory);
-NotificacionesWSFactory.$inject = ['$resource', 'baseurl', '$log', '$websocket', '$timeout'];
-
-function NotificacionesWSFactory($resource, baseurl, $log, $websocket, $timeout) {
-  var service = {
-    all: all,
-    close: close,
-    create: create,
-    get: get,
-    getLatest: getLatest,
-    init: init,
-    remove: remove,
-    save: save,
-    sendAction: sendAction,
-    registerMessageObserver: registerMessageObserver
-  };
-
-  var notificaciones = $resource( baseurl.getBaseUrl() + "/notificaciones/:id", {id: '@id'}, {
-    update: {
-      method: 'PUT'
-    }
-  });
-
-  var closedByUser = false;
-
-  var retries = 0;
-
-  var websocket = undefined;
-
-  return service;
-
-  function all(params) {
-    return notificaciones.query(params);
-  }
-
-  function close(forceClose) {
-    closedByUser = true;
-    var forzar = false;
-    if(forceClose) {
-      forzar = forceClose;
-    }
-
-    websocket.close(forzar);
-  }
-
-  function create(attrs) {
-    return new notificaciones(attrs);
-  }
-
-  function get(id) {
-    return notificaciones.get({id: id});
-  }
-
-  function getLatest(offset, limit) {
-    var obj = {
-      action: "get",
-      offset: offset,
-      limit: limit
-    };
-    websocket.send(JSON.stringify(obj));
-  }
-
-  function init(username) {
-    websocket = $websocket(baseurl.getBareServerUrl() + "wsnotificaciones");
-    var obj = {
-      action: "init",
-      username: username
-    };
-    websocket.onOpen(function() {
-      console.log("Socket abierto");
-      retries = 0;
-    });
-
-    websocket.onClose(function() {
-      console.log("Socket cerrado");
-      if(!closedByUser) {
-        if(retries < 4) {
-          retries = retries + 1;
-          $timeout(function() { init(username) }, (1000 * retries));
-        } else {
-          console.error("Tras 4 intentos no se pudo reestablecer conexion con websocket de notificaciones.");
-        }
-      } else {
-        closedByUser = false;
-      }
-    });
-    console.log(websocket);
-    websocket.send(JSON.stringify(obj));
-  }
-
-  function sendAction(accion, notificacion) {
-    var obj = {
-      action: accion,
-      notificacion: notificacion.id
-    };
-    $log.info("mensaje a mandar: ");
-    $log.info(obj);
-    websocket.send(JSON.stringify(obj));
-  }
-
-  function registerMessageObserver(functionHandler) {
-    if(!websocket) {
-      websocket = $websocket(baseurl.getBareServerUrl() + "wsnotificaciones");
-    }
-    websocket.onMessage(functionHandler);
-  }
-
-  function remove(notificacion) {
-    return notificacion.$remove();
-  }
-
-  function save(notificacion) {
-    return (notificacion.id) ? notificacion.$update() : notificacion.$save();
-  }
-}
-}());
-
-(function() {
-'use strict';
-
-/**
- * @ngdoc service
- * @name ui.ReportTicketFactory
- * @description
- * # ReportTicketFactory
- */
-angular.module('ui')
-  .factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
-  
-    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID?:query&currentColumnOrder=:currentColumnOrder', 
-      {
-        action: '@reportID'
-      });
-
-    return {
-      ticket: function(reportID, filters, searchParams, currentColumnOrder) {
-        var report = new ReportTicket(filters);
-        var params = {reportID: reportID}; 
-
-        if (searchParams) {
-          params.query = decodeURIComponent($.param(searchParams));
-        }
-
-        if (currentColumnOrder) {
-          params.currentColumnOrder = currentColumnOrder;
-        }
-        
-        return report.$save(params);
-      },
-
-      downloadURL: function(reportTicket, exportType) {
-        console.log('downloadURL');
-        return baseurl.getBaseUrl() + '/generar/' + reportTicket + '/' + exportType;
-      },
-
-      downloadCustomReport: function(reportID, exportType, filters) {
-        console.log('dowloadCustomReport');
-        var downloadUrl = baseurl.getBaseUrl() + '/reportes/' + reportID;
-        if (filters) {
-          downloadUrl += "?";
-          _.forEach(filters, function (filter) {
-            //console.log(filter);
-            downloadUrl += filter + "&";
-          });
-          return downloadUrl;
-        }
-        return downloadUrl;
-      }
-    };
-  }]);
-}());
-(function() {
-'use strict';
-
-/**
- * Provider que permite:
- *
- * 1) Que un controller/service pueda definir las claves de traduccion que necesita.
- * 2) Que un controller/service pueda recuperar las claves de traduccion registradas por un modulo.
- *
- * @author Jorge Ramirez <jorge@codium.com.py>
- **/
-angular
-  .module('ui')
-  .provider('tkeys', Provider);
-
-function Provider() {
-  var keysMap = {};
-  this.addKeys = addKeys;
-  this.$get = [tkeysFactory];
-
-  /**
-   * Agrega la lista de claves de traduccion que el modulo va a necesitar
-   *
-   * @param module {String}: identificador del modulo.
-   * @param keys {Array}
-   **/
-  function addKeys(module, keys) {
-    keysMap[module] = keys;
-  }
-  
-  /**
-   * Esta funcion es la que retorna el prototipo del servicio tkeys.
-   **/
-  function tkeysFactory() {
-    return keysMap;
-  }
-}
-}());
-
-(function() {
-'use strict';
-
-/**
- * @ngdoc service
- * @name ui.UploadFactory
- * @description
- */
-angular.module('ui')
-  .service('UploadFactory', ['$rootScope', 'baseurl', function ($rootScope, baseurl) {
-      var flow;
-      var mimeTypeMap = {
-        jpg: 'image/jpg',
-        jpeg: 'image/jpeg',
-        png: 'image/png',
-        gif: 'image/gif'
-      };
-     
-      function setFlow(uploadOptions) {
-        flow = uploadOptions.flow;
-      }
-
-      // Public API here
-      return {
-        getCurrentFiles: function(uploadOptions) {
-          var self = this;
-          setFlow(uploadOptions);
-
-          if(!flow) {
-            return;
-          }
-          var flowFiles = flow.files;
-          var files = []; // Lista de objetos de tipo { path: '' }
-
-          if (flowFiles.length > 0){
-            angular.forEach(flowFiles, function(file) {
-              files.push({
-                path: self.getFilename(file)
-              });
-            });
-          }
-          return files;
-        },
-
-        clearCurrentFiles: function() {
-          $rootScope.flow.files = [];
-        },
-
-        /**
-         * Se encarga de cargar en el objeto flow el array de imagenes.
-         **/
-        addFiles: function(images) {
-          setFlow();
-          
-          if(!flow) {
-            return;
-          }
-          
-          angular.forEach(images, function(img) {
-            var contentType = mimeTypeMap[img.path.toLowerCase().substring(_.lastIndexOf(img.path, '.') + 1)];
-            var blob = new Blob(['pre_existing_image'], {type: contentType});
-            blob.name = img.path;
-            blob.image_url = baseurl.getPublicBaseUrl() + img.path;
-            var file = new Flow.FlowFile(flow, blob);
-            file.fromServer = true; // el archivo ya se encuentra en el servidor, no hay que procesar de vuelta.
-            flow.files.push(file);
-          });
-        },
-        
-        /**
-         * Retorna el nombre del archivo. Esto se corresponde con la logica en el backend
-         **/
-        getFilename: function(file) {
-          
-          if(file.fromServer) {
-            return file.name;
-          }
-          var basename = file.size + '-' + file.name;
-          // se corresponde con el backend
-          basename = basename.replace(/[^a-zA-Z/-_\\.0-9]+/g, '');
-          basename = basename.replace(/\s/g, '');
-          return basename;
-        }
-      };
-  }]);
-}());
-
-(function() {
-'use strict';
-
-/**
- * @ngdoc service
- * @name ui.usuariosFactory
- * @description
- * # usuariosFactory
- */
-angular.module('ui')
-  .factory('usuariosFactory', function ($resource, filterFactory, baseurl) {
-
-    var Usuario = $resource(baseurl.getBaseUrl() + '/usuarios/:id', { id: '@id' }, {
-      'update': { method: 'PUT' }, // this method issues a PUT request
-    });
-
-    // Public API here
-    return {
-      all: function(params) {
-        return Usuario.query(params);
-      },
-
-      get: function(id) {
-        return Usuario.get({id: id});
-      },
-
-      getByUsername: function(username) {
-        var params = {};
-        params.search = filterFactory.single({
-                        path: 'username',
-                        equals: username
-                      }).value();
-        return Usuario.query(params);
-      },
-
-      create: function(attrs) {
-        return new Usuario(attrs);
-      },
-
-      save: function(usuario) {
-        return (usuario.id) ? usuario.$update() : usuario.$save();
-      },
-
-      remove: function(usuario) {
-        return usuario.$remove();
-      }
-    };
-  });
-}());
-
-(function() {
-'use strict';
-
-angular.module('ui')
-  .factory('Util', Util);
-
-function Util() {
-  var service = {
-    toUnidadMedidaBase: toUnidadMedidaBase,
-    fromUnidadMedidaBase: fromUnidadMedidaBase
-  };
-
-  return service;
-
-  function toUnidadMedidaBase(cantidad, unidadMedida) {
-      var multiplicador=1;
-      var unidadActual = unidadMedida;
-      while(!unidadActual.esBase){
-        multiplicador=multiplicador*unidadActual.cantidad;
-        unidadActual=unidadActual.unidadContenida;
-      }
-      return cantidad * multiplicador;
-  }
-
-  function fromUnidadMedidaBase(cantidad, unidadObjetivo) {
-    var multiplicador = 1;
-    var unidadActual = unidadObjetivo;
-    while (!unidadActual.esBase) {
-      multiplicador = multiplicador * unidadActual.cantidad;
-      unidadActual = unidadActual.unidadContenida;
-    }
-    return cantidad / multiplicador;
-  }
-}
-}());
