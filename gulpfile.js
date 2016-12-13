@@ -35,9 +35,11 @@ var sourceFiles = [
 ];
 
 var cssFiles = [
-  path.join(sourceDirectory, '/**/*.scss'),
+  path.join(sourceDirectory, '/styles/main.scss'),
   path.join(sourceDirectory, '/**/*.css')
 ];
+
+var themeCssFile = [path.join(sourceDirectory, '/styles/theme.scss')];
 
 var htmlFiles = [
   path.join(sourceDirectory, '/views/**/*.html'),
@@ -60,6 +62,11 @@ gulp.task('build', function() {
   
   gulp.src(cssFiles)
     .pipe(concat('ui.scss'))
+    .pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
+    .pipe(gulp.dest('./dist'));
+
+  gulp.src(themeCssFile)
+    .pipe(concat('ui.theme.scss'))
     .pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
     .pipe(gulp.dest('./dist'));
 
