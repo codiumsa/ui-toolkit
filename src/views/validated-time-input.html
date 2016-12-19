@@ -1,5 +1,5 @@
 <div class="{{ vm.classes }} has-feedback" ng-class="{ 'has-error' : vm.form[vm.name].$invalid && ((!vm.focus && vm.form[vm.name].$touched) || vm.submitedFlag), 'has-success' : !vm.form[vm.name].$invalid && ((!vm.focus && vm.form[vm.name].$touched) || vm.submitedFlag) }">
-  <label ng-if="vm.label" for="{{vm.name}}" ng-class="{ 'help-block' : vm.form[vm.name].$invalid &&((!vm.focus && vm.form[vm.name].$touched)|| vm.submitedFlag), 'custom-success': !vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submitedFlag)}">{{vm.label}}</label>
+  <label ng-if="vm.label" for="{{vm.name}}" ng-class="{ 'help-block' : vm.form[vm.name].$invalid &&((!vm.focus && vm.form[vm.name].$touched)|| vm.submitedFlag), 'custom-success': !vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submitedFlag)}">{{vm.label}} {{vm.isRequired ? '*' : ''}}</label>
   <div class="input-group" style="width: 100%;">
 		<input type="text"  name="{{vm.name}}" id="{{vm.name}}" ng-model="vm.model" ng-required="vm.isRequired"
 		class="form-control" ng-disabled="vm.isDisabled" ng-focus="vm.focus()" ng-blur="vm.blur()"/>

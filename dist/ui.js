@@ -208,2922 +208,6 @@ angular.module('ui')
 (function() {
 'use strict';
 
-angular
-  .module('ui').directive('aDisabled', function() {
-    return {
-      compile: function(tElement, tAttrs, transclude) {
-        //Disable ngClick
-        tAttrs['ngClick'] = '!(' + tAttrs['aDisabled']+ ') && (' + tAttrs['ngClick'] + ')';
-
-        //return a link function
-        return function (scope, iElement, iAttrs) {
-
-          //Toggle 'disabled' to class when aDisabled becomes true
-          scope.$watch(iAttrs['aDisabled'], function(newValue) {
-            if (newValue !== undefined) {
-              iElement.toggleClass('disabled', newValue);
-            }
-          });
-
-          //Disable href on click
-          iElement.on('click', function(e) {
-            if (scope.$eval(iAttrs['aDisabled'])) {
-              e.preventDefault();
-            }
-          });
-        };
-      }
-    };
-  });
-
-angular.module('ui')
-  .directive('uiRequired', function() {
-    return {
-      require: 'ngModel',
-      link: function(scope, elm, attrs, ctrl) {
-        ctrl.$validators.required = function(modelValue, viewValue) {
-          return !((viewValue && viewValue.length === 0 || false) && attrs.uiRequired === 'true');
-        };
-
-        attrs.$observe('uiRequired', function() {
-          ctrl.$setValidity('required', !(attrs.uiRequired === 'true' && ctrl.$viewValue && ctrl.$viewValue.length === 0));
-        });
-      }
-    };
-  });
-}());
-
-(function() {
-angular
-  .module('ui')
-  .directive('advancedDatatablesSearch', advancedDatatablesSearch);
-
-function advancedDatatablesSearch() {
-  var directive = {
-    restrict: 'E',
-    controllerAs: 'vm',
-    scope: {
-      model: '=',
-      options: '=',
-      factory: '=',
-      disabledBtn: '=',
-      multipleSelection: '=?',
-      size: '@',
-      serializationView: '@',
-      style: '@'
-    },
-    bindToController: true,
-    templateUrl: 'views/directives/advanced-datatables-search.html',
-    link: linkFunc,
-    controller: AdvancedDatatablesSearchController,
-  };
-
-  function linkFunc(scope, elem, attr) {
-    scope.vm.multipleSelection = angular.isDefined(scope.vm.multipleSelection) ? scope.vm.multipleSelection : false;
-  }
-
-  return directive;
-}
-
-AdvancedDatatablesSearchController.$inject =  ['$log', '$scope', '$modal', '$state'];
-function AdvancedDatatablesSearchController($log, $scope, $modal, $state) {
-  var vm = this;
-  if(!vm.size) { vm.size = "btn-xs"; }
-  vm.valorScope = "hola";
-  vm.pick = pick;
-  vm.showSearch = showSearch;
-  vm.addAll = addAll;
-  if(!vm.multipleSelection) {
-    vm.options.extraRowOptions = [{
-      templateToRender: "<button class='btn btn-primary' style='margin-right: 5px;' ng-click='pick(<%=dataId%>)'> <span class='glyphicon glyphicon-ok'></span> </button>",
-      functionName: "pick",
-      functionDef: function (itemId) {
-        vm.pick(itemId);
-      }
-    }];
-  } else {
-    if (vm.multipleSelection) {
-      vm.options.isSelectable = true;
-      vm.options.selection = {};
-      vm.options.extraMenuOptions = [{
-        'title': "GSDG",
-        'icon': 'glyphicon glyphicon-plus',
-        'showCondition': function() {
-          return true;
-        },
-        'action': function() {
-          if (vm.isProcesoImportacion){
-            $state.go("app.importaciones.proceso.ordenescompra.new");
-          }else{
-            $state.go("app.orden_compra_importacion.new");
-          }
-        }
-      }];
-    }
-  }
-  vm.options.hideAddMenu = true;
-  vm.options.hideEditMenu = true;
-  vm.options.hideRemoveMenu = true;
-  vm.options.hideHeader = true;
-
-  var createFilters = function (filters) {
-    var filtersArr = [];
-    _.each(filters, function (search, data) {
-      filtersArr.push({path: data, like: search})
-    });
-    var filters = filterFactory.and(filtersArr).value();
-    return filters;
-  };
-
-  activate();
-
-  function activate() {
-    vm.modalInstance = undefined;
-  }
-
-  function pick(item) {
-    vm.model = vm.factory.get(item, vm.serializationView);
-    
-    if(vm.modalInstance) {
-      vm.modalInstance.close();
-    }
-  }
-
-  function showSearch() {
-    vm.modalInstance = $modal.open({
-      templateUrl: 'views/datatables-modal.html',
-      scope: $scope,
-      size: 'lg'
-    });
-  }
-
-  function addAll() {
-    //convertimos los datos a un array de indicesSelected
-    var indicesSelected = _.filter(_.map(vm.options.selection, function(val, idx) {
-        return val == true ? parseInt(idx) : false; }),
-      function(val) {  return val; });
-    vm.model = _.map(indicesSelected, function(idx) { return vm.factory.get(idx, vm.serializationView); });
-    
-    if(vm.modalInstance) {
-      vm.modalInstance.close();
-    }
-  }
-}
-}());
-
-(function() {
-'use strict';
-
-angular.module('ui')
-.value('$datepickerSuppressError', true)
-.directive('pickDate', ['$filter', function ($filter) {
-  return {
-    restrict: 'A',
-    require: 'ngModel',
-    link: function (scope, element, attrs, ngModel) {
-      moment.locale('es');
-      if (scope.model[scope.form.key[0]]) {
-        scope.model[scope.form.key[0]] = new Date(scope.model[scope.form.key[0]]);
-      }
-      
-      scope.status = {
-        opened: false
-      };
-      
-      scope.open = function () {
-        scope.status.opened = true;
-      };
-      var defaultFormat = 'dd/MM/yyyy';
-
-      ngModel.$parsers.push(function () {
-        console.log(scope.schema.formatDate);
-        return $filter('date')(element.val(), scope.form.schema.formatDate || defaultFormat);
-      });
-    }
-  };
-}]);
-}());
-
-(function() {
-'use strict';
-
-/**
- * @ngdoc directive
- * @name ui.directive:fileupload
- * @description
- * # fileupload
- */
-angular.module('ui')
-  .directive('fileupload', ['$rootScope', 'notify', 'UploadFactory', 'baseurl', function ($rootScope, notify, UploadFactory, baseurl) {
-    return {
-      template: '<div ng-show="uploadOptions.imageOnly">' +
-      '<div flow-init="{singleFile: true}" ' +
-      'flow-files-submitted="uploader.flow.upload()"' +
-      'flow-file-added="!!{png:1,gif:1,jpg:1,jpeg:1}[$file.getExtension()]"' +
-      'flow-files-added="filesAdded($files, $event, uploader.flow)"' +
-      'flow-name="uploader.flow"' +
-      'class="ng-scope">' +
-      '<label>{{uploadOptions.title}}</label>' +
-
-      '<div class="thumbnail" ng-show="uploader.currentFile && !uploader.flow.files.length">' +
-      '<img src="{{uploader.currentFile}}" style="max-width: 300px; max-height: 200px;"/> ' +
-      '</div>' +
-
-      '<div class="thumbnail" ng-show="!uploader.flow.files.length && !uploader.currentFile && !uploadOptions.imagePath">' +
-      '<img src="images/placeholder.png" style="max-width: 300px; max-height: 200px;">' +
-      '</div>' +
-
-      '<div class="thumbnail" ng-show="uploader.flow.files.length">' +
-      '<img flow-img="uploader.flow.files[0]" style="max-width: 300px; max-height: 200px;"/> ' +
-      '</div>' +
-
-      '<div class="thumbnail" ng-show="uploadOptions.imagePath && !uploader.currentFile && !uploader.flow.files.length">' +
-      '<img ng-src="{{uploadOptions.imagePath}}" style="max-width: 300px; max-height: 200px;"/> ' +
-      '</div>' +
-
-      '<div>' +
-      '<span class="btn btn-primary" ng-show="!uploader.flow.files.length" flow-btn="">' +
-      'Seleccionar imagen' +
-      '<input type="file" sf-changed="form" ng-model="$$value$$" style="visibility: hidden; position: absolute;" />' +
-      '</span>' +
-      '<span class="btn btn-info ng-hide" ng-show="uploader.flow.files.length" flow-btn="">' +
-      'Cambiar' +
-      '<input type="file" sf-changed="form" ng-model="$$value$$" style="visibility: hidden; position: absolute;" />' +
-      '</span>' +
-      '<span class="btn btn-danger ng-hide" ng-show="uploader.flow.files.length" ng-click="uploader.flow.cancel()">' +
-      'Eliminar' +
-      '</span>' +
-      '</div>' +
-      '<p>' +
-      'Formatos permitidos: PNG, GIF, JPG y JPEG.' +
-      '</p>' +
-      '</div>' +
-      '</div>' +
-
-      '<div ng-show="!uploadOptions.imageOnly">' +
-      '<div flow-init ' +
-      'flow-files-submitted="uploader.flow.upload()"' +
-      'flow-file-added="fileAdded($file, $event, $flow)" ' +
-      'flow-files-added="filesAdded($files, $event, $flow)" ' +
-      'flow-file-success="uploadCompleted()" ' +
-      'class="ng-scope">' +
-      '<h3>{{uploadOptions.title}}</h3>' +
-      '<div class="drop" flow-drop ng-class="dropClass">' +
-
-      '<span class="btn btn-default btn-sm" flow-btn>Cargar archivo ' +
-        '<input type="file" ng-model="$$value$$" sf-changed="form" style="visibility: hidden; position: absolute;"/> ' +
-      '</span> ' +
-      '<br/> ' +
-      '<b>O</b> ' +
-      'Arrastre el archivo aqu&iacute; ' +
-      '</div> ' +
-      '<br/> ' +
-      '<div ng-repeat="file in uploader.flow.files" class="transfer-box">' +
-      '{{file.relativePath}} ({{file.size}}bytes)' +
-      '<div class="progress progress-striped" ng-class="{active: file.isUploading()}">' +
-      '<div class="progress-bar" role="progressbar" ' +
-      'aria-valuenow="{{file.progress() * 100}}" ' +
-      'aria-valuemin="0" ' +
-      'aria-valuemax="100" ' +
-      'ng-style="{width: progressWith(file.progress())}">' +
-      '<span class="sr-only">{{file.progress()}}% Complete</span>' +
-      '</div>' +
-      '</div>' +
-      '<div class="btn-group">' +
-      '<a class="btn btn-xs btn-danger" ng-click="file.cancel()">' +
-      'Cancelar' +
-      '</a>' +
-      '<a class="btn btn-xs btn-info" ng-click="file.retry()" ng-show="file.error">' +
-      'Reintentar' +
-      '</a>' +
-      '</div>' +
-      '</div>' +
-      '</div>' +
-      '</div>' +
-      '</div>',
-      restrict: 'E',
-      tranclude: true,
-      scope: {
-        uploadOptions: '='
-      },
-      link: function postLink(scope, element, attrs) {
-        scope.uploader = {};
-        scope.title = attrs.title;
-        scope.fileModel = {};
-
-        scope.progressWith = function (progress) {
-          return (progress * 100) + '%';
-        };
-        
-        scope.filesAdded = function (files, event, flow) {
-          scope.uploader.flow = flow;
-          scope.uploadOptions.flow = flow;
-        };
-
-        if (scope.uploadOptions) {
-          scope.uploader.flow = scope.uploadOptions.flow;
-        }
-        scope.files = [];
-        scope.adjuntosBaseURL = baseurl.getPublicBaseUrl();
-
-        scope.fileAdded = function(file, event) {
-          // controlamos que no se supere el limite de tamano          
-          if(scope.uploadOptions.FILE_UPLOAD_LIMIT && file.size > (scope.uploadOptions.FILE_UPLOAD_LIMIT * 1000 * 1000)){
-            event.preventDefault();
-            ngNotify.set('El tamaño del archivo supera el límite de ' + scope.uploadOptions.FILE_UPLOAD_LIMIT + ' MB.', 'warn');
-            return false;
-          }
-          var ext = file.getExtension();
-          // si es imagen controlamos que sea alguna de las extensiones permitidas
-          if(scope.uploadOptions.imageOnly && ['png', 'gif', 'jpg', 'jpeg'].indexOf(ext) < 0){
-            notify({message: 'Solo se permiten archivos con extensión: png, gif, jpg o jpeg.', classes: 'alert-warning', position: 'right'});
-            return false;
-          }
-          // controlamos que el tamanio del nombre no supere 255 caracteres
-          if(file.name.length > 255) {
-            notify({message: 'El nombre del archivo supera los 255 caracteres', classes: 'alert-warning', position: 'right'});
-            return false;
-          }
-        };
-
-        scope.uploadCompleted = function() {
-          notify({message: 'Archivo cargado correctamente', classes: 'alert-warning', position: 'right'});
-          scope.files = UploadFactory.getCurrentFiles(scope.uploadOptions);
-        };
-      }
-    };
-  }]);
-}());
-
-(function() {
-'use strict';
-
-angular
-  .module('ui').directive('focusOn', ['$timeout', function($timeout) {
-   return function(scope, elem, attrs) {
-     scope.$on(attrs.focusOn, function(e) {
-       $timeout((function() {
-         elem[0].focus();
-       }), 10);
-     });
-   };
-}]);
-}());
-
-(function() {
-'use strict';
-
-/**
- * @ngdoc directive
- * @name ui.directive:menuBuilder
- * @description
- * # menuBuilder
- */
-angular.module('ui')
-  .directive('menuBuilder', ['$timeout', function ($timeout) {
-    return {
-      templateUrl: 'views/menu-builder.html',
-      restrict: 'EA',
-      replace: true,
-      scope: { options: '=', menu: '=', save: '=' },
-      link: function postLink(scope, element, attrs) {
-        //scope.menu = {};
-        var setLeafs = function(nodes) {
-          _.each(nodes, function(n) {
-            n.data = { estado: n.estado };
-            if(n.children) setLeafs(n.children);
-            else n.type = 'leaf';
-          }); 
-          return nodes;
-        };
-
-        function drawJSTree(treeData) {
-          $('#menu-builder').jstree({
-            'core' : {
-              'animation' : 0,
-              'check_callback': function(operation, node, parent, position)
-              { 
-                switch (operation) {
-                    case 'move_node':
-                      return !parent.parent || parent.original.type !== 'leaf';
-                    case 'create_node':
-                      return parent.original.type !== 'leaf';
-                    case 'rename_node':
-                      return node.original.type !== 'leaf';
-                    case 'delete_node':
-                      return _.isEmpty(node.children) && node.original.type !== 'leaf';
-                }
-                return false;
-              },
-              'themes' : { 'stripes' : true },
-              'data' : setLeafs(treeData)
-            },
-            'types' : {
-              'default' : {
-                'icon' : 'glyphicon glyphicon-record'
-              },
-              'leaf' : {
-                'icon' : 'glyphicon glyphicon-asterisk'
-              }
-            },
-            'plugins' : [
-              'dnd', 'search',
-              'state', 'types', 'wholerow'
-            ]
-          });
-        }
-
-        function nodeRename() {
-          var ref = $('#menu-builder').jstree(true),
-            sel = ref.get_selected();
-          if(!sel.length) { return false; }
-          sel = sel[0];
-          //console.log(ref.get_node(sel));
-          if(ref.get_node(sel).original.type !== 'leaf') ref.edit(sel);
-        }
-
-        $('#menu-builder').delegate("li","dblclick", function(e) {
-          nodeRename();
-          return false;
-        });
-
-        scope.nodeCreate = function() {
-          var ref = $('#menu-builder').jstree(true),
-              sel = ref.get_selected();
-          if(!sel.length) { return false; }
-          sel = sel[0];
-          sel = ref.create_node(sel);
-          if(sel) {
-              ref.edit(sel);
-          }
-        };
-
-        scope.nodeDelete = function() {
-          var ref = $('#menu-builder').jstree(true),
-              sel = ref.get_selected();
-          if(!sel.length) { return false; }
-          ref.delete_node(sel);
-        };
-
-        scope.getMenu = function() {
-          var getMenuNode = function(e) {
-            var result = {
-              text: e.text,
-              estado: e.data.estado
-            };
-
-            if(!_.isEmpty(e.children)){
-              result.children = _.map(e.children, function(c){
-                return getMenuNode(c);
-              });
-            }
-
-            return result;
-          }
-
-          var ref = $('#menu-builder').jstree(true);
-          var menu = _.map(ref.get_json(), getMenuNode);
-          
-          scope.save(menu);
-          //scope.menu = menu;
-        };
-
-        scope.$watch('menu', function(menu) {
-          if(menu) drawJSTree(menu);
-        });
-      }
-    };
-  }]);
-}());
-
-(function() {
-'use strict';
-
-angular.module('ui')
-.directive('mmenu', function() {
-    return {
-        restrict : 'A',
-        link : function(scope, element, attrs) {
-            $(element).mmenu({
-               "extensions": [
-                  "pagedim-black",
-                  "effect-listitems-slide",
-                  "multiline",
-                  "pageshadow"
-               ],
-               "counters": true,
-               "iconPanels": {add:true,
-                 hideNavbars: true
-               },
-               "navbar": {
-                 "title": attrs.navbarTitle
-               },
-               "navbars": [
-                  {
-                     "position": "top",
-                     "content": [
-                        "searchfield"
-                     ]
-                  },
-                  true
-               ],
-               searchfield: {
-                  resultsPanel: {
-                    title: "Resultados",
-                    add: true},
-                  placeholder: "Buscar menú",
-                  noResults: "Sin coincidencias",
-                  
-               }
-            }, {
-             searchfield: {
-                clear: true  
-             }
-          });
-        }
-    };
-});
-}());
-(function() {
-'use strict';
-
-/**
- * @ngdoc directive
- * @name qualita.directive:offlineFormRecovery
- * @description
- * # offlineFormRecovery
- */
-angular.module('ui')
-  .directive('offlineFormRecovery', ['$localForage', function ($localForage) {
-    return {
-      template: '<div class="btn-group" role="group" aria-label="First group">' +
-      '<button ng-disabled="!pending.length || position == 0" type="button" class="glyphicon glyphicon-arrow-left btn btn-default btn-recovery" ng-click="previous()"></button>' +
-      '<button ng-disabled="!pending.length || position == pending.length" type="button" class="glyphicon glyphicon-arrow-right btn btn-default btn-recovery" ng-click="next()"></button>' +
-      '<button ng-disabled="!pending.length || position == 0" type="button" class="glyphicon glyphicon-remove btn btn-default btn-recovery" ng-click="remove()"></button>' +
-      '</div>',
-      restrict: 'EA',
-      link: function postLink(scope, element, attrs) {
-        scope.position = 0;
-
-        if (scope.resource) {
-          $localForage.getItem(scope.resource).then(function(value) {
-            scope.pending = _(value).filter(function(e) { return !e.id; })
-                              .map(function(e, i){ e.index = i; return e; }).value();
-          });
-        } else {
-          console.log('scope.resource no definido');
-        }
-
-        scope.next = function() {
-          scope.position++;
-          scope.model = (scope.position == 0) ? {} : scope.pending[scope.position - 1];
-        };
-
-        scope.previous = function() {
-          scope.position--;
-          scope.model = (scope.position == 0) ? {} : scope.pending[scope.position - 1];
-        };
-
-        scope.remove = function() {
-          $localForage.getItem(scope.resource).then(function(value) {
-            scope.pending = _.filter(value, function(e, i) { return i !== scope.position - 1; });
-            $localForage.setItem(scope.resource, scope.pending);
-            scope.previous();
-          });
-        }
-      }
-    };
-  }]);
-}());
-
-(function() {
-'use strict';
-
-/**
- * @ngdoc directive
- * @name ui.directive:reportViewer
- * @description
- * # reportViewer
- */
-angular.module('ui')
-  .directive('reportViewer', ['$modal', '$sce', function ($modal, $sce) {
-    return {
-      template: '',
-      restrict: 'E',
-      scope: {
-        url: '=',
-        title: '@',
-        background: '='
-      },
-      link: function postLink(scope, element) {
-
-        scope.close = function () {
-          scope.modalInstance.dismiss('close');
-        };
-
-        scope.$watch('url', function() {
-         
-          if(scope.url) {
-            scope.trustedUrl = $sce.trustAsResourceUrl(scope.url);
-            
-            if(!scope.background){
-              scope.modalInstance = $modal.open({
-                template: '<div class="modal-header">' +
-                  '<div class="close glyphicon glyphicon-remove" ng-click="close()"></div>' +
-                  '<h3 class="modal-title">{{title}}</h3>' +
-                '</div>' +
-                '<div class="modal-body">' +
-                  '<iframe src="{{trustedUrl}}" width="100%" height="450"></iframe>' +
-                '</div>' +
-                '<div class="modal-footer">' +
-                  '<button class="btn btn-primary" ng-click="close()">Cerrar</button>' +
-                '</div>',
-                scope: scope
-              });
-            }else{
-              element.append('<iframe src="' + scope.trustedUrl + '" hidden></iframe>');
-            }
-          }
-        });
-      }
-    };
-  }]);
-}());
-(function() {
-'use strict';
-
-angular
-  .module('ui').directive('resize', ['$window', function($window){
-  return{
-    link: function(scope, element, attrs){
-      var w = angular.element($window);
-      scope.getWindowDimensions = function () {
-        return { 'h': w.height(), 'w': w.width() };
-      };
-      scope.$watch(scope.getWindowDimensions, function (newValue, oldValue) {
-        scope.windowHeight = newValue.h;
-        scope.windowWidth = newValue.w;
-
-        scope.style = function () {
-          return {
-            'height': (newValue.h) + 'px',
-            'width': (newValue.w) + 'px'
-          };
-        };
-        scope.getHeight = function (padding) {
-          return {
-            'height': (newValue.h + padding) + 'px'
-          };
-        };
-        scope.getWidth= function (padding) {
-          return {
-            'width': (newValue.w + padding) + 'px'
-          };
-        };
-      }, true);
-
-      w.bind('resize', function () {
-        scope.$apply();
-      });
-    }
-  };
-}]);
-}());
-
-angular.module('ui').run(["$templateCache", function($templateCache) {
-
-$templateCache.put("views/directives/uiselect.html", "<div class=\"form-group\"\n" +
-      "     ng-class=\"{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess(), 'has-feedback': form.feedback !== false}\"\n" +
-      "     ng-init=\"selectedOptions=form.titleMap; insideModel=$$value$$;\" ng-controller=\"dynamicSelectController\">\n" +
-      "  <label class=\"control-label\" ng-show=\"showTitle()\">{{form.title}}</label>\n" +
-      "\n" +
-      "  <div class=\"form-group\">\n" +
-      "    <ui-select ng-model=\"select_model.selected\"\n" +
-      "               ng-if=\"!(form.options.tagging||false)\" theme=\"bootstrap\" ng-disabled=\"form.disabled\"\n" +
-      "               on-select=\"$$value$$=$item.value\" class=\"{{form.options.uiClass}}\">\n" +
-      "      <ui-select-match\n" +
-      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" +
-      "        {{select_model.selected.name}}\n" +
-      "      </ui-select-match>\n" +
-      "      <ui-select-choices refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" +
-      "                         refresh-delay=\"form.options.refreshDelay\" group-by=\"form.options.groupBy\"\n" +
-      "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" +
-      "        <div ng-bind-html=\"item.name | highlight: $select.search\"></div>\n" +
-      "        <div ng-if=\"item.description\">\n" +
-      "          <span\n" +
-      "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS'))+ '</small>'\"></span>\n" +
-      "        </div>\n" +
-      "      </ui-select-choices>\n" +
-      "    </ui-select>\n" +
-      "    <ui-select ng-model=\"select_model.selected\"\n" +
-      "               ng-if=\"(form.options.tagging||false) && !(form.options.groupBy || false)\"\n" +
-      "               tagging=\"form.options.tagging||false\" tagging-label=\"form.options.taggingLabel\"\n" +
-      "               tagging-tokens=\"form.options.taggingTokens\"\n" +
-      "               theme=\"bootstrap\" ng-disabled=\"form.disabled\" on-select=\"$$value$$=$item.value\"\n" +
-      "               class=\"{{form.options.uiClass}}\">\n" +
-      "      <ui-select-match\n" +
-      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" +
-      "        {{select_model.selected.name}}&nbsp;\n" +
-      "        <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>\n" +
-      "      </ui-select-match>\n" +
-      "      <!--repeat code because tagging does not display properly under group by but is still useful -->\n" +
-      "      <ui-select-choices refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" +
-      "                         refresh-delay=\"form.options.refreshDelay\"\n" +
-      "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescription===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" +
-      "        <div ng-if=\"item.isTag\"\n" +
-      "             ng-bind-html=\"'<div>' + (item.name   | highlight: $select.search) + ' ' + form.options.taggingLabel + '</div><div class=&quot;divider&quot;></div>'\"></div>\n" +
-      "        <div ng-if=\"!item.isTag\" ng-bind-html=\"item.name + item.isTag| highlight: $select.search\"></div>\n" +
-      "        <div ng-if=\"item.description\">\n" +
-      "          <span\n" +
-      "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS')) + '</small>'\"></span>\n" +
-      "        </div>\n" +
-      "      </ui-select-choices>\n" +
-      "    </ui-select>\n" +
-      "\n" +
-      "    <!--repeat code because tagging does not display properly under group by but is still useful -->\n" +
-      "\n" +
-      "    <ui-select ng-model=\"select_model.selected\"\n" +
-      "               ng-if=\"(form.options.tagging||false) && (form.options.groupBy || false)\"\n" +
-      "               tagging=\"form.options.tagging||false\" tagging-label=\"form.options.taggingLabel\"\n" +
-      "               tagging-tokens=\"form.options.taggingTokens\"\n" +
-      "               theme=\"bootstrap\" ng-disabled=\"form.disabled\" on-select=\"$$value$$=$item.value\"\n" +
-      "               class=\"{{form.options.uiClass}}\">\n" +
-      "      <ui-select-match\n" +
-      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" +
-      "        {{select_model.selected.name}}&nbsp;\n" +
-      "        <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>\n" +
-      "      </ui-select-match>\n" +
-      "      <ui-select-choices group-by=\"form.options.groupBy\"\n" +
-      "                         refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" +
-      "                         refresh-delay=\"form.options.refreshDelay\"\n" +
-      "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescription===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" +
-      "        <div ng-if=\"item.isTag\"\n" +
-      "             ng-bind-html=\"'<div>' + (item.name  | highlight: $select.search) + ' ' + form.options.taggingLabel + '</div><div class=&quot;divider&quot;></div>'\"></div>\n" +
-      "        <div ng-if=\"!item.isTag\" ng-bind-html=\"item.name + item.isTag| highlight: $select.search\"></div>\n" +
-      "        <div ng-if=\"item.description\">\n" +
-      "          <span\n" +
-      "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS')) + '</small>'\"></span>\n" +
-      "        </div>\n" +
-      "      </ui-select-choices>\n" +
-      "    </ui-select>\n" +
-      "    <input type=\"hidden\" toggle-single-model sf-changed=\"form\" ng-model=\"insideModel\" schema-validate=\"form\"/>\n" +
-      "    <span ng-if=\"form.feedback !== false\"\n" +
-      "          class=\"form-control-feedback\"\n" +
-      "          ng-class=\"evalInScope(form.feedback) || {'glyphicon': true, 'glyphicon-ok': hasSuccess(), 'glyphicon-remove': hasError() }\"></span>\n" +
-      "\n" +
-      "    <div class=\"help-block\"\n" +
-      "         ng-show=\"(hasError() && errorMessage(schemaError())) || form.description\"\n" +
-      "         ng-bind-html=\"(hasError() && errorMessage(schemaError())) || form.description\"></div>\n" +
-      "  </div>\n" +
-      "</div>\n"
-  );
-
-  $templateCache.put('ngTagsInput/tags-input.html',
-    "<div class=\"host\" tabindex=\"-1\" ng-click=\"eventHandlers.host.click()\" ti-transclude-append><div class=\"tags\" ng-class=\"{focused: hasFocus}\"><ul class=\"tag-list\"><li class=\"tag-item\" ng-repeat=\"tag in tagList.items track by track(tag)\" ng-class=\"{ selected: tag == tagList.selected }\" ng-click=\"eventHandlers.tag.click(tag)\"><ti-tag-item data=\"::tag\"></ti-tag-item></li></ul><input class=\"tag-input-text input\" autocomplete=\"off\" ng-model=\"newTag.text\" ng-model-options=\"{getterSetter: true}\" ng-keydown=\"eventHandlers.input.keydown($event)\" ng-focus=\"eventHandlers.input.focus($event)\" ng-blur=\"eventHandlers.input.blur($event)\" ng-paste=\"eventHandlers.input.paste($event)\" ng-trim=\"false\" ng-class=\"{'invalid-tag': newTag.invalid}\" ng-disabled=\"disabled\" ti-bind-attrs=\"{type: options.type, tabindex: options.tabindex, spellcheck: options.spellcheck}\" ti-autosize></div></div>"
-  );
-
-  $templateCache.put('ngTagsInput/tag-item.html',
-    "<span ng-bind=\"$getDisplayText()\"></span> <span class=\"remove-button close ui-select-match-close\" ng-click=\"$removeTag()\" ng-bind=\"::$$removeTagSymbol\"></span>"
-  );
-
-  $templateCache.put('ngTagsInput/auto-complete.html',
-    "<div class=\"autocomplete\" ng-if=\"suggestionList.visible\"><ul class=\"suggestion-list\"><li class=\"suggestion-item\" ng-repeat=\"item in suggestionList.items track by track(item)\" ng-class=\"{selected: item == suggestionList.selected}\" ng-click=\"addSuggestionByIndex($index)\" ng-mouseenter=\"suggestionList.select($index)\"><ti-autocomplete-match data=\"::item\"></ti-autocomplete-match></li></ul></div>"
-  );
-
-  $templateCache.put('ngTagsInput/auto-complete-match.html',
-    "<span ng-bind-html=\"$highlight($getDisplayText())\"></span>"
-  );
-
-  $templateCache.put("bootstrap/select-multiple.tpl.html","<div class=\"ui-select-container ui-select-multiple ui-select-bootstrap dropdown form-control\" ng-class=\"{open: $select.open}\"><div><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" autocorrect=\"off\" autocapitalize=\"off\" spellcheck=\"false\" class=\"ui-select-search input-xs\" placeholder=\"{{$selectMultiple.getPlaceholder()}}\" ng-disabled=\"$select.disabled\" ng-hide=\"$select.disabled\" ng-click=\"$select.activate()\" ng-model=\"$select.search\" role=\"combobox\" aria-label=\"{{ $select.baseTitle }}\" ondrop=\"return false;\"></div><div class=\"ui-select-choices\"></div></div>");
-  $templateCache.put("bootstrap/select.tpl.html","<div class=\"ui-select-container ui-select-bootstrap dropdown\" ng-class=\"{open: $select.open}\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" aria-expanded=\"true\" aria-label=\"{{ $select.baseTitle }}\" aria-owns=\"ui-select-choices-{{ $select.generatedId }}\" aria-activedescendant=\"ui-select-choices-row-{{ $select.generatedId }}-{{ $select.activeIndex }}\" class=\"form-control ui-select-search ui-select-search-single\" placeholder=\"{{$select.placeholder}}\" ng-model=\"$select.search\" ng-show=\"$select.searchEnabled && $select.open\"><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");
-
-}]);
-
-angular.module('ui').config(
-  ['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider',
-    function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
-
-      var select = function (name, schema, options) {
-        if ((schema.type === 'string') && ("enum" in schema)) {
-          var f = schemaFormProvider.stdFormObj(name, schema, options);
-          f.key = options.path;
-          f.type = 'strapselect';
-          options.lookup[sfPathProvider.stringify(options.path)] = f;
-          return f;
-        }
-      };
-
-      schemaFormProvider.defaults.string.unshift(select);
-
-      //Add to the bootstrap directive
-      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapselect',
-        'views/directives/strapselect.html');
-      schemaFormDecoratorsProvider.createDirective('strapselect',
-        'views/directives/strapselect.html');
-
-      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapmultiselect',
-        'views/directives/strapmultiselect.html');
-      schemaFormDecoratorsProvider.createDirective('strapmultiselect',
-        'views/directives/strapmultiselect.html');
-
-      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapselectdynamic',
-        'views/directives/strapselect.html');
-      schemaFormDecoratorsProvider.createDirective('strapselectdynamic',
-        'views/directives/strapselect.html');
-
-      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapmultiselectdynamic',
-        'views/directives/strapmultiselect.html');
-      schemaFormDecoratorsProvider.createDirective('strapmultiselectdynamic',
-        'views/directives/strapmultiselect.html');
-
-
-      // UI SELECT
-      //Add to the bootstrap directive
-      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'uiselect',
-        'views/directives/uiselect.html');
-
-      schemaFormDecoratorsProvider.createDirective('uiselect',
-        'views/directives/uiselect.html');
-
-      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'uiselectmultiple',
-        'views/directives/uiselectmultiple.html');
-
-      schemaFormDecoratorsProvider.createDirective('uiselectmultiple',
-        'views/directives/uiselectmultiple.html');
-
-    }])
-  .directive("toggleSingleModel", function () {
-    // some how we get this to work ...
-    return {
-      require: 'ngModel',
-      restrict: "A",
-      scope: {},
-      replace: true,
-      controller: ['$scope', function ($scope) {
-        $scope.$parent.$watch('select_model.selected', function () {
-          if ($scope.$parent.select_model.selected != undefined) {
-            $scope.$parent.insideModel = $scope.$parent.select_model.selected.value;
-            $scope.$parent.ngModel.$setViewValue($scope.$parent.select_model.selected.value);
-          }
-        });
-      }]
-    };
-  })
-  .directive("toggleModel", function () {
-    // some how we get this to work ...
-    return {
-      require: 'ngModel',
-      restrict: "A",
-      scope: {},
-      controller: ['$scope', 'sfSelect', function ($scope, sfSelect) {
-
-        var list = sfSelect($scope.$parent.form.key, $scope.$parent.model);
-        //as per base array implemenation if the array is undefined it must be set as empty for data binding to work
-        if (angular.isUndefined(list)) {
-          list = [];
-          sfSelect($scope.$parent.form.key, $scope.$parent.model, list);
-        }
-        $scope.$parent.$watch('form.selectedOptions', function () {
-          if (!($scope.$parent.form.selectedOptions)) {
-
-          } else if ($scope.$parent.form.selectedOptions.length == 0) {
-
-            if ($scope.$parent.ngModel.$viewValue != undefined) {
-              $scope.$parent.ngModel.$setViewValue($scope.$parent.form.selectedOptions);
-            }
-          } else {
-            $scope.$parent.$$value$$ = [];
-            $scope.$parent.form.selectedOptions.forEach(function (item) {
-                $scope.$parent.$$value$$.push(item.value);
-              }
-            );
-            $scope.$parent.ngModel.$setViewValue($scope.$parent.$$value$$);
-          }
-        }, true);
-      }]
-    };
-  })
-  .directive('multipleOn', function () {
-    return {
-      link: function ($scope, $element, $attrs) {
-        $scope.$watch(
-          function () {
-            return $element.attr('multiple-on');
-          },
-          function (newVal) {
-
-            if (newVal == "true") {
-              var select_scope = angular.element($element).scope().$$childTail;
-              select_scope.$isMultiple = true;
-              select_scope.options.multiple = true;
-              select_scope.$select.$element.addClass('select-multiple');
-            }
-            else {
-              angular.element($element).scope().$$childTail.$isMultiple = false;
-            }
-          }
-        );
-      }
-    };
-  })
-  .filter('whereMulti', function () {
-    return function (items, key, values) {
-      var out = [];
-
-      if (angular.isArray(values) && items !== undefined) {
-        values.forEach(function (value) {
-          for (var i = 0; i < items.length; i++) {
-            if (value == items[i][key]) {
-              out.push(items[i]);
-              break;
-            }
-          }
-        });
-      } else {
-        // Let the output be the input untouched
-        out = items;
-      }
-
-      return out;
-    };
-  })
-  .filter('propsFilter', function () {
-    return function (items, props) {
-      var out = [];
-
-      if (angular.isArray(items)) {
-        items.forEach(function (item) {
-          var itemMatches = false;
-
-          var keys = Object.keys(props);
-          for (var i = 0; i < keys.length; i++) {
-            var prop = keys[i];
-            if (item && item.hasOwnProperty(prop)) {
-              //only match if this property is actually in the item to avoid
-              var text = props[prop].toLowerCase();
-              //search for either a space before the text or the textg at the start of the string so that the middle of words are not matched
-              if (item[prop] && (item[prop].toString().toLowerCase().indexOf(text) === 0 || ( item[prop].toString()).toLowerCase().indexOf(' ' + text) !== -1)) {
-                itemMatches = true;
-                break;
-              }
-            }
-          }
-
-          if (itemMatches) {
-            out.push(item);
-          }
-        });
-      } else {
-        // Let the output be the input untouched
-        out = items;
-      }
-
-      return out;
-    };
-  }).filter('filterRelated', function () {
-
-    return function(items, props) {
-      if(typeof props.form.options.filterRelated === 'function') {
-        return props.form.options.filterRelated(items);
-      }
-      return items;
-    };
-  });
-
-angular.module('ui').controller('dynamicSelectController', ['$scope', '$http', '$timeout', function ($scope, $http, $timeout) {
-
-
-  $scope.select_model = {};
-
-  $scope.triggerTitleMap = function () {
-    console.log("listener triggered");
-    // Ugly workaround to trigger titleMap expression re-evaluation so that the selectFilter it reapplied.
-    $scope.form.titleMap.push({"value": "345890u340598u3405u9", "name": "34095u3p4ouij"})
-    $timeout(function () {
-      $scope.form.titleMap.pop()
-    });
-
-  };
-
-  $scope.initFiltering = function (localModel) {
-    if ($scope.form.options.filterTriggers) {
-      $scope.form.options.filterTriggers.forEach(function (trigger) {
-        $scope.$parent.$watch(trigger, $scope.triggerTitleMap)
-
-      });
-    }
-    // This is set here, as the model value may become unitialized and typeless if validation fails.
-    $scope.localModelType = Object.prototype.toString.call(localModel);
-    $scope.filteringInitialized = true;
-  };
-
-
-  /**
-   * Función implementada para solucionar el problema de pre-seleccionar el elemento.
-   * Dejamos el elemento a pre-seleccionar en la primera posición del titleMap.
-   **/
-  function initSelection(data, scope, options) {
-    var model = getModel(options);
-    var map = options.map;
-    if (angular.isArray(model)) {
-      return data;
-    } else {
-
-      if (!model) {
-        return [{value: undefined, name: $scope.form.placeholder}].concat(data);
-      }
-
-      var isEdit = false;
-      for (var i = 0; i < data.length; i++) {
-        if (data[i][map.valueProperty] === model[map.valueProperty]) {
-          isEdit = true;
-          break;
-        }
-      }
-      var tmp = data[0];
-      data[0] = data[i];
-      data[i] = tmp;
-
-      if (isEdit) {
-        $scope.select_model.selected = data[0];
-      }
-      return data;
-    }
-  }
-
-  function getModel(options) {
-    var form = $scope.form;
-    var modelKey = form.key[0];
-    var _scope = angular.element('form[name=' + options.formName + ']').scope();
-    return _scope.model[modelKey];
-  }
-
-  /**
-   * Función implementada para solucionar el problema de pre-seleccionar el elemento.
-   **/
-  function initEnumSelection(data, options) {
-    var model = getModel(options);
-    $scope.select_model.selected = {value: model, name: model};
-  }
-
-  $scope.remap = function (options, data) {
-
-
-    if (options && "map" in options && options.map) {
-      var current_row = null;
-      var result = [];
-      data.forEach(function (current_row) {
-        current_row["value"] = current_row[options.map.valueProperty];
-        current_row["name"] = current_row[options.map.nameProperty];
-        result.push(current_row);
-      });
-
-      if (options.formName) {
-        var _scope = angular.element('form[name=' + options.formName + ']').scope();
-        result = initSelection(data, _scope, options);
-      }
-      return result;
-    }
-    else {
-      data.forEach(function (item) {
-          if ("text" in item) {
-            item.name = item.text
-          }
-        }
-      );
-      return data;
-    }
-  };
-
-  $scope.clone = function (obj) {
-    if (null == obj || "object" != typeof(obj)) return obj;
-    var copy = obj.constructor();
-    for (var attr in obj) {
-      if (obj.hasOwnProperty(attr)) copy[attr] = $scope.clone(obj[attr]);
-    }
-    return copy;
-  };
-
-
-  $scope.getCallback = function (callback, name) {
-    if (typeof(callback) == "string") {
-      var _result = $scope.$parent.evalExpr(callback);
-      if (typeof(_result) == "function") {
-        return _result;
-      }
-      else {
-        throw("A callback string must match name of a function in the parent scope")
-      }
-
-    }
-    else if (typeof(callback) == "function") {
-      return callback;
-    }
-    else {
-      throw("A callback must either be a string matching the name of a function in the parent scope or a " +
-      "direct function reference")
-
-    }
-  };
-
-  $scope.getOptions = function (options) {
-    // If defined, let the a callback function manipulate the options
-    if (options.httpPost && options.httpPost.optionsCallback) {
-      newOptionInstance = $scope.clone(options);
-      return $scope.getCallback(options.httpPost.optionsCallback)(newOptionInstance);
-    }
-    if (options.httpGet && options.httpGet.optionsCallback) {
-      newOptionInstance = $scope.clone(options);
-      return $scope.getCallback(options.httpGet.optionsCallback)(newOptionInstance);
-    }
-    else {
-      return options;
-    }
-  };
-
-  $scope.test = function (form) {
-    form.titleMap.pop();
-  };
-
-  $scope.populateTitleMap = function (form) {
-
-    if ("enum" in form.schema) {
-      form.titleMap = [];
-      form.schema.enum.forEach(function (item) {
-        form.titleMap.push({"value": item, "name": item})
-      });
-      initEnumSelection(form.titleMap, form.options);
-
-    }/* else if (form.titleMap) {
-     console.log("dynamicSelectController.populateTitleMap(key:" + form.key + ") : There is already a titleMap");
-     }*/
-    else if (!form.options) {
-
-      console.log("dynamicSelectController.populateTitleMap(key:" + form.key + ") : No options set, needed for dynamic selects");
-    }
-    else if (form.options.callback) {
-      form.titleMap = $scope.getCallback(form.options.callback)(form.options);
-      console.log('callback items', form.titleMap);
-    }
-    else if (form.options.asyncCallback) {
-      return $scope.getCallback(form.options.asyncCallback)(form.options).then(
-        function (_data) {
-          form.titleMap = $scope.remap(form.options, _data.data);
-
-          if (form.options.multiple) {
-            $scope.uiMultiSelectInitInternalModel(getModel(form.options));
-          } else {
-            //$scope.select_model.selected = form.titleMap[0];
-          }
-          console.log('asyncCallback items', form.titleMap);
-        },
-        function (data, status) {
-          alert("Loading select items failed(Options: '" + String(form.options) +
-            "\nError: " + status);
-        });
-    }
-    else if (form.options.httpPost) {
-      var finalOptions = $scope.getOptions(form.options);
-
-      return $http.post(finalOptions.httpPost.url, finalOptions.httpPost.parameter).then(
-        function (_data) {
-
-          form.titleMap = $scope.remap(finalOptions, _data.data);
-          console.log('httpPost items', form.titleMap);
-        },
-        function (data, status) {
-          alert("Loading select items failed (URL: '" + String(finalOptions.httpPost.url) +
-            "' Parameter: " + String(finalOptions.httpPost.parameter) + "\nError: " + status);
-        });
-    }
-    else if (form.options.httpGet) {
-      var finalOptions = $scope.getOptions(form.options);
-      return $http.get(finalOptions.httpGet.url, finalOptions.httpGet.parameter).then(
-        function (data) {
-          form.titleMap = $scope.remap(finalOptions, data.data);
-          console.log('httpGet items', form.titleMap);
-        },
-        function (data, status) {
-          alert("Loading select items failed (URL: '" + String(finalOptions.httpGet.url) +
-            "\nError: " + status);
-        });
-    }
-  };
-  $scope.uiMultiSelectInitInternalModel = function (_model) {
-
-    function find_in_titleMap(value) {
-      for (i = 0; i < $scope.form.titleMap.length; i++) {
-        if ($scope.form.titleMap[i].value == value) {
-          return $scope.form.titleMap[i].name
-        }
-      }
-
-
-    }
-
-    $scope.internalModel = [];
-
-    if (_model !== undefined && angular.isArray(_model)) {
-      _model.forEach(function (value) {
-          $scope.internalModel.push({"value": value, "name": find_in_titleMap(value)})
-        }
-      )
-    }
-  }
-
-}]);
-
-angular.module('ui').filter('selectFilter', [function ($filter) {
-  return function (inputArray, controller, localModel, strLocalModel) {
-    // As the controllers' .model is the global and its form is the local, we need to get the local model as well.
-    // We also need tp be able to set it if is undefined after a validation failure,so for that we need
-    // its string representation as well as we do not know its name. A typical value if strLocalModel is model['groups']
-    // This is very ugly, though. TODO: Find out why the model is set to undefined after validation failure.
-
-    if (!angular.isDefined(inputArray) || !angular.isDefined(controller.form.options) || !angular.isDefined(controller.form.options.filter) || controller.form.options.filter == '') {
-      return inputArray;
-    }
-
-    console.log("----- In filtering for " + controller.form.key + "(" + controller.form.title + "), model value: " + JSON.stringify(localModel) + "----");
-    console.log("Filter:" + controller.form.options.filter);
-    if (!controller.filteringInitialized) {
-      console.log("Initialize filter");
-      controller.initFiltering(localModel);
-    }
-    var data = [];
-
-
-    angular.forEach(inputArray, function (curr_item) {
-      console.log("Compare: curr_item: " + JSON.stringify(curr_item) +
-        "with : " + JSON.stringify(controller.$eval(controller.form.options.filterTriggers[0])));
-      if (controller.$eval(controller.form.options.filter, {item: curr_item})) {
-        data.push(curr_item);
-      }
-      else if (localModel) {
-        // If not in list, also remove the set value
-
-        if (controller.localModelType == "[object Array]" && localModel.indexOf(curr_item.value) > -1) {
-          localModel.splice(localModel.indexOf(curr_item.value), 1);
-        }
-        else if (localModel == curr_item.value) {
-          console.log("Setting model of type " + controller.localModelType + "to null.");
-          localModel = null;
-        }
-      }
-    });
-
-    if (controller.localModelType == "[object Array]" && !localModel) {
-      // An undefined local model seems to mess up bootstrap select's indicators
-      console.log("Resetting model of type " + controller.localModelType + " to [].");
-
-      controller.$eval(strLocalModel + "=[]");
-    }
-
-    console.log("Input: " + JSON.stringify(inputArray));
-    console.log("Output: " + JSON.stringify(data));
-    console.log("Model value out : " + JSON.stringify(localModel));
-    console.log("----- Exiting filter for " + controller.form.title + "-----");
-
-    return data;
-  };
-}]);
-
-
-(function() {
-'use strict';
- 
-/**
- * Anularjs Module for pop up timepicker
- */
-angular.module('ui')
-.factory('timepickerState', function() {
-  var pickers = [];
-  return {
-		addPicker: function(picker) {
-			pickers.push(picker);
-		},
-		closeAll: function() {
-			for (var i=0; i<pickers.length; i++) {
-				pickers[i].close();
-			}
-		}
-	};
-})
-
-.directive('timeFormat', ['$filter', function($filter) {
-  return {
-    restrict : 'A',
-    require : 'ngModel',
-    scope : {
-      showMeridian : '=',
-    },
-    link : function(scope, element, attrs, ngModel) {
-        var parseTime = function(viewValue) {
-
-        if (!viewValue) {
-          ngModel.$setValidity('time', true);
-          return null;
-        } else if (angular.isDate(viewValue) && !isNaN(viewValue)) {
-          ngModel.$setValidity('time', true);
-          return viewValue;
-        } else if (angular.isString(viewValue)) {
-          var timeRegex = /^(0?[0-9]|1[0-2]):[0-5][0-9] ?[a|p]m$/i;
-          if (!scope.showMeridian) {
-            timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-          }
-          if (!timeRegex.test(viewValue)) {
-            ngModel.$setValidity('time', false);
-            return undefined;
-          } else {
-            ngModel.$setValidity('time', true);
-            var date = new Date();
-            var sp = viewValue.split(":");
-            var apm = sp[1].match(/[a|p]m/i);
-            if (apm) {
-              sp[1] = sp[1].replace(/[a|p]m/i, '');
-              if (apm[0].toLowerCase() == 'pm') {
-                sp[0] = sp[0] + 12;
-              }
-            }
-            date.setHours(sp[0], sp[1]);
-            return date;
-          };
-        } else {
-          ngModel.$setValidity('time', false);
-          return undefined;
-        };
-      };
-
-      ngModel.$parsers.push(parseTime);
-
-      var showTime = function(data) {
-        parseTime(data);
-        var timeFormat = (!scope.showMeridian) ? "HH:mm" : "hh:mm a";
-        return $filter('date')(data, timeFormat);
-      };
-      ngModel.$formatters.push(showTime);
-      scope.$watch('showMeridian', function(value) {
-        var myTime = ngModel.$modelValue;
-        if (myTime) {
-          element.val(showTime(myTime));
-        }
-
-      });
-    }
-  };
-}])
-
-.directive('timepickerPop', ['$document', 'timepickerState', function($document, timepickerState) {
-      return {
-        restrict : 'E',
-        transclude : false,
-        scope : {
-          inputTime : '=',
-          showMeridian : '=',
-          disabled : '='
-        },
-        controller : function($scope, $element) {
-          $scope.isOpen = false;
-          $scope.disabledInt = angular.isUndefined($scope.disabled)? false : $scope.disabled;
-          $scope.toggle = function() {
-            if ($scope.isOpen) {
-              $scope.close();
-            } else {
-              $scope.open();
-            }
-          };
-        },
-        link : function(scope, element, attrs) {
-          console.log('link de la directiva timepicker');
-          var picker = {
-        		  open : function () {
-        			  timepickerState.closeAll();
-        			  scope.isOpen = true;
-        		  },
-        		  close: function () {
-        			  scope.isOpen = false;
-        		  }
-          		  
-          };
-          timepickerState.addPicker(picker);
-          
-          scope.open = picker.open;
-          scope.close = picker.close;
-          
-          scope.$watch("disabled", function(value) {
-            scope.disabledInt = angular.isUndefined(scope.disabled)? false : scope.disabled;
-          });
-          
-          scope.$watch("inputTime", function(value) {
-            if (!scope.inputTime) {
-              element.addClass('has-error');
-            } else {
-              element.removeClass('has-error');
-            }
-
-          });
-
-          element.bind('click', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-          });
-
-          $document.bind('click', function(event) {
-            scope.$apply(function() {
-           		scope.isOpen = false;
-            });
-          });
-
-        },
-        template : "<input type='text' class='form-control' ng-model='inputTime' ng-disabled='disabledInt' time-format show-meridian='showMeridian' ng-focus='open()' />"
-            + "  <div class='input-group-btn' ng-class='{open:isOpen}'> "
-            + "    <button type='button' ng-disabled='disabledInt' class='btn btn-default form-control' ng-class=\"{'btn-primary':isOpen}\" data-toggle='dropdown' ng-click='toggle()'> "
-            + "        <i class='glyphicon glyphicon-time'></i></button> "
-            + "          <div class='dropdown-menu pull-right'> "
-            + "            <timepicker ng-model='inputTime' show-meridian='showMeridian' style='margin-left: 15%;'></timepicker> "
-            + "           </div> " + "  </div>"
-      };
-}]);
-}());
-(function() {
-'use strict';
-/**
- * @ngdoc directive
- * @name ui.directive:uiDatatable
- * @description
- * # uiDatatable
- */
-angular.module('ui')
-  .directive('uiDatatable', ['$timeout', '$uibModal', '$compile', '$state', '$resource', 'AuthorizationService', 'DTOptionsBuilder', 'DTColumnBuilder', 'baseurl', '$rootScope', 
-    function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
-
-    var hasPermission = AuthorizationService.hasPermission;
-
-    return {
-      template: '<div>' +
-    '<div class="widget">' +
-      '<div class="widget-header bordered-top bordered-palegreen" ng-if="!options.hideHeader">' +
-        '<span class="widget-caption">{{options.title}}</span>' +
-        '<div class="widget-buttons">' +
-          '<a href="" ng-show="canCreate()" ng-click="new()" title="Nuevo">' +
-            '<i class="glyphicon glyphicon-plus"></i>' +
-          '</a>' +
-          '<a ng-repeat="menuOption in options.extraMenuOptions" href="" ng-show="menuOption.showCondition()" ng-click="menuOption.action()" title="{{menuOption.title}}">' +
-            '<p><i class="{{menuOption.icon}}"></i>' +
-            '  {{menuOption.data}}&nbsp;&nbsp;&nbsp;</p>' +
-          '</a>' +
-        '</div>' +
-      '</div>' +
-      '<div class="widget-body">' +
-          '<div class="table-responsive">' +
-            '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-hover table-responsive table-condensed no-footer">' +
-            '</table>' +
-          '</div>' +
-          '<div ng-if="selected">' +
-              '<h3>Detalles</h3>' +
-              '<table class="table table-striped table-bordered table-detail">' +
-                  '<tbody>' +
-                      '<tr ng-repeat="row in options.detailRows">' +
-                          '<td ng-if="selected[row.data]" class="row-title">{{row.title}}</td>' +
-                          '<td ng-if="selected[row.data] && row.renderWith">{{row.renderWith(selected[row.data])}}</td>' +
-                          '<td ng-if="selected[row.data] && !row.renderWith">{{selected[row.data]}}</td>' +
-                      '</tr>' +
-                  '</tbody>' +
-              '</table>' +
-          '</div>' +
-        '</div>' +
-      '</div>',
-      restrict: 'AE',
-      replace: true,
-      scope: {
-        options: '='
-      },
-      controller: function controller($scope, $element) {
-        var actionsColumn, selectionColumn, urlTemplate;
-        // Se arma la ruta según tenga o no filtros estáticos
-        updateStaticFilters();
-
-        $scope.dtInstance = {};
-        $scope.selectAll = false;
-        $scope.options.selection = {};
-        $scope.headerCompiled = false;
-        $scope.customFilters = {};
-
-        var rangeSeparator = "~";
-        var dateFormat = "DD/MM/YYYY";
-        var defaultFilterType = 'string';
-        var table;
-        var tableId;
-
-
-        var ajaxRequest = function(data, callback) {
-
-          if (table) {
-            $scope.options.tableAjaxParams = table.ajax.params();
-
-            _.forEach(table.colReorder.order(), function(columnIndex, index) {
-              if ($scope.customFilters[columnIndex]) {
-                data.columns[index]['type'] = $scope.customFilters[columnIndex].filterType;
-              } else {
-                data.columns[index]['type'] = defaultFilterType;
-              }
-            });
-          }
-          data.rangeSeparator = rangeSeparator;
-
-          var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
-            query: {
-              isArray: false,
-              method: 'POST'
-            }
-          });
-
-          xhr.query({}).$promise.then(function(response) {
-            var datos = response.data;
-            if(datos) {
-              datos.forEach(function(registro) {
-                Object.keys(registro).forEach(function(key) {
-                  if(registro[key] === true) {
-                    registro[key] = "Sí";
-                  } else if(registro[key] === false) {
-                    registro[key] = "No";
-                  }
-                });
-              });
-            }
-            callback(response);
-          }).catch(function(response) {
-            console.log(response);
-          });
-        };
-        var ajaxConfig = ($scope.options.ajax) ? $scope.options.ajax : ajaxRequest;
-
-        //modelos de los filtros de rangos de fechas
-        $scope.dateRangeFilters = {
-          'i': {
-            startDate: null,
-            endDate: null
-          }
-        };
-
-        //callback para el boton apply en el widget de rango de fechas
-        var datePickerApplyEvent = function(ev, picker) {
-          var ini = ev.model.startDate.format(dateFormat);
-          var end = ev.model.endDate.format(dateFormat);
-
-          var index = table.colReorder.order().indexOf(ev.opts.index);
-          table.column(index).search(ini + rangeSeparator + end).draw();
-        }
-
-        //callback para el boton cancel en el widget de rango de fechas, que borra el filtro
-        var datePickerCancelEvent = function(ev, picker) {
-          var index = table.colReorder.order().indexOf(ev.opts.index);
-          table.column(index).search("").draw();
-          $("#daterange_" + ev.opts.index ).val("");
-          $scope.dateRangeFilters[ev.opts.index].startDate = null;
-          $scope.dateRangeFilters[ev.opts.index].endDate = null;
-        }
-
-        //callback para borrar el rango previamente seleccionado
-        var datePickerShowEvent = function(ev, picker) {
-
-          if ($scope.dateRangeFilters[ev.opts.index].startDate === null) {
-            var widgetIndex = $scope.dateRangePickerWidgetsOrder.indexOf(ev.opts.index);
-            var widget = $($(".daterangepicker").get(widgetIndex));
-            widget.parent().find('.in-range').removeClass("in-range");
-            widget.parent().find('.active').removeClass("active");
-            widget.parent().find('.input-mini').removeClass("active").val("");
-          }
-        }
-
-        moment.locale('es');
-        var dateRangeLocaleOptions = {
-          cancelLabel: 'Limpiar',
-          applyLabel: 'Aplicar',
-          format: dateFormat,
-          separator: ' a ',
-          weekLabel: 'S',
-          daysOfWeek: moment.weekdaysMin(),
-          monthNames: moment.monthsShort(),
-          firstDay: moment.localeData().firstDayOfWeek()
-        };
-
-        $scope.dateRangeOptions = {};
-
-        var dateRangeDefaultOptions = {
-          eventHandlers: {
-            'apply.daterangepicker' : datePickerApplyEvent,
-            'cancel.daterangepicker' : datePickerCancelEvent,
-            'show.daterangepicker' : datePickerShowEvent
-          },
-          opens: "right",
-          index: 0,
-          showDropdowns: true,
-          locale: dateRangeLocaleOptions
-        };
-
-        $scope.dateRangePickerWidgetsOrder = [];
-
-        //modelos del filtro de rango numericos
-        $scope.numberRangeFilters = {
-          'i': {
-            startRange: null,
-            endRange: null
-          }
-        };
-
-        //callback para el boton apply en el widget de rango de numeros
-        var rangePickerApplyEvent = function(ev, picker) {
-          //console.log("apply");
-          var ini = ev.model.startRange;
-          var end = ev.model.endRange;
-
-          var index = table.colReorder.order().indexOf(ev.opts.index);
-          table.column(index).search(ini + rangeSeparator + end).draw();
-        }
-
-        //callback para el boton cancel en el widget de rango de numeros, que borra el filtro
-        var rangePickerCancelEvent = function(ev, picker) {
-          //console.log("cancel");
-          var index = table.colReorder.order().indexOf(ev.opts.index);
-          table.column(index).search("").draw();
-          $("#numberrange_" + ev.opts.index ).val("");
-          $scope.numberRangeFilters[ev.opts.index].startRange = null;
-          $scope.numberRangeFilters[ev.opts.index].endRange = null;
-
-          var widgetIndex = $scope.rangePickerWidgetsOrder.indexOf(ev.opts.index);
-          var widget = $($(".rangepicker").get(widgetIndex));
-            widget.parent().find('input[name=rangepicker_start]').val();
-            widget.parent().find('input[name=rangepicker_end]').val();
-        };
-
-        var rangeLocaleOptions = {
-          cancelLabel: 'Limpiar',
-          applyLabel: 'Aplicar',
-          separator: ' a '
-        };
-
-        $scope.rangeOptions = {};
-
-        var rangeDefaultOptions = {
-          eventHandlers: {
-            'apply.rangepicker' : rangePickerApplyEvent,
-            'cancel.rangepicker' : rangePickerCancelEvent
-          },
-          opens: "right",
-          index: 0,
-          showDropdowns: true,
-          locale: rangeLocaleOptions
-        };
-
-        $scope.rangePickerWidgetsOrder = [];
-
-        $scope.dtOptions = DTOptionsBuilder.newOptions()
-          .withDataProp('data')
-          .withOption('language', {
-                  'sProcessing' : 'Procesando...',
-                  'sLengthMenu' : 'Registros _MENU_',
-                  'sZeroRecords' : 'No se encontraron resultados',
-                  'sEmptyTable' : 'Ningún dato disponible en esta tabla',
-                  'sInfo' : 'Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros',
-                  'sInfoEmpty' : 'Mostrando registros del 0 al 0 de un total de 0 registros',
-                  'sInfoFiltered' : '(filtrado de un total de _MAX_ registros)',
-                  'sInfoPostFix' : '.',
-                  'sSearch' : 'Buscar:',
-                  'sInfoThousands' : ',',
-                  'sLoadingRecords' : 'Cargando...',
-                  'oPaginate' : {
-                    'sFirst' : 'Primero',
-                    'sLast' : 'Último',
-                    'sNext' : 'Siguiente',
-                    'sPrevious' : 'Anterior'
-                  },
-                  'oAria' : {
-                    'sSortAscending' : ': Activar para ordenar la columna de manera ascendente',
-                    'sSortDescending' : ': Activar para ordenar la columna de manera descendente'
-                  }
-                })
-          .withOption('createdRow', function(row, data, dataIndex) {
-            $compile(angular.element(row).contents())($scope);
-          })
-          .withOption('headerCallback', function(header) {
-            if (!$scope.headerCompiled) {
-                // Use this headerCompiled field to only compile header once
-                $scope.headerCompiled = true;
-                $compile(angular.element(header).contents())($scope);
-            }
-          })
-          .withPaginationType('full_numbers')
-          .withButtons(['colvis'])
-          .withBootstrap();
-
-        if($scope.options.resource === '@'){
-          // @ indica que es los datos para el datatable son locales
-          $scope.dtOptions.withOption('data', $scope.options.factory.all());
-        }else{
-          $scope.dtOptions.withOption('ajax', ajaxConfig);
-          $scope.dtOptions.withOption('serverSide', true);
-          $scope.dtOptions.withOption('processing', true);
-        }
-
-        if($scope.options.detailRows){
-          $scope.dtOptions = $scope.dtOptions.withOption('rowCallback', rowCallback);
-        }
-
-        //inicializan la cantidad de columnas visibles
-        $scope.visibleColumns = 0;//$scope.options.columns.length;
-
-        $scope.dtColumns = [];
-        //indices
-        $scope.defaultColumnOrderIndices = [];
-        $scope.originalIndexKey = {};
-
-        //si tiene checkboxes para seleccion
-        var indexPadding = 0;
-        if($scope.options.isSelectable) {
-
-          var titleHtml = '<label><input type="checkbox" ng-model="selectAll" ng-click="toggleAll()"><span class="text"></span></label>';
-
-          selectionColumn = DTColumnBuilder.newColumn(null).withTitle(titleHtml).notSortable()
-          .withOption('searchable', false)
-          .renderWith(function(data, type, full, meta) {
-              var checkbox = '<label>' +
-                '<input id="' + data.id + '" type="checkbox" ng-model="options.selection[' + data.id + ']" ng-click="toggleOne()">' +
-              '<span class="text"></span></label>';
-              return checkbox;
-          })
-          .withOption('name', 'checkbox');
-
-          $scope.dtColumns.push(selectionColumn);
-          $scope.visibleColumns += 1;
-          indexPadding = 1;
-          $scope.originalIndexKey[0] = null;//'checkbox';
-          $scope.defaultColumnOrderIndices.push(0);
-          $scope.dtOptions.withColReorderOption('iFixedColumnsLeft', 1);
-        }
-
-        /* RENDERS BASICOS */
-        var dateRender =  function(dateFormat) {
-          return function(data) {
-            //return moment.utc(data).format(dateFormat);
-            return moment(data).format(dateFormat);
-          };
-        };
-
-        var emptyRender =  function(data) {
-          if (data == undefined) return "";
-          else return data;
-        };
-
-        var numberRender =  function(data) {
-          if (data) return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-          else return '';
-        };
-
-        var monedaRender =  function(pathAtt) {
-          return function(data, type, row) {
-            if (data) {
-              var moneda = "Gs. ";
-              if (row[pathAtt]==='dolares') {
-                moneda = "Usd. ";
-                data = parseFloat(data).toFixed(2);
-              } else if(row[pathAtt]==='pesos') {
-                moneda = "Pes. ";
-                data = parseFloat(data).toFixed(2);
-              } else if (row[pathAtt]==='real') {
-                moneda = "Rel. ";
-                data = parseFloat(data).toFixed(2);
-              } else if (row[pathAtt]==='euro') {
-                moneda = "Eur. ";
-                data = parseFloat(data).toFixed(2);
-              }
-              return moneda + data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            } else return "";
-          }
-        };
-
-        var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable', 'searchable'];
-        _.map($scope.options.columns, function(c, index){
-
-          var column = DTColumnBuilder.newColumn(c.data);
-          //el indice original para la columna
-          var originalIndex = indexPadding + index
-          $scope.originalIndexKey[originalIndex] = c.data;
-
-          if(c.title) column = column.withTitle(c.title);
-          if(c.class) column = column.withClass(c.class);
-          if(c.renderWith) {
-            if(c.renderWith === 'dateRender')
-              column = column.renderWith(dateRender(c.dateFormat));
-            else if (c.renderWith === 'emptyRender')
-              column = column.renderWith(emptyRender);
-            else if (c.renderWith === 'numberRender')
-              column = column.renderWith(numberRender);
-            else if (c.renderWith === 'monedaRender')
-              column = column.renderWith(monedaRender(c.pathAttMoneda));
-            else
-              column = column.renderWith(c.renderWith);
-          }
-          if(c.sortable === false) column = column.notSortable();
-
-          //si hay un orden definido y no está dentro de ese orden o si especifica que no es visible
-          if(!_.contains($scope.options.defaultColumnOrder, c.data) || c.visible === false) column = column.notVisible();
-          else $scope.visibleColumns += 1;
-
-          _.forOwn(c, function(value, key){
-            if(!_.contains(commonAttrs, key)) column = column.withOption(key, value);
-          });
-
-          if(c.searchable === false) {
-            column = column.withOption('bSearchable', false);
-          } else {
-            column = column.withOption('bSearchable', true);
-          }
-
-          if(c.type) {
-            var customFilter = {'filterType': c.type, 'filterUrl' : c.filterUrl};
-
-            if (c.type === 'date-range') {
-              $scope.dateRangeFilters[originalIndex] = {startDate: null, endDate: null};
-            } else if (c.type === 'number-range') {
-              $scope.numberRangeFilters[originalIndex] = {startRange: null, endRange: null};
-            }
-
-            $scope.customFilters[originalIndex] = customFilter;
-          }
-          $scope.dtColumns.push(column);
-        });
-
-        //console.log($scope.dtColumns);
-        if($scope.options.hasOptions) {
-          $scope.originalIndexKey[$scope.visibleColumns] = null;//'actions';
-          // Fix last right column
-          $scope.dtOptions.withColReorderOption('iFixedColumnsRight', 1);
-          $scope.visibleColumns += 1;
-        }
-
-        //columnas reordenables, por defecto habilitado
-        if ($scope.options.colReorder === true || $scope.options.colReorder === undefined) {
-          $scope.dtOptions.withColReorder();
-        }
-
-        // Se establece el orden por defecto
-        //$scope.dtOptions.withColReorderOrder($scope.defaultColumnOrderIndices);
-
-        actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
-          .withOption('searchable', false)
-          .renderWith(function(data, type, full, meta) {
-              var basicOpts = '<button class="btn-row-datatable btn btn-success btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canEdit(' + data.id + ')}" ng-click="edit(' + data.id + ')">' +
-                  '   <span class="glyphicon glyphicon-pencil"></span>' +
-                  '</button>' +
-                  '<button class="btn-row-datatable btn btn-danger btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canRemove(' + data.id + ')}" ng-click="remove(' + data.id + ')">' +
-                  '   <span class="glyphicon glyphicon-trash"></span>' +
-                  '</button>' +
-                  '<button class="btn-row-datatable btn btn-info btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canList(' + data.id + ')}" ng-click="view(' + data.id + ')">' +
-                  '   <span class="glyphicon glyphicon-eye-open"></span>' +
-                  '</button>';
-            if($scope.options.extraRowOptions) {
-              _.forEach($scope.options.extraRowOptions, function(menuOpt) {
-                var compilado = _.template(menuOpt.templateToRender);
-                $scope[menuOpt.functionName] = menuOpt.functionDef;
-                var customAttribute = menuOpt.customAttribute;
-                var compiled = {'dataId': data.id, '$state': $state, '$scope': $scope};
-                if(customAttribute && customAttribute.constructor === Array) {
-                  compiled.dataCustom = JSON.stringify(_.map(customAttribute, function(ca) { return data[ca] }));
-                } else {
-                  compiled.dataCustom = JSON.stringify(data[menuOpt.customAttribute]);
-                }
-                basicOpts = basicOpts + compilado(compiled);
-                $scope[menuOpt.conditionName] = menuOpt.conditionDef;
-              });
-            }
-            return basicOpts;
-          });
-
-
-        $scope.canEdit = function(data) {
-          var permission = hasPermission('update_' + $scope.options.resource);
-          if($scope.options.extraEditConditions) {
-            var valor = _.find(table.rows().data(), function(value) {
-              return value.id == data;
-            });
-            return permission && $scope.options.extraEditConditions(valor) && !$scope.options.hideEditMenu;
-          }
-          return permission && !$scope.options.hideEditMenu;
-        };
-
-        $scope.canRemove = function(data) {
-          var permission = hasPermission('delete_' + $scope.options.resource);
-          if($scope.options.extraRemoveConditions) {
-            var valor = _.find(table.rows().data(), function(value) {
-              return value.id == data;
-            });
-            return permission && $scope.options.extraRemoveConditions(valor) && !$scope.options.hideRemoveMenu;
-          }
-          return permission && !$scope.options.hideRemoveMenu;
-        };
- 
-        $scope.canCreate = function() {
-          var permission = hasPermission('create_' + $scope.options.resource);
-          return permission && ! $scope.options.hideAddMenu;
-        };
-
-        $scope.canList = function(data) {
-          var permission = hasPermission('index_' + $scope.options.resource);
-          if($scope.options.extraViewConditions) {
-            var valor = _.find(table.rows().data(), function(value) {
-              return value.id == data;
-            });
-            return permission && $scope.options.extraViewConditions(valor) && !$scope.options.hideViewMenu;
-          }
-          return permission && ! $scope.options.hideViewMenu;
-        };
-
-        if($scope.options.hasOptions) {
-          $scope.dtColumns.push(actionsColumn);
-          $scope.visibleColumns += 1;
-        }
-
-        $scope.new = function(){
-          var pathTemplate;
-          if(!$scope.options.customResource)
-            pathTemplate = _.template('app.<%= resource %>.new');
-          else
-            pathTemplate = _.template('app.<%= customResource %>.new');
-          $state.go(pathTemplate($scope.options), {});
-        }
-
-        $scope.edit = function(itemId){
-          var pathTemplate;
-          if(!$scope.options.customResource)
-            pathTemplate = _.template('app.<%= resource %>.edit');
-          else
-            pathTemplate = _.template('app.<%= customResource %>.edit');
-          $state.go(pathTemplate($scope.options), {id: itemId});
-        }
-
-        $scope.view = function(itemId) {
-          var pathTemplate;
-          if(!$scope.options.customResource)
-            pathTemplate = _.template('app.<%= resource %>.view');
-          else
-            pathTemplate = _.template('app.<%= customResource %>.view');
-          $state.go(pathTemplate($scope.options), {id: itemId});
-        }
-
-        $scope.toggleAll = function () {
-            if ($scope.selectAll) {         //If true then select visible
-                _.each(table.rows().data(), function (value, index) {
-                    $scope.options.selection[value.id] = true;
-                });
-            } else {
-              _.each(table.rows().data(), function (value, index) {
-                  $scope.options.selection[value.id] = false;
-              });
-            }
-
-        }
-
-        $scope.toggleOne = function () {
-            var notSelectAll = _.some(table.rows().data(), function (value, index) {
-              return !$scope.options.selection[value.id];
-            });
-            $scope.selectAll = !notSelectAll;
-        }
-
-        //funciones para el select2
-        var formatSelection = function(text) {
-          return text.descripcion;
-        };
-
-        var formatResult = function(text) {
-          if (text.descripcion === "")
-            return '<div class="select2-user-result">Todos</div>';
-          return '<div class="select2-user-result">' + text.descripcion + '</div>';
-        };
-
-
-        //funcion para crear los filtros
-        var createFilters = function() {
-          $('#' + tableId + ' tfoot tr').empty();
-          $scope.dateRangePickerWidgetsOrder = [];
-          $(".daterangepicker").remove();
-          $scope.options.currentColumnOrder = [];
-
-
-          _.forEach(table.context[0].aoColumns, function (column) {
-            var realIndex = column._ColReorder_iOrigCol;
-            var data = column.mData;
-            var html = '<th></th>';
-
-            if (column.bVisible) {
-              if (data) {
-                $scope.options.currentColumnOrder.push(data);
-              }
-
-              var title = column.name;
-              if (!name) {
-                title = column.sTitle;
-              }
-
-              var customFilter = $scope.customFilters[realIndex];
-
-              if (customFilter) {
-                if (customFilter.filterType === 'combo') {
-                  var id = 'combo_' + realIndex;
-
-                  html = '<th><div id="' + id + '" name="' + title + '" class="filtro-ancho"></div></th>';
-                  $('#' + tableId + ' tfoot tr').append(html);
-                  html = '';
-
-                  $('#' + id).select2({
-                    minimumResultsForSearch: -1,
-                    //allowClear: true,
-                    id: function (text) {
-                      return text.descripcion;
-                    },
-                    data: function () {
-                      return $http({
-                        url: baseurl.getBaseUrl() + customFilter.filterUrl,
-                        method: "GET"
-                      });
-                    },
-                    ajax: {
-                      url: baseurl.getBaseUrl() + "/" + customFilter.filterUrl,
-                      dataType: 'json',
-                      quietMillis: 250,
-                      params: {headers: {"Authorization": $rootScope.AuthParams.accessToken}},
-                      data: function (term, page) { // page is the one-based page number tracked by Select2
-                        return {
-                          q: term
-                        };
-                      },
-                      results: function (data, page) { // parse the results into the format expected by Select2.
-                        // since we are using custom formatting functions we do not need to alter the remote JSON data
-                        return {results: data};
-                      },
-                      cache: true
-                    },
-
-                    initSelection: function (element, callback) {
-                      //var id = $(element).val();
-                      var value = table.column(column.idx).search();
-                      $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
-                        dataType: "json",
-                        beforeSend: function (xhr) {
-                          xhr.setRequestHeader("Authorization", $rootScope.AuthParams.accessToken);
-                        }
-                      }).done(function (data) {
-                        callback(data);
-                      });
-                    },
-                    formatResult: formatResult, // omitted for brevity, see the source of this page
-                    formatSelection: formatSelection,  // omitted for brevity, see the source of this page
-                    //dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
-                    escapeMarkup: function (m) {
-                      return m;
-                    }
-                  })
-                    .on('change', function (e) {
-                      var value = $('#' + id).select2('val');
-
-                      //los ids de los inputs tiene la forma "combo_[realIndex]"
-                      var realIndex = parseInt(id.substring(6));
-                      var index = table.colReorder.order().indexOf(realIndex);
-
-                      //console.log(this.value);
-                      if (this.value.length >= 1) {
-                        table.column(index).search(this.value).draw();
-                      } else {
-                        table.column(index).search("").draw();
-                      }
-                    });
-                }  else if (customFilter.filterType === 'date-range') {
-                  $scope.dateRangeOptions[realIndex] = _.clone(dateRangeDefaultOptions, true);
-                  $scope.dateRangeOptions[realIndex].index = realIndex;
-
-                  //si esta despues de la mitad abrir a la izquierda
-                  if (realIndex > ($scope.options.columns.length / 2)) {
-                     $scope.dateRangeOptions[realIndex].opens = 'left';
-                  }
-
-                  //$('body').append('<div id="container-daterange_' + realIndex +'"></div>');
-                  //$scope.dateRangeOptions[realIndex]['parentEl'] = "#container-daterange_" + realIndex;
-                  $scope.dateRangePickerWidgetsOrder.push[realIndex];
-                  var input = '<th><input id="daterange_' + realIndex +
-                   '" date-range-picker class="column-filter form-control input-sm date-picker" options="dateRangeOptions[' + realIndex +
-                    ']" type="text" ng-model="dateRangeFilters[' + realIndex + ']" /></th>';
-
-                  html = $compile(input)($scope);
-                } else if (customFilter.filterType === 'number-range') {
-                  $scope.rangeOptions[realIndex] = _.clone(rangeDefaultOptions, true);
-                  $scope.rangeOptions[realIndex].index = realIndex;
-
-                  //si esta despues de la mitad abrir a la izquierda
-                  if (realIndex > ($scope.options.columns.length / 2)) {
-                     $scope.rangeOptions[realIndex].opens = 'left';
-                  }
-
-                  $scope.rangePickerWidgetsOrder.push[realIndex];
-                  var input = '<th><input  id="numberrange_' + realIndex +
-                   '" range-picker class="column-filter form-control input-sm " options="rangeOptions[' + realIndex +
-                    ']" type="text" ng-model="numberRangeFilters[' + realIndex + ']" /></th>';
-
-                  html = $compile(input)($scope);
-                }
-
-              } else if (column.mData && column.bSearchable) {
-                var value = table.column(column.idx).search();
-
-                html = '<th><input id="filtro_' + realIndex
-                + '" class="column-filter form-control input-sm" type="text" style="min-width:60px; width: 100%;" value="' + value
-                + '"/></th>';
-              } else {
-                html = '<th></th>';
-              }
-
-              $('#' + tableId + ' tfoot tr').append(html);
-              //$('[id="filtro_' + table.colReorder.order()[column] + '"]').val(settings.oAjaxData.columns[column].search.value);            }
-            }
-
-            $compile($('.btn-row-datatable'))($scope);
-          });
-
-          //bind de eventos para filtros
-          _.forEach($("[id^='filtro']"), function (el) {
-            $(el).on('keyup change',
-              function(e) {
-                //los ids de los inputs tiene la forma "filtro_[realIndex]"
-                var realIndex = parseInt(el.id.substring(7));
-                var index = table.colReorder.order().indexOf(realIndex);
-
-                if(this.value.length >= 1 || e.keyCode == 13){
-                  table.column(index).search(this.value).draw();
-                }
-
-                // Ensure we clear the search if they backspace far enough
-                if(this.value == "") {
-                  table.column(index).search("").draw();
-                }
-            });
-          });
-        };
-
-        /* Funcion de actualizacion de URL Base con o sin filtros estaticos */
-        function updateStaticFilters() {
-          if ($scope.options.staticFilter) {
-            urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?search='
-              + encodeURI(JSON.stringify($scope.options.staticFilter.search)) + '&');
-          } else {
-            urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
-          }
-        }
-
-        $scope.dtInstanceCallback = function(dtInstance){
-          $('thead+tfoot').remove();
-          tableId = dtInstance.id;
-          table = dtInstance.DataTable;
-
-          //creacion de filtros
-          $('#' + tableId).append('<tfoot><tr></tr></tfoot>');
-          createFilters();
-          $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
-
-          _.each($scope.dtColumns, function(col, index) {
-              if(col.filter) {
-                var a = $('.input-sm')[index + 1]; // data: estado
-                a.value = col.filter;
-              }
-          });
-
-          //Texto del boton de visibilidad de columnas
-          $(".dt-button.buttons-colvis").removeClass().addClass("columns-selection").html('<i class="glyphicon glyphicon-th-list"></i>');
-
-
-          /* funcion para actualizar la tabla manualmente */
-          $scope.options.reloadData = function(){
-
-            if($scope.options.resource !== '@'){
-              updateStaticFilters();
-              $('#' + tableId).DataTable().ajax.reload();
-            }
-          } 
-
-          /* whatcher para actualizar la tabla automaticamente cuando los filtros estaticos cambian */
-          $scope.$watch(
-              "options.staticFilter",
-              function handleStaticFilterChange( newValue, oldValue ) {
-                
-                if($scope.options.resource !== '@'){
-                  updateStaticFilters();
-                  $('#' + tableId).DataTable().ajax.reload();
-                }
-              }
-          );
-
-          table.on('draw', function() {
-            $timeout(function() {
-              if (table.rows().data().length > 0) {
-                var selectAll = true;
-                _.each(table.rows().data(), function (value, index) {
-
-                    if ($scope.options.selection[value.id] === undefined) {
-                      $scope.options.selection[value.id] = false;
-                      selectAll = false;
-                    } else if ($scope.options.selection[value.id] == false) {
-                      selectAll = false;
-                    }
-                  });
-
-                $scope.selectAll = selectAll;
-              } else {
-                $scope.selectAll = false;
-              }
-            });
-          });
-
-          table.on('column-visibility', function (e, settings, column, state ) {
-            //console.log('change column visibility %o', state);
-            createFilters();
-          });
-
-          table.on('column-reorder', function (e, settings, details ) {
-            //console.log('change column visibility %o', state);
-            createFilters();
-          });
-
-          $scope.dtInstance = dtInstance;
-
-          // obtiene los filtros actuales
-          $scope.options.getFilters = function getFilters () {
-            var filters = {};
-            _.forEach(table.context[0].aoColumns, function (column) {
-                  var realIndex = column._ColReorder_iOrigCol;
-                  var data = column.mData;
-                  if (data !== undefined && data !== "" && data !== null) {
-                    //console.log(data);
-                    filters[data] = table.column(realIndex).search();
-                  }
-            });
-            return filters;
-          }
-
-          if ($scope.options.defaultOrderColumn !== undefined && $scope.options.defaultOrderDir !== undefined) {
-            //console.log('order: ' + $scope.options.defaultOrderColumn);
-            table.order([[$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir]]);
-          }
-        }
-
-        $scope.remove = function(itemId) {
-          $scope.disableButton = false;
-          $scope.selectedItemId = itemId;
-          $scope.tituloModal = "Confirmación de Borrado";
-          $scope.mensajeModal = "Esta operación eliminará el registro seleccionado. ¿Desea continuar?";
-          $scope.modalInstanceBorrar1 = $modal.open({
-            template: '<div class="modal-header">' +
-                '<h3 class="modal-title">{{::tituloModal}}</h3>' +
-            '</div>' +
-            '<div class="modal-body">{{::mensajeModal}}</div>' +
-            '<div class="modal-footer">' +
-                '<button class="btn btn-primary" ng-disabled="disableButton" ng-click="ok(selectedItemId)">Aceptar</button>' +
-                '<button class="btn btn-warning" ng-disabled="disableButton" ng-click="cancel()">Cancelar</button>' +
-            '</div>',
-            scope: $scope
-          });
-
-          $scope.cancel = function() {
-            $scope.disableButton = true;
-            $scope.modalInstanceBorrar1.dismiss('cancel');
-          }
-
-          $scope.ok = function(itemId) {
-            $scope.disableButton = true;
-            var model = $scope.options.factory.create({id: itemId});
-            $scope.options.factory.remove(model).then(function() {
-              // se refresca la tabla
-              $('#' + tableId).DataTable().ajax.reload();
-              $scope.modalInstanceBorrar1.close(itemId);
-            }, function(error) {
-              $scope.modalInstanceBorrar1.dismiss('cancel');
-              $scope.tituloModal = "No se pudo borrar el registro";
-              $scope.mensajeModal = $scope.options.failedDeleteError;
-              var modalInstance = $modal.open({
-                template: '<div class="modal-header">' +
-                '<h3 class="modal-title">{{::tituloModal}}</h3>' +
-                '</div>' +
-                '<div class="modal-body">{{::mensajeModal}}</div>' +
-                '<div class="modal-footer">' +
-                '<button class="btn btn-primary" ng-click="cancel()">Aceptar</button>' +
-                '</div>',
-                scope: $scope
-              });
-              $scope.cancel = function() {
-                modalInstance.dismiss('cancel');
-              };
-              console.log("error al borrar: ");
-              console.log(error);
-            });
-          }
-        };
-
-        function rowCallback(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
-          $('td', nRow).unbind('click');
-          $('td', nRow).bind('click', function() {
-              $scope.$apply(function() {
-                  $scope.selected = aData;
-                  $timeout(function(){
-                    $(document).scrollTop($('.table-detail').offset().top);
-                  });
-              });
-          });
-          return nRow;
-        }
-
-        if($scope.options.detailRows){
-          if($scope.options.detailRows === true){
-            $scope.options.detailRows = $scope.options.columns;
-          }else{
-            $scope.options.detailRows = _.union($scope.options.columns, $scope.options.detailRows);
-          }
-        }
-
-      }
-    };
-  }]);
-}());
-
-(function() {
-'use strict';
-
-angular
-  .module('ui')
-  .directive('validatedDateInput', validatedDateInput);
-
-function validatedDateInput() {
-  var directive = {
-    restrict: 'E',
-    scope: {
-      model: '=',
-      form: '=',
-      name: '@',
-      label: '@',
-      isRequired: '=',
-      submitedFlag: '=',
-      classes: '@',
-      onChange: '&',
-      isDisabled: '=',
-      dateOptions: '@',
-      format:'@',
-      opened:'@'
-    },
-    controllerAs: 'vm',
-    bindToController: true,
-    templateUrl: 'views/validated-date-input.html',
-    link: linkFunc,
-    controller: ValidatedDateInputController,
-  };
-
-  function linkFunc(scope, elem, attr, controller, dateFilter) {
-    //controller.$formatters.shift();
-    if (controller.model) {
-      controller.model = new Date(controller.model);
-    }    
-  }
-
-  return directive;
-}
-
-ValidatedDateInputController.$inject =  ['$scope', '$timeout'];
-function ValidatedDateInputController($scope, $timeout) {
-  var vm = this;
-
-  if (!vm.format)
-    vm.format = "dd/MM/yyyy";
-
-  vm.showWeeks = false;
-
-  vm.open = function() {
-    vm.opened = true;
-  };
-
-  vm.focus = false;
-  vm.focus = function() {
-    vm.opened = true;
-    vm.focus = true;
-  };
-
-  vm.today = function() {
-    vm.model = new Date();
-  };
-
-  vm.clear = function() {
-    vm.model = null;
-  };
-
-  vm.dateOptions = {
-    formatYear: 'yy',
-    startingDay: 1
-  };
-
-  activate();
-  vm.updateListener = updateListener;
-
-  function activate() {
-    moment.locale('es');
-  }
-
-  function updateListener() {
-    vm.focus = false;
-    $timeout(vm.onChange, 0);
-  }
-}
-}());
-
-(function() {
-'use strict';
-
-angular
-  .module('ui')
-  .directive('validatedTextInput', validatedTextInput);
-
-function validatedTextInput() {
-  var directive = {
-    restrict: 'E',
-    scope: {
-      model: '=',
-      form: '=',
-      name: '@',
-      label: '@',
-      isRequired: '=',
-      submitedFlag: '=',
-      placeholder: '@',
-      classes: '@',
-      inputType: '@',
-      onChange: '&',
-      maxLength: '@',
-      minLength: '@',
-      focusElement: '@',
-      isDisabled: '=',
-      pattern: '@',
-      min: '=',
-      max: '='
-    },
-    controllerAs: 'vm',
-    bindToController: true,
-    templateUrl: 'views/validated-text-input.html',
-    link: linkFunc,
-    controller: ValidatedTextInputController,
-  };
-
-  function linkFunc(scope, elem, attr) {
-  }
-
-  return directive;
-}
-
-ValidatedTextInputController.$inject =  ['$scope', '$timeout'];
-function ValidatedTextInputController($scope, $timeout) {
-  var vm = this;
-
-  activate();
-  vm.updateListener = updateListener;
-
-  function activate() {
-  }
-
-  function updateListener() {
-    $timeout(vm.onChange, 0);
-  }
-};
-}());
-
-(function() {
-'use strict';
-
-angular
-  .module('ui')
-  .directive('validatedTextareaInput', validatedTextareaInput);
-
-function validatedTextareaInput() {
-  var directive = {
-    restrict: 'E',
-    scope: {
-      model: '=',
-      form: '=',
-      name: '@',
-      label: '@',
-      isRequired: '=',
-      submitedFlag: '=',
-      classes: '@',
-      inputType: '@',
-      onChange: '&',
-      maxLength: '@',
-      minLength: '@',
-      isDisabled: '='
-    },
-    controllerAs: 'vm',
-    bindToController: true,
-    templateUrl: 'views/validated-textarea-input.html',
-    link: linkFunc,
-    controller: ValidatedTextareaInputController,
-  };
-
-  function linkFunc(scope, elem, attr) {
-  }
-
-  return directive;
-}
-
-ValidatedTextareaInputController.$inject =  ['$scope', '$timeout'];
-function ValidatedTextareaInputController($scope, $timeout) {
-  var vm = this;
-
-  activate();
-  vm.updateListener = updateListener;
-
-  function activate() {
-    vm.campo = vm.form[vm.name];
-  }
-
-  function updateListener() {
-    $timeout(vm.onChange, 0);
-  }
-}
-}());
-
-(function() {
-'use strict';
-
-angular
-  .module('ui')
-  .directive('validatedTimeInput', validatedTimeInput);
-
-function validatedTimeInput() {
-  var directive = {
-    restrict: 'E',
-    scope: {
-      model: '=',
-      form: '=',
-      name: '@',
-      label: '@',
-      isRequired: '=',
-      submitedFlag: '=',
-      classes: '@',
-      onChange: '&',
-      isDisabled: '=',
-      dateOptions: '@',
-      format:'@',
-      opened:'@'
-    },
-    controllerAs: 'vm',
-    bindToController: true,
-    templateUrl: 'views/validated-time-input.html',
-    link: linkFunc,
-    controller: validatedTimeInputController,
-  };
-
-  function linkFunc(scope, elem, attr, controller, dateFilter) {
-    if (controller.model) {
-      controller.model = new Date(controller.model);
-    }    
-  }
-  return directive;
-}
-
-validatedTimeInputController.$inject =  ['$scope', '$timeout', '$element', '$document'];
-function validatedTimeInputController($scope, $timeout, element, $document) {
-  var vm = this;
-
-  if (!vm.format){
-    vm.format = 'HH:mm';
-  }
-  
-  vm.date = new Date();
-
-  vm.showWeeks = false;
-
-  vm.open = function() {
-    if(vm.opened === false) {
-      vm.opened = true;  
-    } else {
-      vm.opened = false;
-    }
-  };
-
-  vm.focus = false;
-  vm.focus = function() {
-    vm.opened = true;
-    vm.focus = true;
-  };
-
-  vm.blur = function() {
-    vm.opened = false;
-    vm.focus = false;
-  };
-
-  vm.today = function() {
-    vm.date = new Date();
-    vm.model = moment(vm.date).format(vm.format);
-  };
-
-  vm.clear = function() {
-    vm.date = null;
-    vm.model = null;
-  };
-
-  vm.close = function() {
-    vm.opened = false;
-    vm.focus = false;
-  };
-
-  activate();
-  vm.updateListener = updateListener;
-
-  function activate() {
-    moment.locale('es');
-    vm.opened = false;
-  }
-
-  function updateListener() {
-    vm.model = moment(vm.date).format(vm.format);
-    $timeout(vm.onChange, 0);
-  }
-
-  vm.keydown = function(evt) {
-    if (evt.which === 27 || evt.which === 9 || evt.which === 13) {
-      vm.close();
-    }
-  };
-
-  element.bind('click', function(event) {
-    event.preventDefault();
-    event.stopPropagation();
-  });
-
-  $document.bind('click', function(event) {
-    $scope.$apply(function() {
-      vm.opened = false;
-    });
-  });
-}
-}());
-
-(function() {
-'use strict';
-
-angular
-  .module('ui')
-  .directive('validatedUiselectInput', validatedUiselectInput);
-
-function validatedUiselectInput() {
-  var directive = {
-    restrict: 'E',
-    scope: {
-      model: '=',
-      form: '=',
-      name: '@',
-      label: '@',
-      isRequired: '=',
-      submitedFlag: '=',
-      fieldToShow: '@',
-      options: '=',
-      classes: '@',
-      onSelect: '&',
-      focusElement: '@',
-      isDisabled: '='
-    },
-    controllerAs: 'vm',
-    bindToController: true,
-    templateUrl: 'views/validated-uiselect-input.html',
-    link: linkFunc,
-    controller: ValidatedUiselectInputController,
-    compile: compileFunc
-  };
-
-  function linkFunc(scope, elem, attr) {
-  }
-
-  function compileFunc(element, attrs) {
-  }
-
-  return directive;
-}
-
-ValidatedUiselectInputController.$inject =  ['$scope', '$timeout'];
-function ValidatedUiselectInputController($scope, $timeout) {
-  var vm = this;
-
-  vm.getChoice = getChoice;
-
-  vm.selectListener = selectListener;
-
-  vm.getFilter = getFilter;
-
-  activate();
-
-  function activate() {
-  }
-
-  function getChoice(obj) {
-    return _.get(obj, vm.fieldToShow);
-  }
-
-  function selectListener() {
-    $timeout(vm.onSelect, 0);
-  }
-
-  function getFilter(param) {
-    var obj = {};
-    obj[vm.fieldToShow] = param;
-      return obj;
-  }
-}
-}());
-
-(function() {
-'use strict';
-
-angular
-  .module('ui')
-  .directive('validatedUiselectMultipleInput', validatedUiselectMultipleInput);
-
-function validatedUiselectMultipleInput() {
-  var directive = {
-    restrict: 'E',
-    scope: {
-      model: '=',
-      form: '=',
-      name: '@',
-      label: '@',
-      isRequired: '=',
-      submitedFlag: '=',
-      fieldToShow: '@',
-      options: '=',
-      classes: '@',
-      onSelect: '&',
-      isDisabled: '='
-    },
-    controllerAs: 'vm',
-    bindToController: true,
-    templateUrl: 'views/validated-uiselect-multiple-input.html',
-    link: linkFunc,
-    controller: ValidatedUiselectMultipleInputController,
-  };
-
-  function linkFunc(scope, elem, attr) {
-  }
-
-  return directive;
-}
-
-ValidatedUiselectMultipleInputController.$inject =  ['$scope', '$timeout'];
-function ValidatedUiselectMultipleInputController($scope, $timeout) {
-  var vm = this;
-
-  vm.getChoice = getChoice;
-
-  vm.selectListener = selectListener;
-
-  vm.printTest = printTest;
-
-  vm.getFilter = getFilter;
-
-  activate();
-
-  function activate() {
-  }
-
-  function getChoice(obj) {
-    return _.get(obj, vm.fieldToShow);
-  }
-
-  function selectListener() {
-    $timeout(vm.onSelect, 0);
-  }
-
-  function getFilter(param) {
-    var obj = {};
-    obj[vm.fieldToShow] = param;
-      return obj;
-  }
-
-  function printTest() {
-    console.log('este es un test');
-  }
-}
-}());
-
-(function() {
-'use strict';
-
-angular
-  .module('ui')
-  .directive('wizard', wizard);
-
-function wizard() {
-  var directive = {
-    restrict: 'E',
-    scope: {},
-    controllerAs: 'vm',
-    bindToController: true,
-    templateUrl: 'views/wizard.html',
-    controller: WizardController,
-    transclude: true
-  };
-  return directive;
-}
-
-WizardController.$inject =  ['$scope', '$timeout'];
-
-function WizardController($scope, $timeout) {
-  var vm = this;
-  vm.tabs = [];
-
-  activate();
-  vm.addTab = addTab;
-
-  function activate() {
-  }
-
-  function addTab() {
-    // TODO Agregar TAB
-  }
-}
-}());
-
-(function() {
-'use strict';
-
-angular
-  .module('ui')
-  .directive('wizardContent', wizardContent);
-
-function wizardContent() {
-  var directive = {
-    restrict: 'E',
-    transclude: true,
-    scope: {},
-    templateUrl: 'views/wizardcontent.html',
-    link: linkFunc,
-  };
-
-  return directive;
-}
-
-function linkFunc(scope, element, attrs) {
-}
-}());
-
-(function() {
-'use strict';
-
-angular
-  .module('ui')
-  .directive('wizardPane', wizardPane);
-
-wizardPane.$inject = ['$state'];
-
-function wizardPane($state) {
-  var directive = {
-    required: '^^wizard',
-    restrict: 'E',
-    scope: {
-      title: '@',
-      number: '@',
-      activeIf: '@',
-      disabledIf: '=',
-      state: '@',
-    },
-    templateUrl: 'views/wizardpane.html',
-    controller: controllerFunc,
-    controllerAs: 'vm',
-    bindToController: true
-  };
-
-  return directive;
-}
-
-controllerFunc.$inject =['$state'];
-
-function controllerFunc($state) {
-  var vm = this;
-  
-  vm.isActive = function(estado) {
-    return $state.includes(estado);
-  };
-
-  vm.go = function(dest) {
-    if(vm.disabledIf) {
-      return;
-    }
-    $state.go(dest);
-  };
-}
-}());
-
-(function() {
-'use strict';
-
 /**
  * @ngdoc service
  * @name ui.Authentication
@@ -8009,3 +5093,2919 @@ the specific language governing permissions and limitations under the Apache Lic
 
     $.extend($.fn.select2.defaults, $.fn.select2.locales['es']);
 })(jQuery);
+
+(function() {
+'use strict';
+
+angular
+  .module('ui').directive('aDisabled', function() {
+    return {
+      compile: function(tElement, tAttrs, transclude) {
+        //Disable ngClick
+        tAttrs['ngClick'] = '!(' + tAttrs['aDisabled']+ ') && (' + tAttrs['ngClick'] + ')';
+
+        //return a link function
+        return function (scope, iElement, iAttrs) {
+
+          //Toggle 'disabled' to class when aDisabled becomes true
+          scope.$watch(iAttrs['aDisabled'], function(newValue) {
+            if (newValue !== undefined) {
+              iElement.toggleClass('disabled', newValue);
+            }
+          });
+
+          //Disable href on click
+          iElement.on('click', function(e) {
+            if (scope.$eval(iAttrs['aDisabled'])) {
+              e.preventDefault();
+            }
+          });
+        };
+      }
+    };
+  });
+
+angular.module('ui')
+  .directive('uiRequired', function() {
+    return {
+      require: 'ngModel',
+      link: function(scope, elm, attrs, ctrl) {
+        ctrl.$validators.required = function(modelValue, viewValue) {
+          return !((viewValue && viewValue.length === 0 || false) && attrs.uiRequired === 'true');
+        };
+
+        attrs.$observe('uiRequired', function() {
+          ctrl.$setValidity('required', !(attrs.uiRequired === 'true' && ctrl.$viewValue && ctrl.$viewValue.length === 0));
+        });
+      }
+    };
+  });
+}());
+
+(function() {
+angular
+  .module('ui')
+  .directive('advancedDatatablesSearch', advancedDatatablesSearch);
+
+function advancedDatatablesSearch() {
+  var directive = {
+    restrict: 'E',
+    controllerAs: 'vm',
+    scope: {
+      model: '=',
+      options: '=',
+      factory: '=',
+      disabledBtn: '=',
+      multipleSelection: '=?',
+      size: '@',
+      serializationView: '@',
+      style: '@'
+    },
+    bindToController: true,
+    templateUrl: 'views/directives/advanced-datatables-search.html',
+    link: linkFunc,
+    controller: AdvancedDatatablesSearchController,
+  };
+
+  function linkFunc(scope, elem, attr) {
+    scope.vm.multipleSelection = angular.isDefined(scope.vm.multipleSelection) ? scope.vm.multipleSelection : false;
+  }
+
+  return directive;
+}
+
+AdvancedDatatablesSearchController.$inject =  ['$log', '$scope', '$modal', '$state'];
+function AdvancedDatatablesSearchController($log, $scope, $modal, $state) {
+  var vm = this;
+  if(!vm.size) { vm.size = "btn-xs"; }
+  vm.valorScope = "hola";
+  vm.pick = pick;
+  vm.showSearch = showSearch;
+  vm.addAll = addAll;
+  if(!vm.multipleSelection) {
+    vm.options.extraRowOptions = [{
+      templateToRender: "<button class='btn btn-primary' style='margin-right: 5px;' ng-click='pick(<%=dataId%>)'> <span class='glyphicon glyphicon-ok'></span> </button>",
+      functionName: "pick",
+      functionDef: function (itemId) {
+        vm.pick(itemId);
+      }
+    }];
+  } else {
+    if (vm.multipleSelection) {
+      vm.options.isSelectable = true;
+      vm.options.selection = {};
+      vm.options.extraMenuOptions = [{
+        'title': "GSDG",
+        'icon': 'glyphicon glyphicon-plus',
+        'showCondition': function() {
+          return true;
+        },
+        'action': function() {
+          if (vm.isProcesoImportacion){
+            $state.go("app.importaciones.proceso.ordenescompra.new");
+          }else{
+            $state.go("app.orden_compra_importacion.new");
+          }
+        }
+      }];
+    }
+  }
+  vm.options.hideAddMenu = true;
+  vm.options.hideEditMenu = true;
+  vm.options.hideRemoveMenu = true;
+  vm.options.hideHeader = true;
+
+  var createFilters = function (filters) {
+    var filtersArr = [];
+    _.each(filters, function (search, data) {
+      filtersArr.push({path: data, like: search})
+    });
+    var filters = filterFactory.and(filtersArr).value();
+    return filters;
+  };
+
+  activate();
+
+  function activate() {
+    vm.modalInstance = undefined;
+  }
+
+  function pick(item) {
+    vm.model = vm.factory.get(item, vm.serializationView);
+    
+    if(vm.modalInstance) {
+      vm.modalInstance.close();
+    }
+  }
+
+  function showSearch() {
+    vm.modalInstance = $modal.open({
+      templateUrl: 'views/datatables-modal.html',
+      scope: $scope,
+      size: 'lg'
+    });
+  }
+
+  function addAll() {
+    //convertimos los datos a un array de indicesSelected
+    var indicesSelected = _.filter(_.map(vm.options.selection, function(val, idx) {
+        return val == true ? parseInt(idx) : false; }),
+      function(val) {  return val; });
+    vm.model = _.map(indicesSelected, function(idx) { return vm.factory.get(idx, vm.serializationView); });
+    
+    if(vm.modalInstance) {
+      vm.modalInstance.close();
+    }
+  }
+}
+}());
+
+(function() {
+'use strict';
+
+angular.module('ui')
+.value('$datepickerSuppressError', true)
+.directive('pickDate', ['$filter', function ($filter) {
+  return {
+    restrict: 'A',
+    require: 'ngModel',
+    link: function (scope, element, attrs, ngModel) {
+      moment.locale('es');
+      if (scope.model[scope.form.key[0]]) {
+        scope.model[scope.form.key[0]] = new Date(scope.model[scope.form.key[0]]);
+      }
+      
+      scope.status = {
+        opened: false
+      };
+      
+      scope.open = function () {
+        scope.status.opened = true;
+      };
+      var defaultFormat = 'dd/MM/yyyy';
+
+      ngModel.$parsers.push(function () {
+        console.log(scope.schema.formatDate);
+        return $filter('date')(element.val(), scope.form.schema.formatDate || defaultFormat);
+      });
+    }
+  };
+}]);
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc directive
+ * @name ui.directive:fileupload
+ * @description
+ * # fileupload
+ */
+angular.module('ui')
+  .directive('fileupload', ['$rootScope', 'notify', 'UploadFactory', 'baseurl', function ($rootScope, notify, UploadFactory, baseurl) {
+    return {
+      template: '<div ng-show="uploadOptions.imageOnly">' +
+      '<div flow-init="{singleFile: true}" ' +
+      'flow-files-submitted="uploader.flow.upload()"' +
+      'flow-file-added="!!{png:1,gif:1,jpg:1,jpeg:1}[$file.getExtension()]"' +
+      'flow-files-added="filesAdded($files, $event, uploader.flow)"' +
+      'flow-name="uploader.flow"' +
+      'class="ng-scope">' +
+      '<label>{{uploadOptions.title}}</label>' +
+
+      '<div class="thumbnail" ng-show="uploader.currentFile && !uploader.flow.files.length">' +
+      '<img src="{{uploader.currentFile}}" style="max-width: 300px; max-height: 200px;"/> ' +
+      '</div>' +
+
+      '<div class="thumbnail" ng-show="!uploader.flow.files.length && !uploader.currentFile && !uploadOptions.imagePath">' +
+      '<img src="images/placeholder.png" style="max-width: 300px; max-height: 200px;">' +
+      '</div>' +
+
+      '<div class="thumbnail" ng-show="uploader.flow.files.length">' +
+      '<img flow-img="uploader.flow.files[0]" style="max-width: 300px; max-height: 200px;"/> ' +
+      '</div>' +
+
+      '<div class="thumbnail" ng-show="uploadOptions.imagePath && !uploader.currentFile && !uploader.flow.files.length">' +
+      '<img ng-src="{{uploadOptions.imagePath}}" style="max-width: 300px; max-height: 200px;"/> ' +
+      '</div>' +
+
+      '<div>' +
+      '<span class="btn btn-primary" ng-show="!uploader.flow.files.length" flow-btn="">' +
+      'Seleccionar imagen' +
+      '<input type="file" sf-changed="form" ng-model="$$value$$" style="visibility: hidden; position: absolute;" />' +
+      '</span>' +
+      '<span class="btn btn-info ng-hide" ng-show="uploader.flow.files.length" flow-btn="">' +
+      'Cambiar' +
+      '<input type="file" sf-changed="form" ng-model="$$value$$" style="visibility: hidden; position: absolute;" />' +
+      '</span>' +
+      '<span class="btn btn-danger ng-hide" ng-show="uploader.flow.files.length" ng-click="uploader.flow.cancel()">' +
+      'Eliminar' +
+      '</span>' +
+      '</div>' +
+      '<p>' +
+      'Formatos permitidos: PNG, GIF, JPG y JPEG.' +
+      '</p>' +
+      '</div>' +
+      '</div>' +
+
+      '<div ng-show="!uploadOptions.imageOnly">' +
+      '<div flow-init ' +
+      'flow-files-submitted="uploader.flow.upload()"' +
+      'flow-file-added="fileAdded($file, $event, $flow)" ' +
+      'flow-files-added="filesAdded($files, $event, $flow)" ' +
+      'flow-file-success="uploadCompleted()" ' +
+      'class="ng-scope">' +
+      '<h3>{{uploadOptions.title}}</h3>' +
+      '<div class="drop" flow-drop ng-class="dropClass">' +
+
+      '<span class="btn btn-default btn-sm" flow-btn>Cargar archivo ' +
+        '<input type="file" ng-model="$$value$$" sf-changed="form" style="visibility: hidden; position: absolute;"/> ' +
+      '</span> ' +
+      '<br/> ' +
+      '<b>O</b> ' +
+      'Arrastre el archivo aqu&iacute; ' +
+      '</div> ' +
+      '<br/> ' +
+      '<div ng-repeat="file in uploader.flow.files" class="transfer-box">' +
+      '{{file.relativePath}} ({{file.size}}bytes)' +
+      '<div class="progress progress-striped" ng-class="{active: file.isUploading()}">' +
+      '<div class="progress-bar" role="progressbar" ' +
+      'aria-valuenow="{{file.progress() * 100}}" ' +
+      'aria-valuemin="0" ' +
+      'aria-valuemax="100" ' +
+      'ng-style="{width: progressWith(file.progress())}">' +
+      '<span class="sr-only">{{file.progress()}}% Complete</span>' +
+      '</div>' +
+      '</div>' +
+      '<div class="btn-group">' +
+      '<a class="btn btn-xs btn-danger" ng-click="file.cancel()">' +
+      'Cancelar' +
+      '</a>' +
+      '<a class="btn btn-xs btn-info" ng-click="file.retry()" ng-show="file.error">' +
+      'Reintentar' +
+      '</a>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>',
+      restrict: 'E',
+      tranclude: true,
+      scope: {
+        uploadOptions: '='
+      },
+      link: function postLink(scope, element, attrs) {
+        scope.uploader = {};
+        scope.title = attrs.title;
+        scope.fileModel = {};
+
+        scope.progressWith = function (progress) {
+          return (progress * 100) + '%';
+        };
+        
+        scope.filesAdded = function (files, event, flow) {
+          scope.uploader.flow = flow;
+          scope.uploadOptions.flow = flow;
+        };
+
+        if (scope.uploadOptions) {
+          scope.uploader.flow = scope.uploadOptions.flow;
+        }
+        scope.files = [];
+        scope.adjuntosBaseURL = baseurl.getPublicBaseUrl();
+
+        scope.fileAdded = function(file, event) {
+          // controlamos que no se supere el limite de tamano          
+          if(scope.uploadOptions.FILE_UPLOAD_LIMIT && file.size > (scope.uploadOptions.FILE_UPLOAD_LIMIT * 1000 * 1000)){
+            event.preventDefault();
+            ngNotify.set('El tamaño del archivo supera el límite de ' + scope.uploadOptions.FILE_UPLOAD_LIMIT + ' MB.', 'warn');
+            return false;
+          }
+          var ext = file.getExtension();
+          // si es imagen controlamos que sea alguna de las extensiones permitidas
+          if(scope.uploadOptions.imageOnly && ['png', 'gif', 'jpg', 'jpeg'].indexOf(ext) < 0){
+            notify({message: 'Solo se permiten archivos con extensión: png, gif, jpg o jpeg.', classes: 'alert-warning', position: 'right'});
+            return false;
+          }
+          // controlamos que el tamanio del nombre no supere 255 caracteres
+          if(file.name.length > 255) {
+            notify({message: 'El nombre del archivo supera los 255 caracteres', classes: 'alert-warning', position: 'right'});
+            return false;
+          }
+        };
+
+        scope.uploadCompleted = function() {
+          notify({message: 'Archivo cargado correctamente', classes: 'alert-warning', position: 'right'});
+          scope.files = UploadFactory.getCurrentFiles(scope.uploadOptions);
+        };
+      }
+    };
+  }]);
+}());
+
+(function() {
+'use strict';
+
+angular
+  .module('ui').directive('focusOn', ['$timeout', function($timeout) {
+   return function(scope, elem, attrs) {
+     scope.$on(attrs.focusOn, function(e) {
+       $timeout((function() {
+         elem[0].focus();
+       }), 10);
+     });
+   };
+}]);
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc directive
+ * @name ui.directive:menuBuilder
+ * @description
+ * # menuBuilder
+ */
+angular.module('ui')
+  .directive('menuBuilder', ['$timeout', function ($timeout) {
+    return {
+      templateUrl: 'views/menu-builder.html',
+      restrict: 'EA',
+      replace: true,
+      scope: { options: '=', menu: '=', save: '=' },
+      link: function postLink(scope, element, attrs) {
+        //scope.menu = {};
+        var setLeafs = function(nodes) {
+          _.each(nodes, function(n) {
+            n.data = { estado: n.estado };
+            if(n.children) setLeafs(n.children);
+            else n.type = 'leaf';
+          }); 
+          return nodes;
+        };
+
+        function drawJSTree(treeData) {
+          $('#menu-builder').jstree({
+            'core' : {
+              'animation' : 0,
+              'check_callback': function(operation, node, parent, position)
+              { 
+                switch (operation) {
+                    case 'move_node':
+                      return !parent.parent || parent.original.type !== 'leaf';
+                    case 'create_node':
+                      return parent.original.type !== 'leaf';
+                    case 'rename_node':
+                      return node.original.type !== 'leaf';
+                    case 'delete_node':
+                      return _.isEmpty(node.children) && node.original.type !== 'leaf';
+                }
+                return false;
+              },
+              'themes' : { 'stripes' : true },
+              'data' : setLeafs(treeData)
+            },
+            'types' : {
+              'default' : {
+                'icon' : 'glyphicon glyphicon-record'
+              },
+              'leaf' : {
+                'icon' : 'glyphicon glyphicon-asterisk'
+              }
+            },
+            'plugins' : [
+              'dnd', 'search',
+              'state', 'types', 'wholerow'
+            ]
+          });
+        }
+
+        function nodeRename() {
+          var ref = $('#menu-builder').jstree(true),
+            sel = ref.get_selected();
+          if(!sel.length) { return false; }
+          sel = sel[0];
+          //console.log(ref.get_node(sel));
+          if(ref.get_node(sel).original.type !== 'leaf') ref.edit(sel);
+        }
+
+        $('#menu-builder').delegate("li","dblclick", function(e) {
+          nodeRename();
+          return false;
+        });
+
+        scope.nodeCreate = function() {
+          var ref = $('#menu-builder').jstree(true),
+              sel = ref.get_selected();
+          if(!sel.length) { return false; }
+          sel = sel[0];
+          sel = ref.create_node(sel);
+          if(sel) {
+              ref.edit(sel);
+          }
+        };
+
+        scope.nodeDelete = function() {
+          var ref = $('#menu-builder').jstree(true),
+              sel = ref.get_selected();
+          if(!sel.length) { return false; }
+          ref.delete_node(sel);
+        };
+
+        scope.getMenu = function() {
+          var getMenuNode = function(e) {
+            var result = {
+              text: e.text,
+              estado: e.data.estado
+            };
+
+            if(!_.isEmpty(e.children)){
+              result.children = _.map(e.children, function(c){
+                return getMenuNode(c);
+              });
+            }
+
+            return result;
+          }
+
+          var ref = $('#menu-builder').jstree(true);
+          var menu = _.map(ref.get_json(), getMenuNode);
+          
+          scope.save(menu);
+          //scope.menu = menu;
+        };
+
+        scope.$watch('menu', function(menu) {
+          if(menu) drawJSTree(menu);
+        });
+      }
+    };
+  }]);
+}());
+
+(function() {
+'use strict';
+
+angular.module('ui')
+.directive('mmenu', function() {
+    return {
+        restrict : 'A',
+        link : function(scope, element, attrs) {
+            $(element).mmenu({
+               "extensions": [
+                  "pagedim-black",
+                  "effect-listitems-slide",
+                  "multiline",
+                  "pageshadow"
+               ],
+               "counters": true,
+               "iconPanels": {add:true,
+                 hideNavbars: true
+               },
+               "navbar": {
+                 "title": attrs.navbarTitle
+               },
+               "navbars": [
+                  {
+                     "position": "top",
+                     "content": [
+                        "searchfield"
+                     ]
+                  },
+                  true
+               ],
+               searchfield: {
+                  resultsPanel: {
+                    title: "Resultados",
+                    add: true},
+                  placeholder: "Buscar menú",
+                  noResults: "Sin coincidencias",
+                  
+               }
+            }, {
+             searchfield: {
+                clear: true  
+             }
+          });
+        }
+    };
+});
+}());
+(function() {
+'use strict';
+
+/**
+ * @ngdoc directive
+ * @name qualita.directive:offlineFormRecovery
+ * @description
+ * # offlineFormRecovery
+ */
+angular.module('ui')
+  .directive('offlineFormRecovery', ['$localForage', function ($localForage) {
+    return {
+      template: '<div class="btn-group" role="group" aria-label="First group">' +
+      '<button ng-disabled="!pending.length || position == 0" type="button" class="glyphicon glyphicon-arrow-left btn btn-default btn-recovery" ng-click="previous()"></button>' +
+      '<button ng-disabled="!pending.length || position == pending.length" type="button" class="glyphicon glyphicon-arrow-right btn btn-default btn-recovery" ng-click="next()"></button>' +
+      '<button ng-disabled="!pending.length || position == 0" type="button" class="glyphicon glyphicon-remove btn btn-default btn-recovery" ng-click="remove()"></button>' +
+      '</div>',
+      restrict: 'EA',
+      link: function postLink(scope, element, attrs) {
+        scope.position = 0;
+
+        if (scope.resource) {
+          $localForage.getItem(scope.resource).then(function(value) {
+            scope.pending = _(value).filter(function(e) { return !e.id; })
+                              .map(function(e, i){ e.index = i; return e; }).value();
+          });
+        } else {
+          console.log('scope.resource no definido');
+        }
+
+        scope.next = function() {
+          scope.position++;
+          scope.model = (scope.position == 0) ? {} : scope.pending[scope.position - 1];
+        };
+
+        scope.previous = function() {
+          scope.position--;
+          scope.model = (scope.position == 0) ? {} : scope.pending[scope.position - 1];
+        };
+
+        scope.remove = function() {
+          $localForage.getItem(scope.resource).then(function(value) {
+            scope.pending = _.filter(value, function(e, i) { return i !== scope.position - 1; });
+            $localForage.setItem(scope.resource, scope.pending);
+            scope.previous();
+          });
+        }
+      }
+    };
+  }]);
+}());
+
+(function() {
+'use strict';
+
+/**
+ * @ngdoc directive
+ * @name ui.directive:reportViewer
+ * @description
+ * # reportViewer
+ */
+angular.module('ui')
+  .directive('reportViewer', ['$modal', '$sce', function ($modal, $sce) {
+    return {
+      template: '',
+      restrict: 'E',
+      scope: {
+        url: '=',
+        title: '@',
+        background: '='
+      },
+      link: function postLink(scope, element) {
+
+        scope.close = function () {
+          scope.modalInstance.dismiss('close');
+        };
+
+        scope.$watch('url', function() {
+         
+          if(scope.url) {
+            scope.trustedUrl = $sce.trustAsResourceUrl(scope.url);
+            
+            if(!scope.background){
+              scope.modalInstance = $modal.open({
+                template: '<div class="modal-header">' +
+                  '<div class="close glyphicon glyphicon-remove" ng-click="close()"></div>' +
+                  '<h3 class="modal-title">{{title}}</h3>' +
+                '</div>' +
+                '<div class="modal-body">' +
+                  '<iframe src="{{trustedUrl}}" width="100%" height="450"></iframe>' +
+                '</div>' +
+                '<div class="modal-footer">' +
+                  '<button class="btn btn-primary" ng-click="close()">Cerrar</button>' +
+                '</div>',
+                scope: scope
+              });
+            }else{
+              element.append('<iframe src="' + scope.trustedUrl + '" hidden></iframe>');
+            }
+          }
+        });
+      }
+    };
+  }]);
+}());
+(function() {
+'use strict';
+
+angular
+  .module('ui').directive('resize', ['$window', function($window){
+  return{
+    link: function(scope, element, attrs){
+      var w = angular.element($window);
+      scope.getWindowDimensions = function () {
+        return { 'h': w.height(), 'w': w.width() };
+      };
+      scope.$watch(scope.getWindowDimensions, function (newValue, oldValue) {
+        scope.windowHeight = newValue.h;
+        scope.windowWidth = newValue.w;
+
+        scope.style = function () {
+          return {
+            'height': (newValue.h) + 'px',
+            'width': (newValue.w) + 'px'
+          };
+        };
+        scope.getHeight = function (padding) {
+          return {
+            'height': (newValue.h + padding) + 'px'
+          };
+        };
+        scope.getWidth= function (padding) {
+          return {
+            'width': (newValue.w + padding) + 'px'
+          };
+        };
+      }, true);
+
+      w.bind('resize', function () {
+        scope.$apply();
+      });
+    }
+  };
+}]);
+}());
+
+angular.module('ui').run(["$templateCache", function($templateCache) {
+
+$templateCache.put("views/directives/uiselect.html", "<div class=\"form-group\"\n" +
+      "     ng-class=\"{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess(), 'has-feedback': form.feedback !== false}\"\n" +
+      "     ng-init=\"selectedOptions=form.titleMap; insideModel=$$value$$;\" ng-controller=\"dynamicSelectController\">\n" +
+      "  <label class=\"control-label\" ng-show=\"showTitle()\">{{form.title}}</label>\n" +
+      "\n" +
+      "  <div class=\"form-group\">\n" +
+      "    <ui-select ng-model=\"select_model.selected\"\n" +
+      "               ng-if=\"!(form.options.tagging||false)\" theme=\"bootstrap\" ng-disabled=\"form.disabled\"\n" +
+      "               on-select=\"$$value$$=$item.value\" class=\"{{form.options.uiClass}}\">\n" +
+      "      <ui-select-match\n" +
+      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" +
+      "        {{select_model.selected.name}}\n" +
+      "      </ui-select-match>\n" +
+      "      <ui-select-choices refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" +
+      "                         refresh-delay=\"form.options.refreshDelay\" group-by=\"form.options.groupBy\"\n" +
+      "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" +
+      "        <div ng-bind-html=\"item.name | highlight: $select.search\"></div>\n" +
+      "        <div ng-if=\"item.description\">\n" +
+      "          <span\n" +
+      "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS'))+ '</small>'\"></span>\n" +
+      "        </div>\n" +
+      "      </ui-select-choices>\n" +
+      "    </ui-select>\n" +
+      "    <ui-select ng-model=\"select_model.selected\"\n" +
+      "               ng-if=\"(form.options.tagging||false) && !(form.options.groupBy || false)\"\n" +
+      "               tagging=\"form.options.tagging||false\" tagging-label=\"form.options.taggingLabel\"\n" +
+      "               tagging-tokens=\"form.options.taggingTokens\"\n" +
+      "               theme=\"bootstrap\" ng-disabled=\"form.disabled\" on-select=\"$$value$$=$item.value\"\n" +
+      "               class=\"{{form.options.uiClass}}\">\n" +
+      "      <ui-select-match\n" +
+      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" +
+      "        {{select_model.selected.name}}&nbsp;\n" +
+      "        <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>\n" +
+      "      </ui-select-match>\n" +
+      "      <!--repeat code because tagging does not display properly under group by but is still useful -->\n" +
+      "      <ui-select-choices refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" +
+      "                         refresh-delay=\"form.options.refreshDelay\"\n" +
+      "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescription===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" +
+      "        <div ng-if=\"item.isTag\"\n" +
+      "             ng-bind-html=\"'<div>' + (item.name   | highlight: $select.search) + ' ' + form.options.taggingLabel + '</div><div class=&quot;divider&quot;></div>'\"></div>\n" +
+      "        <div ng-if=\"!item.isTag\" ng-bind-html=\"item.name + item.isTag| highlight: $select.search\"></div>\n" +
+      "        <div ng-if=\"item.description\">\n" +
+      "          <span\n" +
+      "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS')) + '</small>'\"></span>\n" +
+      "        </div>\n" +
+      "      </ui-select-choices>\n" +
+      "    </ui-select>\n" +
+      "\n" +
+      "    <!--repeat code because tagging does not display properly under group by but is still useful -->\n" +
+      "\n" +
+      "    <ui-select ng-model=\"select_model.selected\"\n" +
+      "               ng-if=\"(form.options.tagging||false) && (form.options.groupBy || false)\"\n" +
+      "               tagging=\"form.options.tagging||false\" tagging-label=\"form.options.taggingLabel\"\n" +
+      "               tagging-tokens=\"form.options.taggingTokens\"\n" +
+      "               theme=\"bootstrap\" ng-disabled=\"form.disabled\" on-select=\"$$value$$=$item.value\"\n" +
+      "               class=\"{{form.options.uiClass}}\">\n" +
+      "      <ui-select-match\n" +
+      "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" +
+      "        {{select_model.selected.name}}&nbsp;\n" +
+      "        <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>\n" +
+      "      </ui-select-match>\n" +
+      "      <ui-select-choices group-by=\"form.options.groupBy\"\n" +
+      "                         refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" +
+      "                         refresh-delay=\"form.options.refreshDelay\"\n" +
+      "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescription===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" +
+      "        <div ng-if=\"item.isTag\"\n" +
+      "             ng-bind-html=\"'<div>' + (item.name  | highlight: $select.search) + ' ' + form.options.taggingLabel + '</div><div class=&quot;divider&quot;></div>'\"></div>\n" +
+      "        <div ng-if=\"!item.isTag\" ng-bind-html=\"item.name + item.isTag| highlight: $select.search\"></div>\n" +
+      "        <div ng-if=\"item.description\">\n" +
+      "          <span\n" +
+      "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS')) + '</small>'\"></span>\n" +
+      "        </div>\n" +
+      "      </ui-select-choices>\n" +
+      "    </ui-select>\n" +
+      "    <input type=\"hidden\" toggle-single-model sf-changed=\"form\" ng-model=\"insideModel\" schema-validate=\"form\"/>\n" +
+      "    <span ng-if=\"form.feedback !== false\"\n" +
+      "          class=\"form-control-feedback\"\n" +
+      "          ng-class=\"evalInScope(form.feedback) || {'glyphicon': true, 'glyphicon-ok': hasSuccess(), 'glyphicon-remove': hasError() }\"></span>\n" +
+      "\n" +
+      "    <div class=\"help-block\"\n" +
+      "         ng-show=\"(hasError() && errorMessage(schemaError())) || form.description\"\n" +
+      "         ng-bind-html=\"(hasError() && errorMessage(schemaError())) || form.description\"></div>\n" +
+      "  </div>\n" +
+      "</div>\n"
+  );
+
+  $templateCache.put('ngTagsInput/tags-input.html',
+    "<div class=\"host\" tabindex=\"-1\" ng-click=\"eventHandlers.host.click()\" ti-transclude-append><div class=\"tags\" ng-class=\"{focused: hasFocus}\"><ul class=\"tag-list\"><li class=\"tag-item\" ng-repeat=\"tag in tagList.items track by track(tag)\" ng-class=\"{ selected: tag == tagList.selected }\" ng-click=\"eventHandlers.tag.click(tag)\"><ti-tag-item data=\"::tag\"></ti-tag-item></li></ul><input class=\"tag-input-text input\" autocomplete=\"off\" ng-model=\"newTag.text\" ng-model-options=\"{getterSetter: true}\" ng-keydown=\"eventHandlers.input.keydown($event)\" ng-focus=\"eventHandlers.input.focus($event)\" ng-blur=\"eventHandlers.input.blur($event)\" ng-paste=\"eventHandlers.input.paste($event)\" ng-trim=\"false\" ng-class=\"{'invalid-tag': newTag.invalid}\" ng-disabled=\"disabled\" ti-bind-attrs=\"{type: options.type, tabindex: options.tabindex, spellcheck: options.spellcheck}\" ti-autosize></div></div>"
+  );
+
+  $templateCache.put('ngTagsInput/tag-item.html',
+    "<span ng-bind=\"$getDisplayText()\"></span> <span class=\"remove-button close ui-select-match-close\" ng-click=\"$removeTag()\" ng-bind=\"::$$removeTagSymbol\"></span>"
+  );
+
+  $templateCache.put('ngTagsInput/auto-complete.html',
+    "<div class=\"autocomplete\" ng-if=\"suggestionList.visible\"><ul class=\"suggestion-list\"><li class=\"suggestion-item\" ng-repeat=\"item in suggestionList.items track by track(item)\" ng-class=\"{selected: item == suggestionList.selected}\" ng-click=\"addSuggestionByIndex($index)\" ng-mouseenter=\"suggestionList.select($index)\"><ti-autocomplete-match data=\"::item\"></ti-autocomplete-match></li></ul></div>"
+  );
+
+  $templateCache.put('ngTagsInput/auto-complete-match.html',
+    "<span ng-bind-html=\"$highlight($getDisplayText())\"></span>"
+  );
+
+  $templateCache.put("bootstrap/select-multiple.tpl.html","<div class=\"ui-select-container ui-select-multiple ui-select-bootstrap dropdown form-control\" ng-class=\"{open: $select.open}\"><div><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" autocorrect=\"off\" autocapitalize=\"off\" spellcheck=\"false\" class=\"ui-select-search input-xs\" placeholder=\"{{$selectMultiple.getPlaceholder()}}\" ng-disabled=\"$select.disabled\" ng-hide=\"$select.disabled\" ng-click=\"$select.activate()\" ng-model=\"$select.search\" role=\"combobox\" aria-label=\"{{ $select.baseTitle }}\" ondrop=\"return false;\"></div><div class=\"ui-select-choices\"></div></div>");
+  $templateCache.put("bootstrap/select.tpl.html","<div class=\"ui-select-container ui-select-bootstrap dropdown\" ng-class=\"{open: $select.open}\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" aria-expanded=\"true\" aria-label=\"{{ $select.baseTitle }}\" aria-owns=\"ui-select-choices-{{ $select.generatedId }}\" aria-activedescendant=\"ui-select-choices-row-{{ $select.generatedId }}-{{ $select.activeIndex }}\" class=\"form-control ui-select-search ui-select-search-single\" placeholder=\"{{$select.placeholder}}\" ng-model=\"$select.search\" ng-show=\"$select.searchEnabled && $select.open\"><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");
+
+}]);
+
+angular.module('ui').config(
+  ['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider',
+    function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
+
+      var select = function (name, schema, options) {
+        if ((schema.type === 'string') && ("enum" in schema)) {
+          var f = schemaFormProvider.stdFormObj(name, schema, options);
+          f.key = options.path;
+          f.type = 'strapselect';
+          options.lookup[sfPathProvider.stringify(options.path)] = f;
+          return f;
+        }
+      };
+
+      schemaFormProvider.defaults.string.unshift(select);
+
+      //Add to the bootstrap directive
+      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapselect',
+        'views/directives/strapselect.html');
+      schemaFormDecoratorsProvider.createDirective('strapselect',
+        'views/directives/strapselect.html');
+
+      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapmultiselect',
+        'views/directives/strapmultiselect.html');
+      schemaFormDecoratorsProvider.createDirective('strapmultiselect',
+        'views/directives/strapmultiselect.html');
+
+      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapselectdynamic',
+        'views/directives/strapselect.html');
+      schemaFormDecoratorsProvider.createDirective('strapselectdynamic',
+        'views/directives/strapselect.html');
+
+      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapmultiselectdynamic',
+        'views/directives/strapmultiselect.html');
+      schemaFormDecoratorsProvider.createDirective('strapmultiselectdynamic',
+        'views/directives/strapmultiselect.html');
+
+
+      // UI SELECT
+      //Add to the bootstrap directive
+      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'uiselect',
+        'views/directives/uiselect.html');
+
+      schemaFormDecoratorsProvider.createDirective('uiselect',
+        'views/directives/uiselect.html');
+
+      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'uiselectmultiple',
+        'views/directives/uiselectmultiple.html');
+
+      schemaFormDecoratorsProvider.createDirective('uiselectmultiple',
+        'views/directives/uiselectmultiple.html');
+
+    }])
+  .directive("toggleSingleModel", function () {
+    // some how we get this to work ...
+    return {
+      require: 'ngModel',
+      restrict: "A",
+      scope: {},
+      replace: true,
+      controller: ['$scope', function ($scope) {
+        $scope.$parent.$watch('select_model.selected', function () {
+          if ($scope.$parent.select_model.selected != undefined) {
+            $scope.$parent.insideModel = $scope.$parent.select_model.selected.value;
+            $scope.$parent.ngModel.$setViewValue($scope.$parent.select_model.selected.value);
+          }
+        });
+      }]
+    };
+  })
+  .directive("toggleModel", function () {
+    // some how we get this to work ...
+    return {
+      require: 'ngModel',
+      restrict: "A",
+      scope: {},
+      controller: ['$scope', 'sfSelect', function ($scope, sfSelect) {
+
+        var list = sfSelect($scope.$parent.form.key, $scope.$parent.model);
+        //as per base array implemenation if the array is undefined it must be set as empty for data binding to work
+        if (angular.isUndefined(list)) {
+          list = [];
+          sfSelect($scope.$parent.form.key, $scope.$parent.model, list);
+        }
+        $scope.$parent.$watch('form.selectedOptions', function () {
+          if (!($scope.$parent.form.selectedOptions)) {
+
+          } else if ($scope.$parent.form.selectedOptions.length == 0) {
+
+            if ($scope.$parent.ngModel.$viewValue != undefined) {
+              $scope.$parent.ngModel.$setViewValue($scope.$parent.form.selectedOptions);
+            }
+          } else {
+            $scope.$parent.$$value$$ = [];
+            $scope.$parent.form.selectedOptions.forEach(function (item) {
+                $scope.$parent.$$value$$.push(item.value);
+              }
+            );
+            $scope.$parent.ngModel.$setViewValue($scope.$parent.$$value$$);
+          }
+        }, true);
+      }]
+    };
+  })
+  .directive('multipleOn', function () {
+    return {
+      link: function ($scope, $element, $attrs) {
+        $scope.$watch(
+          function () {
+            return $element.attr('multiple-on');
+          },
+          function (newVal) {
+
+            if (newVal == "true") {
+              var select_scope = angular.element($element).scope().$$childTail;
+              select_scope.$isMultiple = true;
+              select_scope.options.multiple = true;
+              select_scope.$select.$element.addClass('select-multiple');
+            }
+            else {
+              angular.element($element).scope().$$childTail.$isMultiple = false;
+            }
+          }
+        );
+      }
+    };
+  })
+  .filter('whereMulti', function () {
+    return function (items, key, values) {
+      var out = [];
+
+      if (angular.isArray(values) && items !== undefined) {
+        values.forEach(function (value) {
+          for (var i = 0; i < items.length; i++) {
+            if (value == items[i][key]) {
+              out.push(items[i]);
+              break;
+            }
+          }
+        });
+      } else {
+        // Let the output be the input untouched
+        out = items;
+      }
+
+      return out;
+    };
+  })
+  .filter('propsFilter', function () {
+    return function (items, props) {
+      var out = [];
+
+      if (angular.isArray(items)) {
+        items.forEach(function (item) {
+          var itemMatches = false;
+
+          var keys = Object.keys(props);
+          for (var i = 0; i < keys.length; i++) {
+            var prop = keys[i];
+            if (item && item.hasOwnProperty(prop)) {
+              //only match if this property is actually in the item to avoid
+              var text = props[prop].toLowerCase();
+              //search for either a space before the text or the textg at the start of the string so that the middle of words are not matched
+              if (item[prop] && (item[prop].toString().toLowerCase().indexOf(text) === 0 || ( item[prop].toString()).toLowerCase().indexOf(' ' + text) !== -1)) {
+                itemMatches = true;
+                break;
+              }
+            }
+          }
+
+          if (itemMatches) {
+            out.push(item);
+          }
+        });
+      } else {
+        // Let the output be the input untouched
+        out = items;
+      }
+
+      return out;
+    };
+  }).filter('filterRelated', function () {
+
+    return function(items, props) {
+      if(typeof props.form.options.filterRelated === 'function') {
+        return props.form.options.filterRelated(items);
+      }
+      return items;
+    };
+  });
+
+angular.module('ui').controller('dynamicSelectController', ['$scope', '$http', '$timeout', function ($scope, $http, $timeout) {
+
+
+  $scope.select_model = {};
+
+  $scope.triggerTitleMap = function () {
+    console.log("listener triggered");
+    // Ugly workaround to trigger titleMap expression re-evaluation so that the selectFilter it reapplied.
+    $scope.form.titleMap.push({"value": "345890u340598u3405u9", "name": "34095u3p4ouij"})
+    $timeout(function () {
+      $scope.form.titleMap.pop()
+    });
+
+  };
+
+  $scope.initFiltering = function (localModel) {
+    if ($scope.form.options.filterTriggers) {
+      $scope.form.options.filterTriggers.forEach(function (trigger) {
+        $scope.$parent.$watch(trigger, $scope.triggerTitleMap)
+
+      });
+    }
+    // This is set here, as the model value may become unitialized and typeless if validation fails.
+    $scope.localModelType = Object.prototype.toString.call(localModel);
+    $scope.filteringInitialized = true;
+  };
+
+
+  /**
+   * Función implementada para solucionar el problema de pre-seleccionar el elemento.
+   * Dejamos el elemento a pre-seleccionar en la primera posición del titleMap.
+   **/
+  function initSelection(data, scope, options) {
+    var model = getModel(options);
+    var map = options.map;
+    if (angular.isArray(model)) {
+      return data;
+    } else {
+
+      if (!model) {
+        return [{value: undefined, name: $scope.form.placeholder}].concat(data);
+      }
+
+      var isEdit = false;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i][map.valueProperty] === model[map.valueProperty]) {
+          isEdit = true;
+          break;
+        }
+      }
+      var tmp = data[0];
+      data[0] = data[i];
+      data[i] = tmp;
+
+      if (isEdit) {
+        $scope.select_model.selected = data[0];
+      }
+      return data;
+    }
+  }
+
+  function getModel(options) {
+    var form = $scope.form;
+    var modelKey = form.key[0];
+    var _scope = angular.element('form[name=' + options.formName + ']').scope();
+    return _scope.model[modelKey];
+  }
+
+  /**
+   * Función implementada para solucionar el problema de pre-seleccionar el elemento.
+   **/
+  function initEnumSelection(data, options) {
+    var model = getModel(options);
+    $scope.select_model.selected = {value: model, name: model};
+  }
+
+  $scope.remap = function (options, data) {
+
+
+    if (options && "map" in options && options.map) {
+      var current_row = null;
+      var result = [];
+      data.forEach(function (current_row) {
+        current_row["value"] = current_row[options.map.valueProperty];
+        current_row["name"] = current_row[options.map.nameProperty];
+        result.push(current_row);
+      });
+
+      if (options.formName) {
+        var _scope = angular.element('form[name=' + options.formName + ']').scope();
+        result = initSelection(data, _scope, options);
+      }
+      return result;
+    }
+    else {
+      data.forEach(function (item) {
+          if ("text" in item) {
+            item.name = item.text
+          }
+        }
+      );
+      return data;
+    }
+  };
+
+  $scope.clone = function (obj) {
+    if (null == obj || "object" != typeof(obj)) return obj;
+    var copy = obj.constructor();
+    for (var attr in obj) {
+      if (obj.hasOwnProperty(attr)) copy[attr] = $scope.clone(obj[attr]);
+    }
+    return copy;
+  };
+
+
+  $scope.getCallback = function (callback, name) {
+    if (typeof(callback) == "string") {
+      var _result = $scope.$parent.evalExpr(callback);
+      if (typeof(_result) == "function") {
+        return _result;
+      }
+      else {
+        throw("A callback string must match name of a function in the parent scope")
+      }
+
+    }
+    else if (typeof(callback) == "function") {
+      return callback;
+    }
+    else {
+      throw("A callback must either be a string matching the name of a function in the parent scope or a " +
+      "direct function reference")
+
+    }
+  };
+
+  $scope.getOptions = function (options) {
+    // If defined, let the a callback function manipulate the options
+    if (options.httpPost && options.httpPost.optionsCallback) {
+      newOptionInstance = $scope.clone(options);
+      return $scope.getCallback(options.httpPost.optionsCallback)(newOptionInstance);
+    }
+    if (options.httpGet && options.httpGet.optionsCallback) {
+      newOptionInstance = $scope.clone(options);
+      return $scope.getCallback(options.httpGet.optionsCallback)(newOptionInstance);
+    }
+    else {
+      return options;
+    }
+  };
+
+  $scope.test = function (form) {
+    form.titleMap.pop();
+  };
+
+  $scope.populateTitleMap = function (form) {
+
+    if ("enum" in form.schema) {
+      form.titleMap = [];
+      form.schema.enum.forEach(function (item) {
+        form.titleMap.push({"value": item, "name": item})
+      });
+      initEnumSelection(form.titleMap, form.options);
+
+    }/* else if (form.titleMap) {
+     console.log("dynamicSelectController.populateTitleMap(key:" + form.key + ") : There is already a titleMap");
+     }*/
+    else if (!form.options) {
+
+      console.log("dynamicSelectController.populateTitleMap(key:" + form.key + ") : No options set, needed for dynamic selects");
+    }
+    else if (form.options.callback) {
+      form.titleMap = $scope.getCallback(form.options.callback)(form.options);
+      console.log('callback items', form.titleMap);
+    }
+    else if (form.options.asyncCallback) {
+      return $scope.getCallback(form.options.asyncCallback)(form.options).then(
+        function (_data) {
+          form.titleMap = $scope.remap(form.options, _data.data);
+
+          if (form.options.multiple) {
+            $scope.uiMultiSelectInitInternalModel(getModel(form.options));
+          } else {
+            //$scope.select_model.selected = form.titleMap[0];
+          }
+          console.log('asyncCallback items', form.titleMap);
+        },
+        function (data, status) {
+          alert("Loading select items failed(Options: '" + String(form.options) +
+            "\nError: " + status);
+        });
+    }
+    else if (form.options.httpPost) {
+      var finalOptions = $scope.getOptions(form.options);
+
+      return $http.post(finalOptions.httpPost.url, finalOptions.httpPost.parameter).then(
+        function (_data) {
+
+          form.titleMap = $scope.remap(finalOptions, _data.data);
+          console.log('httpPost items', form.titleMap);
+        },
+        function (data, status) {
+          alert("Loading select items failed (URL: '" + String(finalOptions.httpPost.url) +
+            "' Parameter: " + String(finalOptions.httpPost.parameter) + "\nError: " + status);
+        });
+    }
+    else if (form.options.httpGet) {
+      var finalOptions = $scope.getOptions(form.options);
+      return $http.get(finalOptions.httpGet.url, finalOptions.httpGet.parameter).then(
+        function (data) {
+          form.titleMap = $scope.remap(finalOptions, data.data);
+          console.log('httpGet items', form.titleMap);
+        },
+        function (data, status) {
+          alert("Loading select items failed (URL: '" + String(finalOptions.httpGet.url) +
+            "\nError: " + status);
+        });
+    }
+  };
+  $scope.uiMultiSelectInitInternalModel = function (_model) {
+
+    function find_in_titleMap(value) {
+      for (i = 0; i < $scope.form.titleMap.length; i++) {
+        if ($scope.form.titleMap[i].value == value) {
+          return $scope.form.titleMap[i].name
+        }
+      }
+
+
+    }
+
+    $scope.internalModel = [];
+
+    if (_model !== undefined && angular.isArray(_model)) {
+      _model.forEach(function (value) {
+          $scope.internalModel.push({"value": value, "name": find_in_titleMap(value)})
+        }
+      )
+    }
+  }
+
+}]);
+
+angular.module('ui').filter('selectFilter', [function ($filter) {
+  return function (inputArray, controller, localModel, strLocalModel) {
+    // As the controllers' .model is the global and its form is the local, we need to get the local model as well.
+    // We also need tp be able to set it if is undefined after a validation failure,so for that we need
+    // its string representation as well as we do not know its name. A typical value if strLocalModel is model['groups']
+    // This is very ugly, though. TODO: Find out why the model is set to undefined after validation failure.
+
+    if (!angular.isDefined(inputArray) || !angular.isDefined(controller.form.options) || !angular.isDefined(controller.form.options.filter) || controller.form.options.filter == '') {
+      return inputArray;
+    }
+
+    console.log("----- In filtering for " + controller.form.key + "(" + controller.form.title + "), model value: " + JSON.stringify(localModel) + "----");
+    console.log("Filter:" + controller.form.options.filter);
+    if (!controller.filteringInitialized) {
+      console.log("Initialize filter");
+      controller.initFiltering(localModel);
+    }
+    var data = [];
+
+
+    angular.forEach(inputArray, function (curr_item) {
+      console.log("Compare: curr_item: " + JSON.stringify(curr_item) +
+        "with : " + JSON.stringify(controller.$eval(controller.form.options.filterTriggers[0])));
+      if (controller.$eval(controller.form.options.filter, {item: curr_item})) {
+        data.push(curr_item);
+      }
+      else if (localModel) {
+        // If not in list, also remove the set value
+
+        if (controller.localModelType == "[object Array]" && localModel.indexOf(curr_item.value) > -1) {
+          localModel.splice(localModel.indexOf(curr_item.value), 1);
+        }
+        else if (localModel == curr_item.value) {
+          console.log("Setting model of type " + controller.localModelType + "to null.");
+          localModel = null;
+        }
+      }
+    });
+
+    if (controller.localModelType == "[object Array]" && !localModel) {
+      // An undefined local model seems to mess up bootstrap select's indicators
+      console.log("Resetting model of type " + controller.localModelType + " to [].");
+
+      controller.$eval(strLocalModel + "=[]");
+    }
+
+    console.log("Input: " + JSON.stringify(inputArray));
+    console.log("Output: " + JSON.stringify(data));
+    console.log("Model value out : " + JSON.stringify(localModel));
+    console.log("----- Exiting filter for " + controller.form.title + "-----");
+
+    return data;
+  };
+}]);
+
+
+(function() {
+'use strict';
+ 
+/**
+ * Anularjs Module for pop up timepicker
+ */
+angular.module('ui')
+.factory('timepickerState', function() {
+  var pickers = [];
+  return {
+		addPicker: function(picker) {
+			pickers.push(picker);
+		},
+		closeAll: function() {
+			for (var i=0; i<pickers.length; i++) {
+				pickers[i].close();
+			}
+		}
+	};
+})
+
+.directive('timeFormat', ['$filter', function($filter) {
+  return {
+    restrict : 'A',
+    require : 'ngModel',
+    scope : {
+      showMeridian : '=',
+    },
+    link : function(scope, element, attrs, ngModel) {
+        var parseTime = function(viewValue) {
+
+        if (!viewValue) {
+          ngModel.$setValidity('time', true);
+          return null;
+        } else if (angular.isDate(viewValue) && !isNaN(viewValue)) {
+          ngModel.$setValidity('time', true);
+          return viewValue;
+        } else if (angular.isString(viewValue)) {
+          var timeRegex = /^(0?[0-9]|1[0-2]):[0-5][0-9] ?[a|p]m$/i;
+          if (!scope.showMeridian) {
+            timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+          }
+          if (!timeRegex.test(viewValue)) {
+            ngModel.$setValidity('time', false);
+            return undefined;
+          } else {
+            ngModel.$setValidity('time', true);
+            var date = new Date();
+            var sp = viewValue.split(":");
+            var apm = sp[1].match(/[a|p]m/i);
+            if (apm) {
+              sp[1] = sp[1].replace(/[a|p]m/i, '');
+              if (apm[0].toLowerCase() == 'pm') {
+                sp[0] = sp[0] + 12;
+              }
+            }
+            date.setHours(sp[0], sp[1]);
+            return date;
+          };
+        } else {
+          ngModel.$setValidity('time', false);
+          return undefined;
+        };
+      };
+
+      ngModel.$parsers.push(parseTime);
+
+      var showTime = function(data) {
+        parseTime(data);
+        var timeFormat = (!scope.showMeridian) ? "HH:mm" : "hh:mm a";
+        return $filter('date')(data, timeFormat);
+      };
+      ngModel.$formatters.push(showTime);
+      scope.$watch('showMeridian', function(value) {
+        var myTime = ngModel.$modelValue;
+        if (myTime) {
+          element.val(showTime(myTime));
+        }
+
+      });
+    }
+  };
+}])
+
+.directive('timepickerPop', ['$document', 'timepickerState', function($document, timepickerState) {
+      return {
+        restrict : 'E',
+        transclude : false,
+        scope : {
+          inputTime : '=',
+          showMeridian : '=',
+          disabled : '='
+        },
+        controller : function($scope, $element) {
+          $scope.isOpen = false;
+          $scope.disabledInt = angular.isUndefined($scope.disabled)? false : $scope.disabled;
+          $scope.toggle = function() {
+            if ($scope.isOpen) {
+              $scope.close();
+            } else {
+              $scope.open();
+            }
+          };
+        },
+        link : function(scope, element, attrs) {
+          console.log('link de la directiva timepicker');
+          var picker = {
+        		  open : function () {
+        			  timepickerState.closeAll();
+        			  scope.isOpen = true;
+        		  },
+        		  close: function () {
+        			  scope.isOpen = false;
+        		  }
+          		  
+          };
+          timepickerState.addPicker(picker);
+          
+          scope.open = picker.open;
+          scope.close = picker.close;
+          
+          scope.$watch("disabled", function(value) {
+            scope.disabledInt = angular.isUndefined(scope.disabled)? false : scope.disabled;
+          });
+          
+          scope.$watch("inputTime", function(value) {
+            if (!scope.inputTime) {
+              element.addClass('has-error');
+            } else {
+              element.removeClass('has-error');
+            }
+
+          });
+
+          element.bind('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+          });
+
+          $document.bind('click', function(event) {
+            scope.$apply(function() {
+           		scope.isOpen = false;
+            });
+          });
+
+        },
+        template : "<input type='text' class='form-control' ng-model='inputTime' ng-disabled='disabledInt' time-format show-meridian='showMeridian' ng-focus='open()' />"
+            + "  <div class='input-group-btn' ng-class='{open:isOpen}'> "
+            + "    <button type='button' ng-disabled='disabledInt' class='btn btn-default form-control' ng-class=\"{'btn-primary':isOpen}\" data-toggle='dropdown' ng-click='toggle()'> "
+            + "        <i class='glyphicon glyphicon-time'></i></button> "
+            + "          <div class='dropdown-menu pull-right'> "
+            + "            <timepicker ng-model='inputTime' show-meridian='showMeridian' style='margin-left: 15%;'></timepicker> "
+            + "           </div> " + "  </div>"
+      };
+}]);
+}());
+(function() {
+'use strict';
+/**
+ * @ngdoc directive
+ * @name ui.directive:uiDatatable
+ * @description
+ * # uiDatatable
+ */
+angular.module('ui')
+  .directive('uiDatatable', ['$timeout', '$uibModal', '$compile', '$state', '$resource', 'AuthorizationService', 'DTOptionsBuilder', 'DTColumnBuilder', 'baseurl', '$rootScope', 
+    function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
+
+    var hasPermission = AuthorizationService.hasPermission;
+
+    return {
+      template: '<div>' +
+    '<div class="widget">' +
+      '<div class="widget-header bordered-top bordered-palegreen" ng-if="!options.hideHeader">' +
+        '<span class="widget-caption">{{options.title}}</span>' +
+        '<div class="widget-buttons">' +
+          '<a href="" ng-show="canCreate()" ng-click="new()" title="Nuevo">' +
+            '<i class="glyphicon glyphicon-plus"></i>' +
+          '</a>' +
+          '<a ng-repeat="menuOption in options.extraMenuOptions" href="" ng-show="menuOption.showCondition()" ng-click="menuOption.action()" title="{{menuOption.title}}">' +
+            '<p><i class="{{menuOption.icon}}"></i>' +
+            '  {{menuOption.data}}&nbsp;&nbsp;&nbsp;</p>' +
+          '</a>' +
+        '</div>' +
+      '</div>' +
+      '<div class="widget-body">' +
+          '<div class="table-responsive">' +
+            '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-hover table-responsive table-condensed no-footer">' +
+            '</table>' +
+          '</div>' +
+          '<div ng-if="selected">' +
+              '<h3>Detalles</h3>' +
+              '<table class="table table-striped table-bordered table-detail">' +
+                  '<tbody>' +
+                      '<tr ng-repeat="row in options.detailRows">' +
+                          '<td ng-if="selected[row.data]" class="row-title">{{row.title}}</td>' +
+                          '<td ng-if="selected[row.data] && row.renderWith">{{row.renderWith(selected[row.data])}}</td>' +
+                          '<td ng-if="selected[row.data] && !row.renderWith">{{selected[row.data]}}</td>' +
+                      '</tr>' +
+                  '</tbody>' +
+              '</table>' +
+          '</div>' +
+        '</div>' +
+      '</div>',
+      restrict: 'AE',
+      replace: true,
+      scope: {
+        options: '='
+      },
+      controller: function controller($scope, $element) {
+        var actionsColumn, selectionColumn, urlTemplate;
+        // Se arma la ruta según tenga o no filtros estáticos
+        updateStaticFilters();
+
+        $scope.dtInstance = {};
+        $scope.selectAll = false;
+        $scope.options.selection = {};
+        $scope.headerCompiled = false;
+        $scope.customFilters = {};
+
+        var rangeSeparator = "~";
+        var dateFormat = "DD/MM/YYYY";
+        var defaultFilterType = 'string';
+        var table;
+        var tableId;
+
+
+        var ajaxRequest = function(data, callback) {
+
+          if (table) {
+            $scope.options.tableAjaxParams = table.ajax.params();
+
+            _.forEach(table.colReorder.order(), function(columnIndex, index) {
+              if ($scope.customFilters[columnIndex]) {
+                data.columns[index]['type'] = $scope.customFilters[columnIndex].filterType;
+              } else {
+                data.columns[index]['type'] = defaultFilterType;
+              }
+            });
+          }
+          data.rangeSeparator = rangeSeparator;
+
+          var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
+            query: {
+              isArray: false,
+              method: 'POST'
+            }
+          });
+
+          xhr.query({}).$promise.then(function(response) {
+            var datos = response.data;
+            if(datos) {
+              datos.forEach(function(registro) {
+                Object.keys(registro).forEach(function(key) {
+                  if(registro[key] === true) {
+                    registro[key] = "Sí";
+                  } else if(registro[key] === false) {
+                    registro[key] = "No";
+                  }
+                });
+              });
+            }
+            callback(response);
+          }).catch(function(response) {
+            console.log(response);
+          });
+        };
+        var ajaxConfig = ($scope.options.ajax) ? $scope.options.ajax : ajaxRequest;
+
+        //modelos de los filtros de rangos de fechas
+        $scope.dateRangeFilters = {
+          'i': {
+            startDate: null,
+            endDate: null
+          }
+        };
+
+        //callback para el boton apply en el widget de rango de fechas
+        var datePickerApplyEvent = function(ev, picker) {
+          var ini = ev.model.startDate.format(dateFormat);
+          var end = ev.model.endDate.format(dateFormat);
+
+          var index = table.colReorder.order().indexOf(ev.opts.index);
+          table.column(index).search(ini + rangeSeparator + end).draw();
+        }
+
+        //callback para el boton cancel en el widget de rango de fechas, que borra el filtro
+        var datePickerCancelEvent = function(ev, picker) {
+          var index = table.colReorder.order().indexOf(ev.opts.index);
+          table.column(index).search("").draw();
+          $("#daterange_" + ev.opts.index ).val("");
+          $scope.dateRangeFilters[ev.opts.index].startDate = null;
+          $scope.dateRangeFilters[ev.opts.index].endDate = null;
+        }
+
+        //callback para borrar el rango previamente seleccionado
+        var datePickerShowEvent = function(ev, picker) {
+
+          if ($scope.dateRangeFilters[ev.opts.index].startDate === null) {
+            var widgetIndex = $scope.dateRangePickerWidgetsOrder.indexOf(ev.opts.index);
+            var widget = $($(".daterangepicker").get(widgetIndex));
+            widget.parent().find('.in-range').removeClass("in-range");
+            widget.parent().find('.active').removeClass("active");
+            widget.parent().find('.input-mini').removeClass("active").val("");
+          }
+        }
+
+        moment.locale('es');
+        var dateRangeLocaleOptions = {
+          cancelLabel: 'Limpiar',
+          applyLabel: 'Aplicar',
+          format: dateFormat,
+          separator: ' a ',
+          weekLabel: 'S',
+          daysOfWeek: moment.weekdaysMin(),
+          monthNames: moment.monthsShort(),
+          firstDay: moment.localeData().firstDayOfWeek()
+        };
+
+        $scope.dateRangeOptions = {};
+
+        var dateRangeDefaultOptions = {
+          eventHandlers: {
+            'apply.daterangepicker' : datePickerApplyEvent,
+            'cancel.daterangepicker' : datePickerCancelEvent,
+            'show.daterangepicker' : datePickerShowEvent
+          },
+          opens: "right",
+          index: 0,
+          showDropdowns: true,
+          locale: dateRangeLocaleOptions
+        };
+
+        $scope.dateRangePickerWidgetsOrder = [];
+
+        //modelos del filtro de rango numericos
+        $scope.numberRangeFilters = {
+          'i': {
+            startRange: null,
+            endRange: null
+          }
+        };
+
+        //callback para el boton apply en el widget de rango de numeros
+        var rangePickerApplyEvent = function(ev, picker) {
+          //console.log("apply");
+          var ini = ev.model.startRange;
+          var end = ev.model.endRange;
+
+          var index = table.colReorder.order().indexOf(ev.opts.index);
+          table.column(index).search(ini + rangeSeparator + end).draw();
+        }
+
+        //callback para el boton cancel en el widget de rango de numeros, que borra el filtro
+        var rangePickerCancelEvent = function(ev, picker) {
+          //console.log("cancel");
+          var index = table.colReorder.order().indexOf(ev.opts.index);
+          table.column(index).search("").draw();
+          $("#numberrange_" + ev.opts.index ).val("");
+          $scope.numberRangeFilters[ev.opts.index].startRange = null;
+          $scope.numberRangeFilters[ev.opts.index].endRange = null;
+
+          var widgetIndex = $scope.rangePickerWidgetsOrder.indexOf(ev.opts.index);
+          var widget = $($(".rangepicker").get(widgetIndex));
+            widget.parent().find('input[name=rangepicker_start]').val();
+            widget.parent().find('input[name=rangepicker_end]').val();
+        };
+
+        var rangeLocaleOptions = {
+          cancelLabel: 'Limpiar',
+          applyLabel: 'Aplicar',
+          separator: ' a '
+        };
+
+        $scope.rangeOptions = {};
+
+        var rangeDefaultOptions = {
+          eventHandlers: {
+            'apply.rangepicker' : rangePickerApplyEvent,
+            'cancel.rangepicker' : rangePickerCancelEvent
+          },
+          opens: "right",
+          index: 0,
+          showDropdowns: true,
+          locale: rangeLocaleOptions
+        };
+
+        $scope.rangePickerWidgetsOrder = [];
+
+        $scope.dtOptions = DTOptionsBuilder.newOptions()
+          .withDataProp('data')
+          .withOption('language', {
+                  'sProcessing' : 'Procesando...',
+                  'sLengthMenu' : 'Registros _MENU_',
+                  'sZeroRecords' : 'No se encontraron resultados',
+                  'sEmptyTable' : 'Ningún dato disponible en esta tabla',
+                  'sInfo' : 'Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros',
+                  'sInfoEmpty' : 'Mostrando registros del 0 al 0 de un total de 0 registros',
+                  'sInfoFiltered' : '(filtrado de un total de _MAX_ registros)',
+                  'sInfoPostFix' : '.',
+                  'sSearch' : 'Buscar:',
+                  'sInfoThousands' : ',',
+                  'sLoadingRecords' : 'Cargando...',
+                  'oPaginate' : {
+                    'sFirst' : 'Primero',
+                    'sLast' : 'Último',
+                    'sNext' : 'Siguiente',
+                    'sPrevious' : 'Anterior'
+                  },
+                  'oAria' : {
+                    'sSortAscending' : ': Activar para ordenar la columna de manera ascendente',
+                    'sSortDescending' : ': Activar para ordenar la columna de manera descendente'
+                  }
+                })
+          .withOption('createdRow', function(row, data, dataIndex) {
+            $compile(angular.element(row).contents())($scope);
+          })
+          .withOption('headerCallback', function(header) {
+            if (!$scope.headerCompiled) {
+                // Use this headerCompiled field to only compile header once
+                $scope.headerCompiled = true;
+                $compile(angular.element(header).contents())($scope);
+            }
+          })
+          .withPaginationType('full_numbers')
+          .withButtons(['colvis'])
+          .withBootstrap();
+
+        if($scope.options.resource === '@'){
+          // @ indica que es los datos para el datatable son locales
+          $scope.dtOptions.withOption('data', $scope.options.factory.all());
+        }else{
+          $scope.dtOptions.withOption('ajax', ajaxConfig);
+          $scope.dtOptions.withOption('serverSide', true);
+          $scope.dtOptions.withOption('processing', true);
+        }
+
+        if($scope.options.detailRows){
+          $scope.dtOptions = $scope.dtOptions.withOption('rowCallback', rowCallback);
+        }
+
+        //inicializan la cantidad de columnas visibles
+        $scope.visibleColumns = 0;//$scope.options.columns.length;
+
+        $scope.dtColumns = [];
+        //indices
+        $scope.defaultColumnOrderIndices = [];
+        $scope.originalIndexKey = {};
+
+        //si tiene checkboxes para seleccion
+        var indexPadding = 0;
+        if($scope.options.isSelectable) {
+
+          var titleHtml = '<label><input type="checkbox" ng-model="selectAll" ng-click="toggleAll()"><span class="text"></span></label>';
+
+          selectionColumn = DTColumnBuilder.newColumn(null).withTitle(titleHtml).notSortable()
+          .withOption('searchable', false)
+          .renderWith(function(data, type, full, meta) {
+              var checkbox = '<label>' +
+                '<input id="' + data.id + '" type="checkbox" ng-model="options.selection[' + data.id + ']" ng-click="toggleOne()">' +
+              '<span class="text"></span></label>';
+              return checkbox;
+          })
+          .withOption('name', 'checkbox');
+
+          $scope.dtColumns.push(selectionColumn);
+          $scope.visibleColumns += 1;
+          indexPadding = 1;
+          $scope.originalIndexKey[0] = null;//'checkbox';
+          $scope.defaultColumnOrderIndices.push(0);
+          $scope.dtOptions.withColReorderOption('iFixedColumnsLeft', 1);
+        }
+
+        /* RENDERS BASICOS */
+        var dateRender =  function(dateFormat) {
+          return function(data) {
+            //return moment.utc(data).format(dateFormat);
+            return moment(data).format(dateFormat);
+          };
+        };
+
+        var emptyRender =  function(data) {
+          if (data == undefined) return "";
+          else return data;
+        };
+
+        var numberRender =  function(data) {
+          if (data) return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+          else return '';
+        };
+
+        var monedaRender =  function(pathAtt) {
+          return function(data, type, row) {
+            if (data) {
+              var moneda = "Gs. ";
+              if (row[pathAtt]==='dolares') {
+                moneda = "Usd. ";
+                data = parseFloat(data).toFixed(2);
+              } else if(row[pathAtt]==='pesos') {
+                moneda = "Pes. ";
+                data = parseFloat(data).toFixed(2);
+              } else if (row[pathAtt]==='real') {
+                moneda = "Rel. ";
+                data = parseFloat(data).toFixed(2);
+              } else if (row[pathAtt]==='euro') {
+                moneda = "Eur. ";
+                data = parseFloat(data).toFixed(2);
+              }
+              return moneda + data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            } else return "";
+          }
+        };
+
+        var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable', 'searchable'];
+        _.map($scope.options.columns, function(c, index){
+
+          var column = DTColumnBuilder.newColumn(c.data);
+          //el indice original para la columna
+          var originalIndex = indexPadding + index
+          $scope.originalIndexKey[originalIndex] = c.data;
+
+          if(c.title) column = column.withTitle(c.title);
+          if(c.class) column = column.withClass(c.class);
+          if(c.renderWith) {
+            if(c.renderWith === 'dateRender')
+              column = column.renderWith(dateRender(c.dateFormat));
+            else if (c.renderWith === 'emptyRender')
+              column = column.renderWith(emptyRender);
+            else if (c.renderWith === 'numberRender')
+              column = column.renderWith(numberRender);
+            else if (c.renderWith === 'monedaRender')
+              column = column.renderWith(monedaRender(c.pathAttMoneda));
+            else
+              column = column.renderWith(c.renderWith);
+          }
+          if(c.sortable === false) column = column.notSortable();
+
+          //si hay un orden definido y no está dentro de ese orden o si especifica que no es visible
+          if(!_.contains($scope.options.defaultColumnOrder, c.data) || c.visible === false) column = column.notVisible();
+          else $scope.visibleColumns += 1;
+
+          _.forOwn(c, function(value, key){
+            if(!_.contains(commonAttrs, key)) column = column.withOption(key, value);
+          });
+
+          if(c.searchable === false) {
+            column = column.withOption('bSearchable', false);
+          } else {
+            column = column.withOption('bSearchable', true);
+          }
+
+          if(c.type) {
+            var customFilter = {'filterType': c.type, 'filterUrl' : c.filterUrl};
+
+            if (c.type === 'date-range') {
+              $scope.dateRangeFilters[originalIndex] = {startDate: null, endDate: null};
+            } else if (c.type === 'number-range') {
+              $scope.numberRangeFilters[originalIndex] = {startRange: null, endRange: null};
+            }
+
+            $scope.customFilters[originalIndex] = customFilter;
+          }
+          $scope.dtColumns.push(column);
+        });
+
+        //console.log($scope.dtColumns);
+        if($scope.options.hasOptions) {
+          $scope.originalIndexKey[$scope.visibleColumns] = null;//'actions';
+          // Fix last right column
+          $scope.dtOptions.withColReorderOption('iFixedColumnsRight', 1);
+          $scope.visibleColumns += 1;
+        }
+
+        //columnas reordenables, por defecto habilitado
+        if ($scope.options.colReorder === true || $scope.options.colReorder === undefined) {
+          $scope.dtOptions.withColReorder();
+        }
+
+        // Se establece el orden por defecto
+        //$scope.dtOptions.withColReorderOrder($scope.defaultColumnOrderIndices);
+
+        actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
+          .withOption('searchable', false)
+          .renderWith(function(data, type, full, meta) {
+              var basicOpts = '<button class="btn-row-datatable btn btn-success btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canEdit(' + data.id + ')}" ng-click="edit(' + data.id + ')">' +
+                  '   <span class="glyphicon glyphicon-pencil"></span>' +
+                  '</button>' +
+                  '<button class="btn-row-datatable btn btn-danger btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canRemove(' + data.id + ')}" ng-click="remove(' + data.id + ')">' +
+                  '   <span class="glyphicon glyphicon-trash"></span>' +
+                  '</button>' +
+                  '<button class="btn-row-datatable btn btn-info btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canList(' + data.id + ')}" ng-click="view(' + data.id + ')">' +
+                  '   <span class="glyphicon glyphicon-eye-open"></span>' +
+                  '</button>';
+            if($scope.options.extraRowOptions) {
+              _.forEach($scope.options.extraRowOptions, function(menuOpt) {
+                var compilado = _.template(menuOpt.templateToRender);
+                $scope[menuOpt.functionName] = menuOpt.functionDef;
+                var customAttribute = menuOpt.customAttribute;
+                var compiled = {'dataId': data.id, '$state': $state, '$scope': $scope};
+                if(customAttribute && customAttribute.constructor === Array) {
+                  compiled.dataCustom = JSON.stringify(_.map(customAttribute, function(ca) { return data[ca] }));
+                } else {
+                  compiled.dataCustom = JSON.stringify(data[menuOpt.customAttribute]);
+                }
+                basicOpts = basicOpts + compilado(compiled);
+                $scope[menuOpt.conditionName] = menuOpt.conditionDef;
+              });
+            }
+            return basicOpts;
+          });
+
+
+        $scope.canEdit = function(data) {
+          var permission = hasPermission('update_' + $scope.options.resource);
+          if($scope.options.extraEditConditions) {
+            var valor = _.find(table.rows().data(), function(value) {
+              return value.id == data;
+            });
+            return permission && $scope.options.extraEditConditions(valor) && !$scope.options.hideEditMenu;
+          }
+          return permission && !$scope.options.hideEditMenu;
+        };
+
+        $scope.canRemove = function(data) {
+          var permission = hasPermission('delete_' + $scope.options.resource);
+          if($scope.options.extraRemoveConditions) {
+            var valor = _.find(table.rows().data(), function(value) {
+              return value.id == data;
+            });
+            return permission && $scope.options.extraRemoveConditions(valor) && !$scope.options.hideRemoveMenu;
+          }
+          return permission && !$scope.options.hideRemoveMenu;
+        };
+ 
+        $scope.canCreate = function() {
+          var permission = hasPermission('create_' + $scope.options.resource);
+          return permission && ! $scope.options.hideAddMenu;
+        };
+
+        $scope.canList = function(data) {
+          var permission = hasPermission('index_' + $scope.options.resource);
+          if($scope.options.extraViewConditions) {
+            var valor = _.find(table.rows().data(), function(value) {
+              return value.id == data;
+            });
+            return permission && $scope.options.extraViewConditions(valor) && !$scope.options.hideViewMenu;
+          }
+          return permission && ! $scope.options.hideViewMenu;
+        };
+
+        if($scope.options.hasOptions) {
+          $scope.dtColumns.push(actionsColumn);
+          $scope.visibleColumns += 1;
+        }
+
+        $scope.new = function(){
+          var pathTemplate;
+          if(!$scope.options.customResource)
+            pathTemplate = _.template('app.<%= resource %>.new');
+          else
+            pathTemplate = _.template('app.<%= customResource %>.new');
+          $state.go(pathTemplate($scope.options), {});
+        }
+
+        $scope.edit = function(itemId){
+          var pathTemplate;
+          if(!$scope.options.customResource)
+            pathTemplate = _.template('app.<%= resource %>.edit');
+          else
+            pathTemplate = _.template('app.<%= customResource %>.edit');
+          $state.go(pathTemplate($scope.options), {id: itemId});
+        }
+
+        $scope.view = function(itemId) {
+          var pathTemplate;
+          if(!$scope.options.customResource)
+            pathTemplate = _.template('app.<%= resource %>.view');
+          else
+            pathTemplate = _.template('app.<%= customResource %>.view');
+          $state.go(pathTemplate($scope.options), {id: itemId});
+        }
+
+        $scope.toggleAll = function () {
+            if ($scope.selectAll) {         //If true then select visible
+                _.each(table.rows().data(), function (value, index) {
+                    $scope.options.selection[value.id] = true;
+                });
+            } else {
+              _.each(table.rows().data(), function (value, index) {
+                  $scope.options.selection[value.id] = false;
+              });
+            }
+
+        }
+
+        $scope.toggleOne = function () {
+            var notSelectAll = _.some(table.rows().data(), function (value, index) {
+              return !$scope.options.selection[value.id];
+            });
+            $scope.selectAll = !notSelectAll;
+        }
+
+        //funciones para el select2
+        var formatSelection = function(text) {
+          return text.descripcion;
+        };
+
+        var formatResult = function(text) {
+          if (text.descripcion === "")
+            return '<div class="select2-user-result">Todos</div>';
+          return '<div class="select2-user-result">' + text.descripcion + '</div>';
+        };
+
+
+        //funcion para crear los filtros
+        var createFilters = function() {
+          $('#' + tableId + ' tfoot tr').empty();
+          $scope.dateRangePickerWidgetsOrder = [];
+          $(".daterangepicker").remove();
+          $scope.options.currentColumnOrder = [];
+
+
+          _.forEach(table.context[0].aoColumns, function (column) {
+            var realIndex = column._ColReorder_iOrigCol;
+            var data = column.mData;
+            var html = '<th></th>';
+
+            if (column.bVisible) {
+              if (data) {
+                $scope.options.currentColumnOrder.push(data);
+              }
+
+              var title = column.name;
+              if (!name) {
+                title = column.sTitle;
+              }
+
+              var customFilter = $scope.customFilters[realIndex];
+
+              if (customFilter) {
+                if (customFilter.filterType === 'combo') {
+                  var id = 'combo_' + realIndex;
+
+                  html = '<th><div id="' + id + '" name="' + title + '" class="filtro-ancho"></div></th>';
+                  $('#' + tableId + ' tfoot tr').append(html);
+                  html = '';
+
+                  $('#' + id).select2({
+                    minimumResultsForSearch: -1,
+                    //allowClear: true,
+                    id: function (text) {
+                      return text.descripcion;
+                    },
+                    data: function () {
+                      return $http({
+                        url: baseurl.getBaseUrl() + customFilter.filterUrl,
+                        method: "GET"
+                      });
+                    },
+                    ajax: {
+                      url: baseurl.getBaseUrl() + "/" + customFilter.filterUrl,
+                      dataType: 'json',
+                      quietMillis: 250,
+                      params: {headers: {"Authorization": $rootScope.AuthParams.accessToken}},
+                      data: function (term, page) { // page is the one-based page number tracked by Select2
+                        return {
+                          q: term
+                        };
+                      },
+                      results: function (data, page) { // parse the results into the format expected by Select2.
+                        // since we are using custom formatting functions we do not need to alter the remote JSON data
+                        return {results: data};
+                      },
+                      cache: true
+                    },
+
+                    initSelection: function (element, callback) {
+                      //var id = $(element).val();
+                      var value = table.column(column.idx).search();
+                      $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
+                        dataType: "json",
+                        beforeSend: function (xhr) {
+                          xhr.setRequestHeader("Authorization", $rootScope.AuthParams.accessToken);
+                        }
+                      }).done(function (data) {
+                        callback(data);
+                      });
+                    },
+                    formatResult: formatResult, // omitted for brevity, see the source of this page
+                    formatSelection: formatSelection,  // omitted for brevity, see the source of this page
+                    //dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
+                    escapeMarkup: function (m) {
+                      return m;
+                    }
+                  })
+                    .on('change', function (e) {
+                      var value = $('#' + id).select2('val');
+
+                      //los ids de los inputs tiene la forma "combo_[realIndex]"
+                      var realIndex = parseInt(id.substring(6));
+                      var index = table.colReorder.order().indexOf(realIndex);
+
+                      //console.log(this.value);
+                      if (this.value.length >= 1) {
+                        table.column(index).search(this.value).draw();
+                      } else {
+                        table.column(index).search("").draw();
+                      }
+                    });
+                }  else if (customFilter.filterType === 'date-range') {
+                  $scope.dateRangeOptions[realIndex] = _.clone(dateRangeDefaultOptions, true);
+                  $scope.dateRangeOptions[realIndex].index = realIndex;
+
+                  //si esta despues de la mitad abrir a la izquierda
+                  if (realIndex > ($scope.options.columns.length / 2)) {
+                     $scope.dateRangeOptions[realIndex].opens = 'left';
+                  }
+
+                  //$('body').append('<div id="container-daterange_' + realIndex +'"></div>');
+                  //$scope.dateRangeOptions[realIndex]['parentEl'] = "#container-daterange_" + realIndex;
+                  $scope.dateRangePickerWidgetsOrder.push[realIndex];
+                  var input = '<th><input id="daterange_' + realIndex +
+                   '" date-range-picker class="column-filter form-control input-sm date-picker" options="dateRangeOptions[' + realIndex +
+                    ']" type="text" ng-model="dateRangeFilters[' + realIndex + ']" /></th>';
+
+                  html = $compile(input)($scope);
+                } else if (customFilter.filterType === 'number-range') {
+                  $scope.rangeOptions[realIndex] = _.clone(rangeDefaultOptions, true);
+                  $scope.rangeOptions[realIndex].index = realIndex;
+
+                  //si esta despues de la mitad abrir a la izquierda
+                  if (realIndex > ($scope.options.columns.length / 2)) {
+                     $scope.rangeOptions[realIndex].opens = 'left';
+                  }
+
+                  $scope.rangePickerWidgetsOrder.push[realIndex];
+                  var input = '<th><input  id="numberrange_' + realIndex +
+                   '" range-picker class="column-filter form-control input-sm " options="rangeOptions[' + realIndex +
+                    ']" type="text" ng-model="numberRangeFilters[' + realIndex + ']" /></th>';
+
+                  html = $compile(input)($scope);
+                }
+
+              } else if (column.mData && column.bSearchable) {
+                var value = table.column(column.idx).search();
+
+                html = '<th><input id="filtro_' + realIndex
+                + '" class="column-filter form-control input-sm" type="text" style="min-width:60px; width: 100%;" value="' + value
+                + '"/></th>';
+              } else {
+                html = '<th></th>';
+              }
+
+              $('#' + tableId + ' tfoot tr').append(html);
+              //$('[id="filtro_' + table.colReorder.order()[column] + '"]').val(settings.oAjaxData.columns[column].search.value);            }
+            }
+
+            $compile($('.btn-row-datatable'))($scope);
+          });
+
+          //bind de eventos para filtros
+          _.forEach($("[id^='filtro']"), function (el) {
+            $(el).on('keyup change',
+              function(e) {
+                //los ids de los inputs tiene la forma "filtro_[realIndex]"
+                var realIndex = parseInt(el.id.substring(7));
+                var index = table.colReorder.order().indexOf(realIndex);
+
+                if(this.value.length >= 1 || e.keyCode == 13){
+                  table.column(index).search(this.value).draw();
+                }
+
+                // Ensure we clear the search if they backspace far enough
+                if(this.value == "") {
+                  table.column(index).search("").draw();
+                }
+            });
+          });
+        };
+
+        /* Funcion de actualizacion de URL Base con o sin filtros estaticos */
+        function updateStaticFilters() {
+          if ($scope.options.staticFilter) {
+            urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?search='
+              + encodeURI(JSON.stringify($scope.options.staticFilter.search)) + '&');
+          } else {
+            urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
+          }
+        }
+
+        $scope.dtInstanceCallback = function(dtInstance){
+          $('thead+tfoot').remove();
+          tableId = dtInstance.id;
+          table = dtInstance.DataTable;
+
+          //creacion de filtros
+          $('#' + tableId).append('<tfoot><tr></tr></tfoot>');
+          createFilters();
+          $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
+
+          _.each($scope.dtColumns, function(col, index) {
+              if(col.filter) {
+                var a = $('.input-sm')[index + 1]; // data: estado
+                a.value = col.filter;
+              }
+          });
+
+          //Texto del boton de visibilidad de columnas
+          $(".dt-button.buttons-colvis").removeClass().addClass("columns-selection").html('<i class="glyphicon glyphicon-th-list"></i>');
+
+
+          /* funcion para actualizar la tabla manualmente */
+          $scope.options.reloadData = function(){
+
+            if($scope.options.resource !== '@'){
+              updateStaticFilters();
+              $('#' + tableId).DataTable().ajax.reload();
+            }
+          } 
+
+          /* whatcher para actualizar la tabla automaticamente cuando los filtros estaticos cambian */
+          $scope.$watch(
+              "options.staticFilter",
+              function handleStaticFilterChange( newValue, oldValue ) {
+                
+                if($scope.options.resource !== '@'){
+                  updateStaticFilters();
+                  $('#' + tableId).DataTable().ajax.reload();
+                }
+              }
+          );
+
+          table.on('draw', function() {
+            $timeout(function() {
+              if (table.rows().data().length > 0) {
+                var selectAll = true;
+                _.each(table.rows().data(), function (value, index) {
+
+                    if ($scope.options.selection[value.id] === undefined) {
+                      $scope.options.selection[value.id] = false;
+                      selectAll = false;
+                    } else if ($scope.options.selection[value.id] == false) {
+                      selectAll = false;
+                    }
+                  });
+
+                $scope.selectAll = selectAll;
+              } else {
+                $scope.selectAll = false;
+              }
+            });
+          });
+
+          table.on('column-visibility', function (e, settings, column, state ) {
+            //console.log('change column visibility %o', state);
+            createFilters();
+          });
+
+          table.on('column-reorder', function (e, settings, details ) {
+            //console.log('change column visibility %o', state);
+            createFilters();
+          });
+
+          $scope.dtInstance = dtInstance;
+
+          // obtiene los filtros actuales
+          $scope.options.getFilters = function getFilters () {
+            var filters = {};
+            _.forEach(table.context[0].aoColumns, function (column) {
+                  var realIndex = column._ColReorder_iOrigCol;
+                  var data = column.mData;
+                  if (data !== undefined && data !== "" && data !== null) {
+                    //console.log(data);
+                    filters[data] = table.column(realIndex).search();
+                  }
+            });
+            return filters;
+          }
+
+          if ($scope.options.defaultOrderColumn !== undefined && $scope.options.defaultOrderDir !== undefined) {
+            //console.log('order: ' + $scope.options.defaultOrderColumn);
+            table.order([[$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir]]);
+          }
+        }
+
+        $scope.remove = function(itemId) {
+          $scope.disableButton = false;
+          $scope.selectedItemId = itemId;
+          $scope.tituloModal = "Confirmación de Borrado";
+          $scope.mensajeModal = "Esta operación eliminará el registro seleccionado. ¿Desea continuar?";
+          $scope.modalInstanceBorrar1 = $modal.open({
+            template: '<div class="modal-header">' +
+                '<h3 class="modal-title">{{::tituloModal}}</h3>' +
+            '</div>' +
+            '<div class="modal-body">{{::mensajeModal}}</div>' +
+            '<div class="modal-footer">' +
+                '<button class="btn btn-primary" ng-disabled="disableButton" ng-click="ok(selectedItemId)">Aceptar</button>' +
+                '<button class="btn btn-warning" ng-disabled="disableButton" ng-click="cancel()">Cancelar</button>' +
+            '</div>',
+            scope: $scope
+          });
+
+          $scope.cancel = function() {
+            $scope.disableButton = true;
+            $scope.modalInstanceBorrar1.dismiss('cancel');
+          }
+
+          $scope.ok = function(itemId) {
+            $scope.disableButton = true;
+            var model = $scope.options.factory.create({id: itemId});
+            $scope.options.factory.remove(model).then(function() {
+              // se refresca la tabla
+              $('#' + tableId).DataTable().ajax.reload();
+              $scope.modalInstanceBorrar1.close(itemId);
+            }, function(error) {
+              $scope.modalInstanceBorrar1.dismiss('cancel');
+              $scope.tituloModal = "No se pudo borrar el registro";
+              $scope.mensajeModal = $scope.options.failedDeleteError;
+              var modalInstance = $modal.open({
+                template: '<div class="modal-header">' +
+                '<h3 class="modal-title">{{::tituloModal}}</h3>' +
+                '</div>' +
+                '<div class="modal-body">{{::mensajeModal}}</div>' +
+                '<div class="modal-footer">' +
+                '<button class="btn btn-primary" ng-click="cancel()">Aceptar</button>' +
+                '</div>',
+                scope: $scope
+              });
+              $scope.cancel = function() {
+                modalInstance.dismiss('cancel');
+              };
+              console.log("error al borrar: ");
+              console.log(error);
+            });
+          }
+        };
+
+        function rowCallback(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
+          $('td', nRow).unbind('click');
+          $('td', nRow).bind('click', function() {
+              $scope.$apply(function() {
+                  $scope.selected = aData;
+                  $timeout(function(){
+                    $(document).scrollTop($('.table-detail').offset().top);
+                  });
+              });
+          });
+          return nRow;
+        }
+
+        if($scope.options.detailRows){
+          if($scope.options.detailRows === true){
+            $scope.options.detailRows = $scope.options.columns;
+          }else{
+            $scope.options.detailRows = _.union($scope.options.columns, $scope.options.detailRows);
+          }
+        }
+
+      }
+    };
+  }]);
+}());
+
+(function() {
+'use strict';
+
+angular
+  .module('ui')
+  .directive('validatedDateInput', validatedDateInput);
+
+function validatedDateInput() {
+  var directive = {
+    restrict: 'E',
+    scope: {
+      model: '=',
+      form: '=',
+      name: '@',
+      label: '@',
+      isRequired: '=',
+      submitedFlag: '=',
+      classes: '@',
+      onChange: '&',
+      isDisabled: '=',
+      dateOptions: '@',
+      format:'@',
+      opened:'@'
+    },
+    controllerAs: 'vm',
+    bindToController: true,
+    templateUrl: 'views/validated-date-input.html',
+    link: linkFunc,
+    controller: ValidatedDateInputController,
+  };
+
+  function linkFunc(scope, elem, attr, controller, dateFilter) {
+    //controller.$formatters.shift();
+    if (controller.model) {
+      controller.model = new Date(controller.model);
+    }    
+  }
+
+  return directive;
+}
+
+ValidatedDateInputController.$inject =  ['$scope', '$timeout'];
+function ValidatedDateInputController($scope, $timeout) {
+  var vm = this;
+
+  if (!vm.format)
+    vm.format = "dd/MM/yyyy";
+
+  vm.showWeeks = false;
+
+  vm.open = function() {
+    vm.opened = true;
+  };
+
+  vm.focus = false;
+  vm.focus = function() {
+    vm.opened = true;
+    vm.focus = true;
+  };
+
+  vm.today = function() {
+    vm.model = new Date();
+  };
+
+  vm.clear = function() {
+    vm.model = null;
+  };
+
+  vm.dateOptions = {
+    formatYear: 'yy',
+    startingDay: 1
+  };
+
+  activate();
+  vm.updateListener = updateListener;
+
+  function activate() {
+    moment.locale('es');
+  }
+
+  function updateListener() {
+    vm.focus = false;
+    $timeout(vm.onChange, 0);
+  }
+}
+}());
+
+(function() {
+'use strict';
+
+angular
+  .module('ui')
+  .directive('validatedTextInput', validatedTextInput);
+
+function validatedTextInput() {
+  var directive = {
+    restrict: 'E',
+    scope: {
+      model: '=',
+      form: '=',
+      name: '@',
+      label: '@',
+      isRequired: '=',
+      submitedFlag: '=',
+      placeholder: '@',
+      classes: '@',
+      inputType: '@',
+      onChange: '&',
+      maxLength: '@',
+      minLength: '@',
+      focusElement: '@',
+      isDisabled: '=',
+      pattern: '@',
+      min: '=',
+      max: '='
+    },
+    controllerAs: 'vm',
+    bindToController: true,
+    templateUrl: 'views/validated-text-input.html',
+    link: linkFunc,
+    controller: ValidatedTextInputController,
+  };
+
+  function linkFunc(scope, elem, attr) {
+  }
+
+  return directive;
+}
+
+ValidatedTextInputController.$inject =  ['$scope', '$timeout'];
+function ValidatedTextInputController($scope, $timeout) {
+  var vm = this;
+
+  activate();
+  vm.updateListener = updateListener;
+
+  function activate() {
+  }
+
+  function updateListener() {
+    $timeout(vm.onChange, 0);
+  }
+};
+}());
+
+(function() {
+'use strict';
+
+angular
+  .module('ui')
+  .directive('validatedTextareaInput', validatedTextareaInput);
+
+function validatedTextareaInput() {
+  var directive = {
+    restrict: 'E',
+    scope: {
+      model: '=',
+      form: '=',
+      name: '@',
+      label: '@',
+      isRequired: '=',
+      submitedFlag: '=',
+      classes: '@',
+      inputType: '@',
+      onChange: '&',
+      maxLength: '@',
+      minLength: '@',
+      isDisabled: '='
+    },
+    controllerAs: 'vm',
+    bindToController: true,
+    templateUrl: 'views/validated-textarea-input.html',
+    link: linkFunc,
+    controller: ValidatedTextareaInputController,
+  };
+
+  function linkFunc(scope, elem, attr) {
+  }
+
+  return directive;
+}
+
+ValidatedTextareaInputController.$inject =  ['$scope', '$timeout'];
+function ValidatedTextareaInputController($scope, $timeout) {
+  var vm = this;
+
+  activate();
+  vm.updateListener = updateListener;
+
+  function activate() {
+    vm.campo = vm.form[vm.name];
+  }
+
+  function updateListener() {
+    $timeout(vm.onChange, 0);
+  }
+}
+}());
+
+(function() {
+'use strict';
+
+angular
+  .module('ui')
+  .directive('validatedTimeInput', validatedTimeInput);
+
+function validatedTimeInput() {
+  var directive = {
+    restrict: 'E',
+    scope: {
+      model: '=',
+      form: '=',
+      name: '@',
+      label: '@',
+      isRequired: '=',
+      submitedFlag: '=',
+      classes: '@',
+      onChange: '&',
+      isDisabled: '=',
+      dateOptions: '@',
+      format:'@',
+      opened:'@'
+    },
+    controllerAs: 'vm',
+    bindToController: true,
+    templateUrl: 'views/validated-time-input.html',
+    link: linkFunc,
+    controller: validatedTimeInputController,
+  };
+
+  function linkFunc(scope, elem, attr, controller, dateFilter) {
+    if (controller.model) {
+      controller.model = new Date(controller.model);
+    }    
+  }
+  return directive;
+}
+
+validatedTimeInputController.$inject =  ['$scope', '$timeout', '$element', '$document'];
+function validatedTimeInputController($scope, $timeout, element, $document) {
+  var vm = this;
+
+  if (!vm.format){
+    vm.format = 'HH:mm';
+  }
+  
+  vm.date = new Date();
+
+  vm.showWeeks = false;
+
+  vm.open = function() {
+    if(vm.opened === false) {
+      vm.opened = true;  
+    } else {
+      vm.opened = false;
+    }
+  };
+
+  vm.focus = false;
+  vm.focus = function() {
+    vm.opened = true;
+    vm.focus = true;
+  };
+
+  vm.blur = function() {
+    vm.opened = false;
+    vm.focus = false;
+  };
+
+  vm.today = function() {
+    vm.date = new Date();
+    vm.model = moment(vm.date).format(vm.format);
+  };
+
+  vm.clear = function() {
+    vm.date = null;
+    vm.model = null;
+  };
+
+  vm.close = function() {
+    vm.opened = false;
+    vm.focus = false;
+  };
+
+  activate();
+  vm.updateListener = updateListener;
+
+  function activate() {
+    moment.locale('es');
+    vm.opened = false;
+  }
+
+  function updateListener() {
+    vm.model = moment(vm.date).format(vm.format);
+    $timeout(vm.onChange, 0);
+  }
+
+  vm.keydown = function(evt) {
+    if (evt.which === 27 || evt.which === 9 || evt.which === 13) {
+      vm.close();
+    }
+  };
+
+  element.bind('click', function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+  });
+
+  $document.bind('click', function(event) {
+    $scope.$apply(function() {
+      vm.opened = false;
+    });
+  });
+}
+}());
+
+(function() {
+'use strict';
+
+angular
+  .module('ui')
+  .directive('validatedUiselectInput', validatedUiselectInput);
+
+function validatedUiselectInput() {
+  var directive = {
+    restrict: 'E',
+    scope: {
+      model: '=',
+      form: '=',
+      name: '@',
+      label: '@',
+      isRequired: '=',
+      submitedFlag: '=',
+      fieldToShow: '@',
+      options: '=',
+      classes: '@',
+      onSelect: '&',
+      focusElement: '@',
+      isDisabled: '='
+    },
+    controllerAs: 'vm',
+    bindToController: true,
+    templateUrl: 'views/validated-uiselect-input.html',
+    link: linkFunc,
+    controller: ValidatedUiselectInputController,
+    compile: compileFunc
+  };
+
+  function linkFunc(scope, elem, attr) {
+  }
+
+  function compileFunc(element, attrs) {
+  }
+
+  return directive;
+}
+
+ValidatedUiselectInputController.$inject =  ['$scope', '$timeout'];
+function ValidatedUiselectInputController($scope, $timeout) {
+  var vm = this;
+
+  vm.getChoice = getChoice;
+
+  vm.selectListener = selectListener;
+
+  vm.getFilter = getFilter;
+
+  activate();
+
+  function activate() {
+  }
+
+  function getChoice(obj) {
+    return _.get(obj, vm.fieldToShow);
+  }
+
+  function selectListener() {
+    $timeout(vm.onSelect, 0);
+  }
+
+  function getFilter(param) {
+    var obj = {};
+    obj[vm.fieldToShow] = param;
+      return obj;
+  }
+}
+}());
+
+(function() {
+'use strict';
+
+angular
+  .module('ui')
+  .directive('validatedUiselectMultipleInput', validatedUiselectMultipleInput);
+
+function validatedUiselectMultipleInput() {
+  var directive = {
+    restrict: 'E',
+    scope: {
+      model: '=',
+      form: '=',
+      name: '@',
+      label: '@',
+      isRequired: '=',
+      submitedFlag: '=',
+      fieldToShow: '@',
+      options: '=',
+      classes: '@',
+      onSelect: '&',
+      isDisabled: '='
+    },
+    controllerAs: 'vm',
+    bindToController: true,
+    templateUrl: 'views/validated-uiselect-multiple-input.html',
+    link: linkFunc,
+    controller: ValidatedUiselectMultipleInputController,
+  };
+
+  function linkFunc(scope, elem, attr) {
+  }
+
+  return directive;
+}
+
+ValidatedUiselectMultipleInputController.$inject =  ['$scope', '$timeout'];
+function ValidatedUiselectMultipleInputController($scope, $timeout) {
+  var vm = this;
+
+  vm.getChoice = getChoice;
+
+  vm.selectListener = selectListener;
+
+  vm.printTest = printTest;
+
+  vm.getFilter = getFilter;
+
+  activate();
+
+  function activate() {
+  }
+
+  function getChoice(obj) {
+    return _.get(obj, vm.fieldToShow);
+  }
+
+  function selectListener() {
+    $timeout(vm.onSelect, 0);
+  }
+
+  function getFilter(param) {
+    var obj = {};
+    obj[vm.fieldToShow] = param;
+      return obj;
+  }
+
+  function printTest() {
+    console.log('este es un test');
+  }
+}
+}());
+
+(function() {
+'use strict';
+
+angular
+  .module('ui')
+  .directive('wizard', wizard);
+
+function wizard() {
+  var directive = {
+    restrict: 'E',
+    scope: {},
+    controllerAs: 'vm',
+    bindToController: true,
+    templateUrl: 'views/wizard.html',
+    controller: WizardController,
+    transclude: true
+  };
+  return directive;
+}
+
+WizardController.$inject =  ['$scope', '$timeout'];
+
+function WizardController($scope, $timeout) {
+  var vm = this;
+  vm.tabs = [];
+
+  activate();
+  vm.addTab = addTab;
+
+  function activate() {
+  }
+
+  function addTab() {
+    // TODO Agregar TAB
+  }
+}
+}());
+
+(function() {
+'use strict';
+
+angular
+  .module('ui')
+  .directive('wizardContent', wizardContent);
+
+function wizardContent() {
+  var directive = {
+    restrict: 'E',
+    transclude: true,
+    scope: {},
+    templateUrl: 'views/wizardcontent.html',
+    link: linkFunc,
+  };
+
+  return directive;
+}
+
+function linkFunc(scope, element, attrs) {
+}
+}());
+
+(function() {
+'use strict';
+
+angular
+  .module('ui')
+  .directive('wizardPane', wizardPane);
+
+wizardPane.$inject = ['$state'];
+
+function wizardPane($state) {
+  var directive = {
+    required: '^^wizard',
+    restrict: 'E',
+    scope: {
+      title: '@',
+      number: '@',
+      activeIf: '@',
+      disabledIf: '=',
+      state: '@',
+    },
+    templateUrl: 'views/wizardpane.html',
+    controller: controllerFunc,
+    controllerAs: 'vm',
+    bindToController: true
+  };
+
+  return directive;
+}
+
+controllerFunc.$inject =['$state'];
+
+function controllerFunc($state) {
+  var vm = this;
+  
+  vm.isActive = function(estado) {
+    return $state.includes(estado);
+  };
+
+  vm.go = function(dest) {
+    if(vm.disabledIf) {
+      return;
+    }
+    $state.go(dest);
+  };
+}
+}());
