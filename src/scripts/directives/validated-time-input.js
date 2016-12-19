@@ -15,7 +15,7 @@ function validatedTimeInput() {
       label: '@',
       isRequired: '=',
       submitedFlag: '=',
-      clases: '@',
+      classes: '@',
       onChange: '&',
       isDisabled: '=',
       dateOptions: '@',

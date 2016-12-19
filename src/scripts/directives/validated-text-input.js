@@ -16,7 +16,7 @@ function validatedTextInput() {
       isRequired: '=',
       submitedFlag: '=',
       placeholder: '@',
-      clases: '@',
+      classes: '@',
       inputType: '@',
       onChange: '&',
       maxLength: '@',

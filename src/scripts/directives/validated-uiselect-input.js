@@ -17,7 +17,7 @@ function validatedUiselectInput() {
       submitedFlag: '=',
       fieldToShow: '@',
       options: '=',
-      clases: '@',
+      classes: '@',
       onSelect: '&',
       focusElement: '@',
       isDisabled: '='
