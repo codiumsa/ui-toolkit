@@ -7,10 +7,8 @@
  * # uiDatatable
  */
 angular.module('ui')
-  .directive('uiDatatable', ['$timeout', '$uibModal', '$compile', '$state', '$resource', 'AuthorizationService', 'DTOptionsBuilder', 'DTColumnBuilder', 'baseurl', '$rootScope', 
-    function ($timeout, $modal, $compile, $state, $resource, AuthorizationService, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
-
-    var hasPermission = AuthorizationService.hasPermission;
+  .directive('uiDatatable', ['$timeout', '$uibModal', '$compile', '$state', '$resource', 'DTOptionsBuilder', 'DTColumnBuilder', 'baseurl', '$rootScope', 
+    function ($timeout, $modal, $compile, $state, $resource, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope) {
 
     return {
       template: '<div>' +
@@ -59,9 +57,17 @@ angular.module('ui')
         $scope.dtInstance = {};
         $scope.selectAll = false;
         $scope.options.selection = {};
+
         $scope.headerCompiled = false;
         $scope.customFilters = {};
 
+        function defaultCondition() {
+          return true;
+        }
+        $scope.options.canEditCondition = $scope.options.canEditCondition || defaultCondition;
+        $scope.options.canAddCondition = $scope.options.canAddCondition || defaultCondition;
+        $scope.options.canRemoveCondition = $scope.options.canRemoveCondition || defaultCondition;
+        $scope.options.canListCondition = $scope.options.canListCondition || defaultCondition;
         var rangeSeparator = "~";
         var dateFormat = "DD/MM/YYYY";
         var defaultFilterType = 'string';
@@ -420,9 +426,6 @@ angular.module('ui')
           $scope.dtOptions.withColReorder();
         }
 
-        // Se establece el orden por defecto
-        //$scope.dtOptions.withColReorderOrder($scope.defaultColumnOrderIndices);
-
         actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
           .withOption('searchable', false)
           .renderWith(function(data, type, full, meta) {
@@ -455,41 +458,19 @@ angular.module('ui')
 
 
         $scope.canEdit = function(data) {
-          var permission = hasPermission('update_' + $scope.options.resource);
-          if($scope.options.extraEditConditions) {
-            var valor = _.find(table.rows().data(), function(value) {
-              return value.id == data;
-            });
-            return permission && $scope.options.extraEditConditions(valor) && !$scope.options.hideEditMenu;
-          }
-          return permission && !$scope.options.hideEditMenu;
+          return $scope.options.canEditCondition(data) && !$scope.options.hideEditMenu;
         };
 
         $scope.canRemove = function(data) {
-          var permission = hasPermission('delete_' + $scope.options.resource);
-          if($scope.options.extraRemoveConditions) {
-            var valor = _.find(table.rows().data(), function(value) {
-              return value.id == data;
-            });
-            return permission && $scope.options.extraRemoveConditions(valor) && !$scope.options.hideRemoveMenu;
-          }
-          return permission && !$scope.options.hideRemoveMenu;
+          return $scope.options.canRemoveCondition(data) && !$scope.options.hideRemoveMenu;
         };
  
-        $scope.canCreate = function() {
-          var permission = hasPermission('create_' + $scope.options.resource);
-          return permission && ! $scope.options.hideAddMenu;
+        $scope.canCreate = function(data) {
+          return $scope.options.canAddCondition(data) && ! $scope.options.hideAddMenu;
         };
 
         $scope.canList = function(data) {
-          var permission = hasPermission('index_' + $scope.options.resource);
-          if($scope.options.extraViewConditions) {
-            var valor = _.find(table.rows().data(), function(value) {
-              return value.id == data;
-            });
-            return permission && $scope.options.extraViewConditions(valor) && !$scope.options.hideViewMenu;
-          }
-          return permission && ! $scope.options.hideViewMenu;
+          return $scope.options.canListCondition(data) && ! $scope.options.hideViewMenu;
         };
 
         if($scope.options.hasOptions) {

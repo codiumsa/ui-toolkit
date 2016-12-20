@@ -21,6 +21,7 @@ function MainCtrl(PersonaService, translations) {
       resource: '@', // resource '@' significa in-memory
       title: 'Listado de personas',
       factory: PersonaService,
+      hasOptions: true,
       defaultColumnOrder: defaultColumnOrder,
       columns: [
         {data: 'id', title: '', visible: false},
