@@ -89,6 +89,9 @@ angular.module('ui')
             });
           }
           data.rangeSeparator = rangeSeparator;
+          data.columns = _.filter(data.columns, function(c) {
+            return !!c.data;
+          });
 
           var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
             query: {
