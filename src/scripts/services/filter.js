@@ -45,6 +45,8 @@
           cond.type = 'string';
         } else if (_.isDate(other)) {
           cond.type = 'date';
+        } else if (_.isNumber(other)) {
+          cond.type = 'integer';
         }
       }
       builder.conditions.push(cond);
