@@ -702,7 +702,7 @@
             function updateStaticFilters() {
               if ($scope.options.staticFilter) {
                 urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?search='
-                  + encodeURI(JSON.stringify($scope.options.staticFilter.search)) + '&');
+                  + encodeURI(JSON.stringify($scope.options.staticFilter)) + '&');
               } else {
                 urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
               }
