@@ -14,7 +14,7 @@ function validatedTextareaInput() {
       name: '@',
       label: '@',
       isRequired: '=',
-      submitedFlag: '=',
+      submittedFlag: '=',
       classes: '@',
       inputType: '@',
       onChange: '&',

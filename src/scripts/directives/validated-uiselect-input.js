@@ -14,7 +14,7 @@ function validatedUiselectInput() {
       name: '@',
       label: '@',
       isRequired: '=',
-      submitedFlag: '=',
+      submittedFlag: '=',
       fieldToShow: '@',
       options: '=',
       classes: '@',

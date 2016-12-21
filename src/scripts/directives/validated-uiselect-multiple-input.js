@@ -14,7 +14,7 @@ function validatedUiselectMultipleInput() {
       name: '@',
       label: '@',
       isRequired: '=',
-      submitedFlag: '=',
+      submittedFlag: '=',
       fieldToShow: '@',
       options: '=',
       classes: '@',

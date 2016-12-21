@@ -14,7 +14,7 @@ function validatedTextInput() {
       name: '@',
       label: '@',
       isRequired: '=',
-      submitedFlag: '=',
+      submittedFlag: '=',
       placeholder: '@',
       classes: '@',
       inputType: '@',
