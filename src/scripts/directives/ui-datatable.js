@@ -92,15 +92,19 @@
               data.columns = _.filter(data.columns, function (c) {
                 return !!c.data;
               });
-
-              var xhr = $resource(urlTemplate($scope.options) + $.param(data), {}, {
+              var reqBody = null;
+              
+              if ($scope.options.staticFilter) {
+                reqBody = $scope.options.staticFilter;
+              }
+              var xhr = $resource(urlTemplate($scope.options), data, {
                 query: {
                   isArray: false,
                   method: 'POST'
                 }
               });
 
-              xhr.query({}).$promise.then(function (response) {
+              xhr.query(reqBody).$promise.then(function (response) {
                 var datos = response.data;
                 if (datos) {
                   datos.forEach(function (registro) {
@@ -700,12 +704,7 @@
 
             /* Funcion de actualizacion de URL Base con o sin filtros estaticos */
             function updateStaticFilters() {
-              if ($scope.options.staticFilter) {
-                urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?search='
-                  + encodeURI(JSON.stringify($scope.options.staticFilter)) + '&');
-              } else {
-                urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables?');
-              }
+              urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables');
             }
 
             $scope.dtInstanceCallback = function (dtInstance) {
