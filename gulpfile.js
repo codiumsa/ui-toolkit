@@ -45,6 +45,10 @@ var htmlFiles = [
   path.join(sourceDirectory, '/views/**/*.html'),
 ];
 
+var imgFiles = [
+  path.join(sourceDirectory, '/images/**/*'),
+];
+
 var lintFiles = [
   'gulpfile.js',
   // Karma configuration
@@ -64,6 +68,9 @@ gulp.task('build', function() {
     .pipe(concat('ui.scss'))
     .pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
     .pipe(gulp.dest('./dist'));
+  
+  gulp.src(imgFiles)
+    .pipe(gulp.dest('./dist/images/'));
 
   gulp.src(themeCssFile)
     .pipe(concat('ui.theme.scss'))
