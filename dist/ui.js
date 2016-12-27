@@ -463,9 +463,9 @@ angular.module('ui')
             }
           };
 
-          scope.uploadCompleted = function () {
+          scope.uploadCompleted = function (files) {
             ngNotify.set('Archivo cargado correctamente', 'success');
-            var files = UploadFactory.getCurrentFiles(scope.uploader);
+            var files = UploadFactory.getCurrentFiles(files);
 
             if (angular.isFunction(scope.options.onComplete)) {
               scope.options.onComplete(files);
@@ -4119,10 +4119,13 @@ function Provider() {
 
       // Public API here
       return {
-        getCurrentFiles: function (uploader) {
+        /**
+         * Retorna una lista compacta de los archivos cargados correctamente.
+         * 
+         * @param {object[]} files - FlowFile list
+         */
+        getCurrentFiles: function (flowFiles) {
           var self = this;
-          var flow = uploader.flow;
-          var flowFiles = flow.files;
           var files = []; // Lista de objetos de tipo { path: '' }
 
           if (flowFiles.length > 0) {

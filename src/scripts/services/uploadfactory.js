@@ -17,10 +17,13 @@
 
       // Public API here
       return {
-        getCurrentFiles: function (uploader) {
+        /**
+         * Retorna una lista compacta de los archivos cargados correctamente.
+         * 
+         * @param {object[]} files - FlowFile list
+         */
+        getCurrentFiles: function (flowFiles) {
           var self = this;
-          var flow = uploader.flow;
-          var flowFiles = flow.files;
           var files = []; // Lista de objetos de tipo { path: '' }
 
           if (flowFiles.length > 0) {

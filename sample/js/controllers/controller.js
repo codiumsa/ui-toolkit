@@ -42,7 +42,7 @@
         onComplete: function (files) {
           console.log('UPLOADED', files);
         },
-        target: '/adjuntos',
+        target: 'http://127.0.0.1:8080/spa-backend/api/adjuntos',
         imageOnly: true
       };
     }
