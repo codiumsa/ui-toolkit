@@ -18,9 +18,7 @@ function config($stateProvider, $urlRouterProvider, $translatePartialLoaderProvi
 
   $stateProvider.state('uix', {
     url: '/',
-    templateUrl: 'views/main.html',
-    controller: 'MainCtrl',
-    controllerAs: 'vm',
+    template: '<main translations="$resolve.translations"></main>',
     resolve: {
       translations: function(LangService, tkeys) {
         return LangService.getTranslations(tkeys.MainCtrl);

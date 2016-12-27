@@ -4,13 +4,19 @@
   angular
     .module('uix')
     .config(config)
-    .controller('MainCtrl', MainCtrl);
+    .component('main', {
+      templateUrl: 'views/main.html',
+      selector: 'main',
+      bindings: {
+        translations: '='
+      },
+      controller: MainCtrl,
+      controllerAs: 'vm'
+    });
 
+  MainCtrl.$inject = ['PersonaService', '$timeout'];
 
-
-  MainCtrl.$inject = ['PersonaService', 'translations', '$timeout'];
-
-  function MainCtrl(PersonaService, translations, $timeout) {
+  function MainCtrl(PersonaService, $timeout) {
     var vm = this;
 
     activate();
@@ -25,10 +31,10 @@
         defaultColumnOrder: defaultColumnOrder,
         columns: [
           { data: 'id', title: '', visible: false },
-          { data: 'nombre', title: translations.NOMBRE },
-          { data: 'apellido', title: translations.APELLIDO },
-          { data: 'cedula', title: translations.CEDULA },
-          { data: 'fechaNacimiento', title: translations.FECHA_NACIMIENTO, type: 'date-range' }
+          { data: 'nombre', title: vm.translations.NOMBRE },
+          { data: 'apellido', title: vm.translations.APELLIDO },
+          { data: 'cedula', title: vm.translations.CEDULA },
+          { data: 'fechaNacimiento', title: vm.translations.FECHA_NACIMIENTO, type: 'date-range' }
         ],
         defaultOrderColumn: 0,
         defaultOrderDir: 'desc',
@@ -52,7 +58,7 @@
           id: 1,
           path: '1016175.jpg'
         };
-      }, 1000);
+      }, 5000);
     }
   }
 

@@ -51,14 +51,14 @@
 </div>
 
 <div ng-if="options.imageOnly" class="clearfix">
-<div flow-files-submitted="$flow.upload()"
-     flow-init
-     flow-object="uploader.flow"
-     flow-files-submitted="uploader.flow.upload()"
-     flow-file-added="fileAdded($file, $event, uploader.flow)"
-     flow-files-added="filesAdded($files, $event, uploader.flow)"
-     flow-file-success="uploadCompleted($flow.files)"
-       class="ng-scope">
+<div
+    flow-init
+    flow-object="uploader.flow"
+    flow-files-submitted="uploader.flow.upload()"
+    flow-file-added="fileAdded($file, $event, uploader.flow)"
+    flow-files-added="filesAdded($files, $event, uploader.flow)"
+    flow-file-success="uploadCompleted($flow.files)"
+    class="ng-scope">
   <h4>{{title}}</h4>
   <div class="drop" flow-drop ng-class="dropClass">
     <span class="btn btn-default" flow-btn>Subir imagen</span>
