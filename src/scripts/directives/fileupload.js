@@ -58,7 +58,7 @@
 
           scope.uploadCompleted = function () {
             ngNotify.set('Archivo cargado correctamente', 'success');
-            var files = UploadFactory.getCurrentFiles(scope.options);
+            var files = UploadFactory.getCurrentFiles(scope.uploader);
 
             if (angular.isFunction(scope.options.onComplete)) {
               scope.options.onComplete(files);
