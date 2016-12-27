@@ -8,9 +8,9 @@
 
 
 
-  MainCtrl.$inject = ['PersonaService', 'translations'];
+  MainCtrl.$inject = ['PersonaService', 'translations', '$timeout'];
 
-  function MainCtrl(PersonaService, translations) {
+  function MainCtrl(PersonaService, translations, $timeout) {
     var vm = this;
 
     activate();
@@ -46,9 +46,13 @@
         publicPath: 'http://127.0.0.1:8080/public/spa-frontend/',
         imageOnly: true
       };
-      vm.files = {
-        path: '1016175.jpg'
-      };
+
+      $timeout(function () {
+        vm.files = {
+          id: 1,
+          path: '1016175.jpg'
+        };
+      }, 1000);
     }
   }
 

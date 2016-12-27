@@ -60,9 +60,11 @@
           gif: 'image/gif'
         };
 
-        if (scope.ngModel) {
-          scope.loadFiles(angular.isArray(scope.ngModel) ? scope.ngModel : [scope.ngModel]);
-        }
+        scope.$watch('ngModel', (newVal) => {
+          if (newVal) {
+            scope.loadFiles(angular.isArray(scope.ngModel) ? scope.ngModel : [scope.ngModel]);
+          }
+        });
       }
     }
 
@@ -119,15 +121,16 @@
      * cuando tenemos imagenes que precargar (ya se encuentran en el server)
      **/
     function loadFiles(images) {
+      let flow = this.uploader.flow;
       angular.forEach(images, (img) => {
-        let flow = this.uploader.flow;
         let contentType = this.mimeTypeMap[img.path.toLowerCase().substring(_.lastIndexOf(img.path, '.') + 1)];
         let blob = new Blob(['pre_existing_image'], { type: contentType });
         blob.name = img.path;
         blob.image_url = this.options.publicPath + img.path;
         let file = new Flow.FlowFile(flow, blob);
         file.fromServer = true;
-        flow.addFile(blob);
+        //flow.addFile(blob);
+        flow.files.push(file);
       });
     }
 
