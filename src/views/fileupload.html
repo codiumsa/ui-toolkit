@@ -1,11 +1,11 @@
 <div>
 <div ng-if="!options.imageOnly">
-  <div flow-init
-       flow-object="uploader.flow"
-       flow-files-submitted="uploader.flow.upload()"
-       flow-file-added="fileAdded($file, $event, uploader.flow)"
-       flow-files-added="filesAdded($files, $event, uploader.flow)"
-       flow-file-success="uploadCompleted(uploader.flow.files)"
+  <div flow-object="uploader.flow"
+       flow-init
+       flow-files-submitted="$flow.upload()"
+       flow-file-added="fileAdded($file, $event, $flow)"
+       flow-files-added="filesAdded($files, $event, $flow)"
+       flow-file-success="uploadCompleted($flow.files)"
        class="ng-scope">
     <h4>{{title}}</h4>
 
@@ -20,7 +20,7 @@
     <br/>
 
     <div>
-      <div ng-repeat="file in uploader.flow.files" class="transfer-box">
+      <div ng-repeat="file in $flow.files" class="transfer-box">
         {{file.relativePath}} ({{file.size}}bytes)
         <div class="progress progress-striped" ng-class="{active: file.isUploading()}">
           <div class="progress-bar" role="progressbar"
@@ -52,25 +52,25 @@
 
 <div ng-if="options.imageOnly" class="clearfix">
 <div
-    flow-init
     flow-object="uploader.flow"
-    flow-files-submitted="uploader.flow.upload()"
-    flow-file-added="fileAdded($file, $event, uploader.flow)"
-    flow-files-added="filesAdded($files, $event, uploader.flow)"
-    flow-file-success="uploadCompleted(uploader.flow.files)"
+    flow-init
+    flow-files-submitted="$flow.upload()"
+    flow-file-added="fileAdded($file, $event, $flow)"
+    flow-files-added="filesAdded($files, $event, $flow)"
+    flow-file-success="uploadCompleted($flow.files)"
     class="ng-scope">
   <h4>{{title}}</h4>
   <div class="drop" flow-drop ng-class="dropClass">
     <span class="btn btn-default" flow-btn>Subir imagen</span>
-    <span class="btn btn-default" flow-btn flow-directory ng-show="uploader.flow.supportDirectory">Subir directorio con im&aacute;genes</span>
+    <span class="btn btn-default" flow-btn flow-directory ng-show="$flow.supportDirectory">Subir directorio con im&aacute;genes</span>
     <b>O</b>
     Arrastrar las im&aacute;genes aqu&iacute;.
   </div>
   <br/>
   <div>
-    <div ng-repeat="file in uploader.flow.files" class="gallery-box">
+    <div ng-repeat="file in $flow.files" class="gallery-box">
       <span class="title">{{file.name}}</span>
-      <div class="thumbnail" ng-show="uploader.flow.files.length">
+      <div class="thumbnail" ng-show="$flow.files.length">
         <img ng-if="!file.file.image_url" flow-img="file" />
         <img ng-if="file.file.image_url" ng-src="{{file.file.image_url}}" />
       </div>
