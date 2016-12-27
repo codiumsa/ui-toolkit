@@ -59,9 +59,11 @@
           png: 'image/png',
           gif: 'image/gif'
         };
+        scope.preload = false;
 
         scope.$watch('ngModel', (newVal) => {
-          if (newVal) {
+          if (newVal && !scope.preload) {
+            scope.preload = true;
             scope.loadFiles(angular.isArray(scope.ngModel) ? scope.ngModel : [scope.ngModel]);
           }
         });
@@ -129,7 +131,6 @@
         blob.image_url = this.options.publicPath + img.path;
         let file = new Flow.FlowFile(flow, blob);
         file.fromServer = true;
-        //flow.addFile(blob);
         flow.files.push(file);
       });
     }

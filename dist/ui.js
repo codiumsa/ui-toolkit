@@ -415,9 +415,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
           png: 'image/png',
           gif: 'image/gif'
         };
+        scope.preload = false;
 
         scope.$watch('ngModel', function (newVal) {
-          if (newVal) {
+          if (newVal && !scope.preload) {
+            scope.preload = true;
             scope.loadFiles(angular.isArray(scope.ngModel) ? scope.ngModel : [scope.ngModel]);
           }
         });
@@ -489,7 +491,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         blob.image_url = _this3.options.publicPath + img.path;
         var file = new Flow.FlowFile(flow, blob);
         file.fromServer = true;
-        //flow.addFile(blob);
         flow.files.push(file);
       });
     }
