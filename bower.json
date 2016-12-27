@@ -3,10 +3,11 @@
   "version": "1.0.5",
   "authors": [
     {
-      "name":  "Jorge Ramirez",
+      "name": "Jorge Ramirez",
       "email": "jorgeramirez1990@gmail.com"
-    },{
-      "name":  "Verena Ojeda",
+    },
+    {
+      "name": "Verena Ojeda",
       "email": "vereojeda@gmail.com"
     }
   ],
@@ -63,7 +64,8 @@
     "bootstrap-sass-official": "^3.2.0",
     "angular-animate": "~1.4.5",
     "angular-cookies": "~1.4.5",
-    "angular-messages": "~1.4.5"
+    "angular-messages": "~1.4.5",
+    "ng-notify": "^0.8.0"
   },
   "devDependencies": {
     "angular-mocks": ">=1.2.0",

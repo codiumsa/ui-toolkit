@@ -1,59 +1,24 @@
-<div ng-show="uploadOptions.imageOnly">
-  <div flow-init="{singleFile: true}" 
-       flow-file-added="!!{png:1,gif:1,jpg:1,jpeg:1}[$file.getExtension()]"
+<div>
+<div ng-if="!options.imageOnly">
+  <div flow-init
+       flow-object="uploader.flow"
        flow-files-submitted="uploader.flow.upload()"
+       flow-file-added="fileAdded($file, $event, uploader.flow)"
        flow-files-added="filesAdded($files, $event, uploader.flow)"
-       flow-name="uploader.flow"
+       flow-file-success="options.completed()"
        class="ng-scope">
-  <h3>{{uploadOptions.title}}</h3>
-  
-  <div class="thumbnail" ng-show="uploader.currentFile && !uploader.flow.files.length">
-    <img src="{{uploader.currentFile}}"/> 
-  </div>
-  
-  <div class="thumbnail" ng-show="!uploader.flow.files.length && !uploader.currentFile">
-    <img src="images/placeholder.png">
-  </div>
+    <h4>{{title}}</h4>
 
-  <div class="thumbnail" ng-show="uploader.flow.files.length">
-    <img flow-img="uploader.flow.files[0]"/> 
-  </div>
-
-  <div>
-    <span class="btn btn-primary" ng-show="!uploader.flow.files.length" flow-btn="">
-      Seleccionar imagen
-      <input type="file" sf-changed="form" ng-model="$$value$$" style="visibility: hidden; position: absolute;" />
-    </span>
-    <span class="btn btn-info ng-hide" ng-show="uploader.flow.files.length" flow-btn="">
-      Cambiar
-      <input type="file" sf-changed="form" ng-model="$$value$$" style="visibility: hidden; position: absolute;" />
-    </span>
-    <span class="btn btn-danger ng-hide" ng-show="uploader.flow.files.length" ng-click="uploader.flow.cancel()">
-      Eliminar
-    </span>
-  </div>
-  <p>
-    Formatos permitidos: PNG, GIF, JPG y JPEG.
-  </p>
-  </div>
-</div>
-
-<div ng-show="!uploadOptions.imageOnly">
-  <div flow-init="{singleFile: true}" 
-       flow-file-added="filesAdded($files, $event, uploader.flow)"
-       flow-files-submitted="uploader.flow.upload()"
-       flow-files-added="filesAdded($files, $event, uploader.flow)"
-       flow-name="uploader.flow"
-       class="ng-scope">
-    <h3>{{uploadOptions.title}}</h3>
     <div class="drop" flow-drop ng-class="dropClass">
-      <span class="btn btn-default" flow-btn>Cargar archivo
-        <input type="file" ng-model="$$value$$" sf-changed="form" style="visibility: hidden; position: absolute;" />
+      <span class="btn btn-default btn-sm" flow-btn>Cargar archivo
+        <input type="file" ng-model="fileModel" sf-changed="form" style="visibility: hidden; position: absolute;"/>
       </span>
+      <br/>
       <b>O</b>
       Arrastre el archivo aqu&iacute;
     </div>
     <br/>
+
     <div>
       <div ng-repeat="file in uploader.flow.files" class="transfer-box">
         {{file.relativePath}} ({{file.size}}bytes)
@@ -67,6 +32,12 @@
           </div>
         </div>
         <div class="btn-group">
+          <a class="btn btn-xs btn-warning" ng-click="file.pause()" ng-show="!file.paused && file.isUploading()">
+            Pausar
+          </a>
+          <a class="btn btn-xs btn-warning" ng-click="file.resume()" ng-show="file.paused">
+            Reanudar
+          </a>
           <a class="btn btn-xs btn-danger" ng-click="file.cancel()">
             Cancelar
           </a>
@@ -77,4 +48,57 @@
       </div>
     </div>
   </div>
+</div>
+
+<div ng-if="options.imageOnly" class="clearfix">
+<div flow-files-submitted="$flow.upload()"
+     flow-init
+     flow-object="uploader.flow"
+     flow-files-submitted="uploader.flow.upload()"
+     flow-file-added="fileAdded($file, $event, uploader.flow)"
+     flow-files-added="filesAdded($files, $event, uploader.flow)"
+     flow-file-success="options.uploadCompleted()"
+       class="ng-scope">
+  <h4>{{title}}</h4>
+  <div class="drop" flow-drop ng-class="dropClass">
+    <span class="btn btn-default" flow-btn>Subir imagen</span>
+    <span class="btn btn-default" flow-btn flow-directory ng-show="$flow.supportDirectory">Subir directorio con im&aacute;genes</span>
+    <b>O</b>
+    Arrastrar las im&aacute;genes aqu&iacute;.
+  </div>
+  <br/>
+  <div>
+    <div ng-repeat="file in $flow.files" class="gallery-box">
+      <span class="title">{{file.name}}</span>
+      <div class="thumbnail" ng-show="$flow.files.length">
+        <img ng-if="!file.file.image_url" flow-img="file" />
+        <img ng-if="file.file.image_url" ng-src="{{file.file.image_url}}" />
+      </div>
+      <div class="progress progress-striped" ng-class="{active: file.isUploading()}">
+        <div class="progress-bar" role="progressbar"
+             aria-valuenow="{{file.progress() * 100}}"
+             aria-valuemin="0"
+             aria-valuemax="100"
+             ng-style="{width: (file.progress() * 100) + '%'}">
+          <span class="sr-only">{{file.progress()}}% Completo</span>
+        </div>
+      </div>
+      <div class="btn-group">
+        <a class="btn btn-xs btn-danger" ng-click="file.cancel()">
+          Remover
+        </a>
+      </div>
+    </div>
+    <div ng-if="options.showFilesSummary" class="row" ng-show="files.length > 0">
+      <div class="col-lg-12" style="margin-left: 10px; margin-top: 15px;">
+        <h4> Archivos subidos </h4>
+        <div ng-repeat="file in files">
+          [{{$index + 1}}] <strong>URL:</strong> <span style="font-size: 13px;">{{adjuntosBaseURL}}/{{file.path}}</span>
+        </div>
+      </div>
+    </div>
+    <div class="clear"></div>
+  </div>
+</div>  
+</div>
 </div>

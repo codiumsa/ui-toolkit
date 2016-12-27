@@ -52,7 +52,8 @@ angular.module('ui', [
   'angular-ladda',
   'perfect_scrollbar',
   'angular-intro',
-  'datatables.colreorder'
+  'datatables.colreorder',
+  'ngNotify'
 ]);
 
 angular.module('ui').config(['$provide', function($provide) {

@@ -37,6 +37,14 @@
         onView: onView,
         onRemove: onRemove
       };
+
+      vm.uploadOptions = {
+        onComplete: function (files) {
+          console.log('UPLOADED', files);
+        },
+        target: '/adjuntos',
+        imageOnly: true
+      };
     }
   }
 
