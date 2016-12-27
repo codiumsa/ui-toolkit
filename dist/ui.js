@@ -4109,8 +4109,7 @@ function Provider() {
    * @description
    */
   angular.module('ui')
-    .service('UploadFactory', ['$rootScope', 'baseurl', function ($rootScope, baseurl) {
-      var flow;
+    .service('UploadFactory', ['baseurl', function (baseurl) {
       var mimeTypeMap = {
         jpg: 'image/jpg',
         jpeg: 'image/jpeg',
@@ -4118,19 +4117,11 @@ function Provider() {
         gif: 'image/gif'
       };
 
-      function setFlow(uploader) {
-        flow = uploader.flow;
-      }
-
       // Public API here
       return {
         getCurrentFiles: function (uploader) {
           var self = this;
-          setFlow(uploader);
-
-          if (!flow) {
-            return;
-          }
+          var flow = uploader.flow;
           var flowFiles = flow.files;
           var files = []; // Lista de objetos de tipo { path: '' }
 
@@ -4144,20 +4135,10 @@ function Provider() {
           return files;
         },
 
-        clearCurrentFiles: function () {
-          $rootScope.flow.files = [];
-        },
-
         /**
          * Se encarga de cargar en el objeto flow el array de imagenes.
          **/
         addFiles: function (images) {
-          setFlow();
-
-          if (!flow) {
-            return;
-          }
-
           angular.forEach(images, function (img) {
             var contentType = mimeTypeMap[img.path.toLowerCase().substring(_.lastIndexOf(img.path, '.') + 1)];
             var blob = new Blob(['pre_existing_image'], { type: contentType });
