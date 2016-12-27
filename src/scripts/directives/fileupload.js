@@ -8,12 +8,20 @@
    * # fileupload
    */
   angular.module('ui')
-    .directive('fileupload', ['ngNotify', 'UploadFactory', 'baseurl', function (ngNotify, UploadFactory, baseurl) {
+    .directive('fileupload', ['ngNotify', 'UploadFactory', function (ngNotify, UploadFactory) {
       return {
         templateUrl: 'views/fileupload.html',
         restrict: 'E',
         tranclude: true,
         scope: {
+          /**
+           * Objeto de configuración:
+           *  - {boolean} singleFile
+           *  - {string} method
+           *  - {boolean} showFilesSummary
+           *  - {string} publicPath
+           *  - {Function} onComplete
+           */
           options: '=',
           title: '@'
         },
@@ -34,7 +42,7 @@
           };
 
           scope.files = [];
-          scope.adjuntosBaseURL = baseurl.getPublicBaseUrl();
+          scope.adjuntosBaseURL = scope.options.publicPath;
 
           scope.fileAdded = function (file, event) {
             // controlamos que no se supere el limite de tamano          
