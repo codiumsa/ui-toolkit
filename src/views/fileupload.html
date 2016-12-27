@@ -1,11 +1,12 @@
 <div>
 <div ng-if="!options.imageOnly">
-  <div flow-object="uploader.flow"
-       flow-init
-       flow-files-submitted="$flow.upload()"
-       flow-file-added="fileAdded($file, $event, $flow)"
-       flow-files-added="filesAdded($files, $event, $flow)"
-       flow-file-success="uploadCompleted($flow.files)"
+  <div 
+      flow-init="options"
+      flow-files-submitted="$flow.upload()"
+      flow-file-added="fileAdded($file, $event, $flow)"
+      flow-files-added="filesAdded($files, $event, $flow)"
+      flow-file-success="uploadCompleted($flow.files)"
+      flow-name="uploader.flow"
        class="ng-scope">
     <h4>{{title}}</h4>
 
@@ -52,12 +53,12 @@
 
 <div ng-if="options.imageOnly" class="clearfix">
 <div
-    flow-object="uploader.flow"
-    flow-init
+    flow-init="options"
     flow-files-submitted="$flow.upload()"
     flow-file-added="fileAdded($file, $event, $flow)"
     flow-files-added="filesAdded($files, $event, $flow)"
     flow-file-success="uploadCompleted($flow.files)"
+    flow-name="uploader.flow"
     class="ng-scope">
   <h4>{{title}}</h4>
   <div class="drop" flow-drop ng-class="dropClass">
