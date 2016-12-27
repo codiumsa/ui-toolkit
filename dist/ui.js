@@ -487,7 +487,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         blob.image_url = _this3.options.publicPath + img.path;
         var file = new Flow.FlowFile(flow, blob);
         file.fromServer = true;
-        flow.files.push(file);
+        flow.addFile(blob);
       });
     }
 
