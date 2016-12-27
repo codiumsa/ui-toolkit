@@ -70,8 +70,6 @@
     }
 
     function fileAdded(file, event, $flow) {
-      console.log('FLOWS', this.uploader.flow, $flow);
-
       // controlamos que no se supere el limite de tamano          
       if (this.options.FILE_UPLOAD_LIMIT && file.size > (this.options.FILE_UPLOAD_LIMIT * 1000 * 1000)) {
         event.preventDefault();
