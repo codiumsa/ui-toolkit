@@ -1,5 +1,5 @@
 <div ng-show="uploadOptions.imageOnly">
-  <div flow-init="{singleFile: true, target: uploadOptions.target}" 
+  <div flow-init="{singleFile: true}" 
        flow-file-added="!!{png:1,gif:1,jpg:1,jpeg:1}[$file.getExtension()]"
        flow-files-submitted="uploader.flow.upload()"
        flow-files-added="filesAdded($files, $event, uploader.flow)"
@@ -39,7 +39,7 @@
 </div>
 
 <div ng-show="!uploadOptions.imageOnly">
-  <div flow-init="{singleFile: true, target: uploadOptions.target}" 
+  <div flow-init="{singleFile: true}" 
        flow-file-added="filesAdded($files, $event, uploader.flow)"
        flow-files-submitted="uploader.flow.upload()"
        flow-files-added="filesAdded($files, $event, uploader.flow)"
