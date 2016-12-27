@@ -43,7 +43,11 @@
           console.log('UPLOADED', files);
         },
         target: 'http://127.0.0.1:8080/spa-backend/api/adjuntos',
+        publicPath: 'http://127.0.0.1:8080/public/spa-frontend/',
         imageOnly: true
+      };
+      vm.files = {
+        path: '1016175.jpg'
       };
     }
   }

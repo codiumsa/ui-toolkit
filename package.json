@@ -14,9 +14,11 @@
   "dependencies": {},
   "devDependencies": {
     "abbrev": "^1.0.7",
+    "babel-preset-es2015": "^6.18.0",
     "chai": "^1.9.1",
     "chai-jquery": "^1.2.3",
     "gulp": "^3.8.7",
+    "gulp-babel": "^6.1.2",
     "gulp-concat": "^2.3.4",
     "gulp-jshint": "^1.8.4",
     "gulp-minify-html": "^1.0.6",

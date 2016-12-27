@@ -10,6 +10,7 @@ var jshint = require('gulp-jshint');
 var sass = require('gulp-sass');
 var ngHtml2Js = require("gulp-ng-html2js");
 var minifyHtml = require("gulp-minify-html");
+var babel = require('gulp-babel');
 
 /**
  * File patterns
@@ -20,7 +21,7 @@ var rootDirectory = path.resolve('./');
 
 // Source directory for build process
 var sourceDirectory = path.join(rootDirectory, './src');
-  
+
 // Bower directory for build process
 var bowerDirectory = path.join(rootDirectory, './bower');
 
@@ -55,48 +56,51 @@ var lintFiles = [
   'karma-*.conf.js'
 ].concat(sourceFiles);
 
-gulp.task('build', function() {
+gulp.task('build', function () {
   gulp.src(sourceFiles)
     .pipe(plumber())
     .pipe(concat('ui.js'))
+    .pipe(babel({
+      presets: ['es2015']
+    }))
     .pipe(gulp.dest('./dist/'))
     .pipe(uglify())
     .pipe(rename('ui.min.js'))
     .pipe(gulp.dest('./dist'));
-  
+
   gulp.src(cssFiles)
     .pipe(concat('ui.scss'))
-    .pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
+    .pipe(sass({ outputStyle: 'compressed' }).on('error', sass.logError))
     .pipe(gulp.dest('./dist'));
-  
+
   gulp.src(imgFiles)
     .pipe(gulp.dest('./dist/images/'));
 
   gulp.src(themeCssFile)
     .pipe(concat('ui.theme.scss'))
-    .pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
+    .pipe(sass({ outputStyle: 'compressed' }).on('error', sass.logError))
     .pipe(gulp.dest('./dist'));
 
   gulp.src(htmlFiles)
     .pipe(minifyHtml({
-        empty: true,
-        spare: true,
-        quotes: true
+      empty: true,
+      spare: true,
+      quotes: true
     }))
     .pipe(ngHtml2Js({
-        moduleName: 'ui',
-        prefix: 'views/'
+      moduleName: 'ui',
+      prefix: 'views/'
     }))
     .pipe(concat('ui-views.min.js'))
     .pipe(uglify())
     .pipe(gulp.dest('./dist'));
 });
 
-gulp.task('views', function() {
+gulp.task('views', function () {
   // Any other view files from app/views
   gulp.src('./views/*')
-  // Will be put in the dist/views folder
-  .pipe(gulp.dest('dist/views/'));
+    // Will be put in the dist/views folder
+    .pipe(gulp.dest('dist/views/'));
 });
 
 /**
