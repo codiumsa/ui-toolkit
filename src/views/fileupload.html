@@ -5,7 +5,7 @@
        flow-files-submitted="uploader.flow.upload()"
        flow-file-added="fileAdded($file, $event, uploader.flow)"
        flow-files-added="filesAdded($files, $event, uploader.flow)"
-       flow-file-success="options.completed()"
+       flow-file-success="uploadCompleted()"
        class="ng-scope">
     <h4>{{title}}</h4>
 
@@ -57,7 +57,7 @@
      flow-files-submitted="uploader.flow.upload()"
      flow-file-added="fileAdded($file, $event, uploader.flow)"
      flow-files-added="filesAdded($files, $event, uploader.flow)"
-     flow-file-success="options.uploadCompleted()"
+     flow-file-success="uploadCompleted()"
        class="ng-scope">
   <h4>{{title}}</h4>
   <div class="drop" flow-drop ng-class="dropClass">
