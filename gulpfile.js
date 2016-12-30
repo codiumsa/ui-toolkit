@@ -37,7 +37,8 @@ var sourceFiles = [
 
 var cssFiles = [
   path.join(sourceDirectory, '/styles/main.scss'),
-  path.join(sourceDirectory, '/**/*.css')
+  path.join(sourceDirectory, '/**/*.css'),
+  path.join(bowerDirectory, '/angular-ui-select/dist/select.css')
 ];
 
 var themeCssFile = [path.join(sourceDirectory, '/styles/theme.scss')];

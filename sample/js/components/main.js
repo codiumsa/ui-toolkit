@@ -59,6 +59,13 @@
           path: '1016175.jpg'
         };
       }, 5000);
+
+      vm.model = {};
+      vm.paises = [
+        { id: 1, nombre: 'Paraguay' },
+        { id: 2, nombre: 'Brasil' },
+        { id: 3, nombre: 'Argentina' }
+      ]
     }
   }
 
