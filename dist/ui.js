@@ -1875,18 +1875,6 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
           $scope.selectAll = !notSelectAll;
         };
 
-        //funciones para el select2
-        var formatSelection = function formatSelection(text) {
-          return text.descripcion;
-        };
-
-        var formatResult = function formatResult(text) {
-          if (text.descripcion === "") {
-            return '<div class="select2-user-result">Todos</div>';
-          }
-          return '<div class="select2-user-result">' + text.descripcion + '</div>';
-        };
-
         //funcion para crear los filtros
         var createFilters = function createFilters() {
           $('#' + tableId + ' tfoot tr').empty();
@@ -1920,9 +1908,8 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
 
                   $('#' + id).select2({
                     minimumResultsForSearch: -1,
-                    //allowClear: true,
                     id: function id(text) {
-                      return text.descripcion;
+                      return text[column.idField];
                     },
                     data: function data() {
                       return $http({
@@ -1931,8 +1918,9 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
                       });
                     },
                     ajax: {
-                      url: baseurl.getBaseUrl() + "/" + customFilter.filterUrl,
+                      url: baseurl.getBaseUrl() + '/' + customFilter.filterUrl,
                       dataType: 'json',
+                      params: { headers: { 'Content-Type': 'application/json' } },
                       quietMillis: 250,
                       data: function data(term, page) {
                         // page is the one-based page number tracked by Select2
@@ -1950,15 +1938,21 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
 
                     initSelection: function initSelection(element, callback) {
                       var value = table.column(column.idx).search();
-                      $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
-                        dataType: "json"
+                      $.ajax(baseurl.getBaseUrl() + '/' + customFilter.filterUrl, {
+                        beforeSend: function beforeSend(xhr) {
+                          xhr.setRequestHeader('Content-Type', 'application/json');
+                        },
+                        dataType: 'json'
                       }).done(function (data) {
                         callback(data);
                       });
                     },
-                    formatResult: formatResult, // omitted for brevity, see the source of this page
-                    formatSelection: formatSelection, // omitted for brevity, see the source of this page
-                    //dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
+                    formatResult: function formatResult(text) {
+                      return '<div class="select2-user-result">' + text[column.textField] + '</div>';
+                    },
+                    formatSelection: function formatSelection(text) {
+                      return text[column.idField];
+                    },
                     escapeMarkup: function escapeMarkup(m) {
                       return m;
                     }

@@ -14,15 +14,17 @@
       controllerAs: 'vm'
     });
 
-  MainCtrl.$inject = ['PersonaService', '$timeout'];
+  MainCtrl.$inject = ['PersonaService', '$timeout', 'Filter'];
 
-  function MainCtrl(PersonaService, $timeout) {
+  function MainCtrl(PersonaService, $timeout, Filter) {
     var vm = this;
 
     activate();
 
     function activate() {
-      var defaultColumnOrder = ['nombre', 'apellido', 'cedula', 'fechaNacimiento'];
+      const parametrosQuery = Filter.path('tipo.codigo').eq('modulo');
+      const parametrosUrl = encodeURI('valores?filter=' + JSON.stringify(parametrosQuery));
+      const defaultColumnOrder = ['nombre', 'apellido', 'cedula', 'fechaNacimiento'];
       vm.options = {
         resource: '@', // resource '@' significa in-memory
         title: 'Listado de personas',
@@ -31,7 +33,10 @@
         defaultColumnOrder: defaultColumnOrder,
         columns: [
           { data: 'id', title: '', visible: false },
-          { data: 'nombre', title: vm.translations.NOMBRE, type: 'combo', filtroUrl: 'usuarios' },
+          {
+            data: 'nombre', title: vm.translations.NOMBRE, type: 'combo',
+            filterUrl: parametrosUrl, idField: 'valor', textField: 'valor'
+          },
           { data: 'apellido', title: vm.translations.APELLIDO },
           { data: 'cedula', title: vm.translations.CEDULA },
           { data: 'fechaNacimiento', title: vm.translations.FECHA_NACIMIENTO, type: 'date-range' }
