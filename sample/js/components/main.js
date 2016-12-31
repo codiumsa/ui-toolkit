@@ -31,7 +31,7 @@
         defaultColumnOrder: defaultColumnOrder,
         columns: [
           { data: 'id', title: '', visible: false },
-          { data: 'nombre', title: vm.translations.NOMBRE },
+          { data: 'nombre', title: vm.translations.NOMBRE, type: 'combo', filtroUrl: 'usuarios' },
           { data: 'apellido', title: vm.translations.APELLIDO },
           { data: 'cedula', title: vm.translations.CEDULA },
           { data: 'fechaNacimiento', title: vm.translations.FECHA_NACIMIENTO, type: 'date-range' }

@@ -41,6 +41,10 @@ var cssFiles = [
   path.join(bowerDirectory, '/angular-ui-select/dist/select.css')
 ];
 
+var fontFiles = [
+  path.join(sourceDirectory, '/styles/utils/fonts/*')
+];
+
 var themeCssFile = [path.join(sourceDirectory, '/styles/theme.scss')];
 
 var htmlFiles = [
@@ -73,6 +77,10 @@ gulp.task('build', function () {
     .pipe(concat('ui.scss'))
     .pipe(sass({ outputStyle: 'compressed' }).on('error', sass.logError))
     .pipe(gulp.dest('./dist'));
+
+  gulp.src(fontFiles)
+    .pipe(gulp.dest('./dist/fonts/'));
+
 
   gulp.src(imgFiles)
     .pipe(gulp.dest('./dist/images/'));

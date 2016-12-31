@@ -93,7 +93,7 @@
                 return !!c.data;
               });
               var reqBody = null;
-              
+
               if ($scope.options.staticFilter) {
                 reqBody = $scope.options.staticFilter;
               }
@@ -592,7 +592,6 @@
                           url: baseurl.getBaseUrl() + "/" + customFilter.filterUrl,
                           dataType: 'json',
                           quietMillis: 250,
-                          params: { headers: { "Authorization": $rootScope.AuthParams.accessToken } },
                           data: function (term, page) { // page is the one-based page number tracked by Select2
                             return {
                               q: term
@@ -606,13 +605,9 @@
                         },
 
                         initSelection: function (element, callback) {
-                          //var id = $(element).val();
                           var value = table.column(column.idx).search();
                           $.ajax(baseurl.getBaseUrl() + "/" + customFilter.filterUrl, {
-                            dataType: "json",
-                            beforeSend: function (xhr) {
-                              xhr.setRequestHeader("Authorization", $rootScope.AuthParams.accessToken);
-                            }
+                            dataType: "json"
                           }).done(function (data) {
                             callback(data);
                           });
