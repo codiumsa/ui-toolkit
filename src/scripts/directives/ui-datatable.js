@@ -570,12 +570,12 @@
                         },
                         data: function () {
                           return $http({
-                            url: baseurl.getBaseUrl() + customFilter.filterUrl,
+                            url: baseurl.getUrl() + customFilter.filterUrl,
                             method: "GET"
                           });
                         },
                         ajax: {
-                          url: baseurl.getBaseUrl() + '/' + customFilter.filterUrl,
+                          url: baseurl.getUrl() + '/' + customFilter.filterUrl,
                           dataType: 'json',
                           params: { headers: { 'Content-Type': 'application/json' } },
                           quietMillis: 250,
@@ -593,7 +593,7 @@
 
                         initSelection: function (element, callback) {
                           var value = table.column(column.idx).search();
-                          $.ajax(baseurl.getBaseUrl() + '/' + customFilter.filterUrl, {
+                          $.ajax(baseurl.getUrl() + '/' + customFilter.filterUrl, {
                             beforeSend: function (xhr) {
                               xhr.setRequestHeader('Content-Type', 'application/json');
                             },
@@ -692,7 +692,7 @@
 
             /* Funcion de actualizacion de URL Base con o sin filtros estaticos */
             function updateStaticFilters() {
-              urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables');
+              urlTemplate = _.template(baseurl.getUrl() + '/<%= resource %>/datatables');
             }
 
             $scope.dtInstanceCallback = function (dtInstance) {

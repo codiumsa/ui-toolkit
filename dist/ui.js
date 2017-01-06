@@ -1913,12 +1913,12 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
                     },
                     data: function data() {
                       return $http({
-                        url: baseurl.getBaseUrl() + customFilter.filterUrl,
+                        url: baseurl.getUrl() + customFilter.filterUrl,
                         method: "GET"
                       });
                     },
                     ajax: {
-                      url: baseurl.getBaseUrl() + '/' + customFilter.filterUrl,
+                      url: baseurl.getUrl() + '/' + customFilter.filterUrl,
                       dataType: 'json',
                       params: { headers: { 'Content-Type': 'application/json' } },
                       quietMillis: 250,
@@ -1938,7 +1938,7 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
 
                     initSelection: function initSelection(element, callback) {
                       var value = table.column(column.idx).search();
-                      $.ajax(baseurl.getBaseUrl() + '/' + customFilter.filterUrl, {
+                      $.ajax(baseurl.getUrl() + '/' + customFilter.filterUrl, {
                         beforeSend: function beforeSend(xhr) {
                           xhr.setRequestHeader('Content-Type', 'application/json');
                         },
@@ -2028,7 +2028,7 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
 
         /* Funcion de actualizacion de URL Base con o sin filtros estaticos */
         function updateStaticFilters() {
-          urlTemplate = _.template(baseurl.getBaseUrl() + '/<%= resource %>/datatables');
+          urlTemplate = _.template(baseurl.getUrl() + '/<%= resource %>/datatables');
         }
 
         $scope.dtInstanceCallback = function (dtInstance) {
@@ -2901,6 +2901,11 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
     this.$get = function () {
       var Config = this.config;
       return {
+        getUrl: function getUrl() {
+          return 'http://' + Config.serverIp + ':' + Config.serverPort + '/' + Config.serverName + '/' + Config.serverAPI;
+        },
+
+
         getBaseUrl: function getBaseUrl() {
           var hostname = window.location.hostname;
 
