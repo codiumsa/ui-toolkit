@@ -21,16 +21,16 @@
             </div>
           </div>
           <div class="btn-group">
-            <a class="btn btn-xs btn-warning" ng-click="file.pause()" ng-show="!file.paused && file.isUploading()">
+            <a class="btn btn-xs btn-warning" ng-disabled="disabled" ng-click="file.pause()" ng-show="!file.paused && file.isUploading()">
             Pausar
           </a>
-            <a class="btn btn-xs btn-warning" ng-click="file.resume()" ng-show="file.paused">
+            <a class="btn btn-xs btn-warning" ng-disabled="disabled" ng-click="file.resume()" ng-show="file.paused">
             Reanudar
           </a>
-            <a class="btn btn-xs btn-danger" ng-click="file.cancel()">
+            <a class="btn btn-xs btn-danger" ng-disabled="disabled" ng-click="file.cancel()">
             Cancelar
           </a>
-            <a class="btn btn-xs btn-info" ng-click="file.retry()" ng-show="file.error">
+            <a class="btn btn-xs btn-info" ng-disabled="disabled" ng-click="file.retry()" ng-show="file.error">
             Reintentar
           </a>
           </div>
@@ -61,7 +61,7 @@
             </div>
           </div>
           <div class="btn-group">
-            <a class="btn btn-xs btn-danger" ng-click="file.cancel()">
+            <a class="btn btn-xs btn-danger" ng-disabled="disabled" ng-click="file.cancel()">
           Remover
         </a>
           </div>
