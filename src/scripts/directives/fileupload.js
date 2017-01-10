@@ -1,4 +1,4 @@
-(function () {
+(function() {
   'use strict';
 
   /**
@@ -29,7 +29,8 @@
          */
         options: '=',
         title: '@',
-        ngModel: '='
+        ngModel: '=',
+        disabled: '='
       },
       link: function postLink(scope, element, attrs) {
         var defaults = {
@@ -42,7 +43,7 @@
         scope.title = attrs.title;
         scope.fileModel = {};
 
-        scope.progressWith = function (progress) {
+        scope.progressWith = function(progress) {
           return (progress * 100) + '%';
         };
         scope.files = [];
@@ -149,4 +150,4 @@
       return basename;
     }
   }
-} ());
+}());

@@ -1,105 +1,81 @@
 <div>
-<div ng-if="!options.imageOnly">
-  <div 
-      flow-init="options"
-      flow-files-submitted="$flow.upload()"
-      flow-file-added="fileAdded($file, $event, $flow)"
-      flow-files-added="filesAdded($files, $event, $flow)"
-      flow-file-success="uploadCompleted($flow.files)"
-      flow-name="uploader.flow"
-       class="ng-scope">
-    <h4>{{title}}</h4>
+  <div ng-if="!options.imageOnly">
+    <div flow-init="options" flow-files-submitted="$flow.upload()" flow-file-added="fileAdded($file, $event, $flow)" flow-files-added="filesAdded($files, $event, $flow)" flow-file-success="uploadCompleted($flow.files)" flow-name="uploader.flow" class="ng-scope">
+      <h4>{{title}}</h4>
 
-    <div class="drop" flow-drop ng-class="dropClass">
-      <span class="btn btn-default btn-sm" flow-btn>Cargar archivo
+      <div class="drop" flow-drop ng-class="dropClass" flow-drop-enabled="!disabled">
+        <span class="btn btn-default btn-sm" ng-disabled="disabled" flow-btn>Cargar archivo
         <input type="file" ng-model="fileModel" sf-changed="form" style="visibility: hidden; position: absolute;"/>
       </span>
+        <br/>
+        <b>O</b> Arrastre el archivo aqu&iacute;
+      </div>
       <br/>
-      <b>O</b>
-      Arrastre el archivo aqu&iacute;
-    </div>
-    <br/>
 
-    <div>
-      <div ng-repeat="file in $flow.files" class="transfer-box">
-        {{file.relativePath}} ({{file.size}}bytes)
-        <div class="progress progress-striped" ng-class="{active: file.isUploading()}">
-          <div class="progress-bar" role="progressbar"
-               aria-valuenow="{{file.progress() * 100}}"
-               aria-valuemin="0"
-               aria-valuemax="100"
-               ng-style="{width: (file.progress() * 100) + '%'}">
-            <span class="sr-only">{{file.progress()}}% Complete</span>
+      <div>
+        <div ng-repeat="file in $flow.files" class="transfer-box">
+          {{file.relativePath}} ({{file.size}}bytes)
+          <div class="progress progress-striped" ng-class="{active: file.isUploading()}">
+            <div class="progress-bar" role="progressbar" aria-valuenow="{{file.progress() * 100}}" aria-valuemin="0" aria-valuemax="100" ng-style="{width: (file.progress() * 100) + '%'}">
+              <span class="sr-only">{{file.progress()}}% Complete</span>
+            </div>
           </div>
-        </div>
-        <div class="btn-group">
-          <a class="btn btn-xs btn-warning" ng-click="file.pause()" ng-show="!file.paused && file.isUploading()">
+          <div class="btn-group">
+            <a class="btn btn-xs btn-warning" ng-click="file.pause()" ng-show="!file.paused && file.isUploading()">
             Pausar
           </a>
-          <a class="btn btn-xs btn-warning" ng-click="file.resume()" ng-show="file.paused">
+            <a class="btn btn-xs btn-warning" ng-click="file.resume()" ng-show="file.paused">
             Reanudar
           </a>
-          <a class="btn btn-xs btn-danger" ng-click="file.cancel()">
+            <a class="btn btn-xs btn-danger" ng-click="file.cancel()">
             Cancelar
           </a>
-          <a class="btn btn-xs btn-info" ng-click="file.retry()" ng-show="file.error">
+            <a class="btn btn-xs btn-info" ng-click="file.retry()" ng-show="file.error">
             Reintentar
           </a>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<div ng-if="options.imageOnly" class="clearfix">
-<div
-    flow-init="options"
-    flow-files-submitted="$flow.upload()"
-    flow-file-added="fileAdded($file, $event, $flow)"
-    flow-files-added="filesAdded($files, $event, $flow)"
-    flow-file-success="uploadCompleted($flow.files)"
-    flow-name="uploader.flow"
-    class="ng-scope">
-  <h4>{{title}}</h4>
-  <div class="drop" flow-drop ng-class="dropClass">
-    <span class="btn btn-default" flow-btn>Subir imagen</span>
-    <span class="btn btn-default" flow-btn flow-directory ng-show="$flow.supportDirectory">Subir directorio con im&aacute;genes</span>
-    <b>O</b>
-    Arrastrar las im&aacute;genes aqu&iacute;.
-  </div>
-  <br/>
-  <div>
-    <div ng-repeat="file in $flow.files" class="gallery-box">
-      <span class="title">{{file.name}}</span>
-      <div class="thumbnail" ng-show="$flow.files.length">
-        <img ng-if="!file.file.image_url" flow-img="file" />
-        <img ng-if="file.file.image_url" ng-src="{{file.file.image_url}}" />
+  <div ng-if="options.imageOnly" class="clearfix">
+    <div flow-init="options" flow-files-submitted="$flow.upload()" flow-file-added="fileAdded($file, $event, $flow)" flow-files-added="filesAdded($files, $event, $flow)" flow-file-success="uploadCompleted($flow.files)" flow-name="uploader.flow" class="ng-scope">
+      <h4>{{title}}</h4>
+      <div class="drop" flow-drop ng-class="dropClass" flow-drop-enabled="!disabled">
+        <span class="btn btn-default" ng-disabled="disabled" flow-btn>Subir imagen</span>
+        <span class="btn btn-default" ng-disabled="disabled" flow-btn flow-directory ng-show="$flow.supportDirectory">Subir directorio con im&aacute;genes</span>
+        <b>O</b> Arrastrar las im&aacute;genes aqu&iacute;.
       </div>
-      <div class="progress progress-striped" ng-class="{active: file.isUploading()}">
-        <div class="progress-bar" role="progressbar"
-             aria-valuenow="{{file.progress() * 100}}"
-             aria-valuemin="0"
-             aria-valuemax="100"
-             ng-style="{width: (file.progress() * 100) + '%'}">
-          <span class="sr-only">{{file.progress()}}% Completo</span>
-        </div>
-      </div>
-      <div class="btn-group">
-        <a class="btn btn-xs btn-danger" ng-click="file.cancel()">
+      <br/>
+      <div>
+        <div ng-repeat="file in $flow.files" class="gallery-box">
+          <span class="title">{{file.name}}</span>
+          <div class="thumbnail" ng-show="$flow.files.length">
+            <img ng-if="!file.file.image_url" flow-img="file" />
+            <img ng-if="file.file.image_url" ng-src="{{file.file.image_url}}" />
+          </div>
+          <div class="progress progress-striped" ng-class="{active: file.isUploading()}">
+            <div class="progress-bar" role="progressbar" aria-valuenow="{{file.progress() * 100}}" aria-valuemin="0" aria-valuemax="100" ng-style="{width: (file.progress() * 100) + '%'}">
+              <span class="sr-only">{{file.progress()}}% Completo</span>
+            </div>
+          </div>
+          <div class="btn-group">
+            <a class="btn btn-xs btn-danger" ng-click="file.cancel()">
           Remover
         </a>
-      </div>
-    </div>
-    <div ng-if="options.showFilesSummary" class="row" ng-show="files.length > 0">
-      <div class="col-lg-12" style="margin-left: 10px; margin-top: 15px;">
-        <h4> Archivos subidos </h4>
-        <div ng-repeat="file in files">
-          [{{$index + 1}}] <strong>URL:</strong> <span style="font-size: 13px;">{{adjuntosBaseURL}}/{{file.path}}</span>
+          </div>
         </div>
+        <div ng-if="options.showFilesSummary" class="row" ng-show="files.length > 0">
+          <div class="col-lg-12" style="margin-left: 10px; margin-top: 15px;">
+            <h4> Archivos subidos </h4>
+            <div ng-repeat="file in files">
+              [{{$index + 1}}] <strong>URL:</strong> <span style="font-size: 13px;">{{adjuntosBaseURL}}/{{file.path}}</span>
+            </div>
+          </div>
+        </div>
+        <div class="clear"></div>
       </div>
     </div>
-    <div class="clear"></div>
   </div>
-</div>  
-</div>
 </div>

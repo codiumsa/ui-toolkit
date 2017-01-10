@@ -385,7 +385,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
          */
         options: '=',
         title: '@',
-        ngModel: '='
+        ngModel: '=',
+        disabled: '='
       },
       link: function postLink(scope, element, attrs) {
         var defaults = {
@@ -510,7 +511,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     }
   }
 })();
-
 (function () {
   'use strict';
 

@@ -1,4 +1,4 @@
-(function () {
+(function() {
   'use strict';
 
   angular
@@ -34,8 +34,12 @@
         columns: [
           { data: 'id', title: '', visible: false },
           {
-            data: 'nombre', title: vm.translations.NOMBRE, type: 'combo',
-            filterUrl: parametrosUrl, idField: 'valor', textField: 'valor'
+            data: 'nombre',
+            title: vm.translations.NOMBRE,
+            type: 'combo',
+            filterUrl: parametrosUrl,
+            idField: 'valor',
+            textField: 'valor'
           },
           { data: 'apellido', title: vm.translations.APELLIDO },
           { data: 'cedula', title: vm.translations.CEDULA },
@@ -50,7 +54,7 @@
       };
 
       vm.uploadOptions = {
-        onComplete: function (files) {
+        onComplete: function(files) {
           console.log('UPLOADED', files);
         },
         target: 'http://127.0.0.1:8080/spa-backend/api/adjuntos',
@@ -58,7 +62,7 @@
         imageOnly: true
       };
 
-      $timeout(function () {
+      $timeout(function() {
         vm.files = {
           id: 1,
           path: '1016175.jpg'
@@ -70,7 +74,8 @@
         { id: 1, nombre: 'Paraguay' },
         { id: 2, nombre: 'Brasil' },
         { id: 3, nombre: 'Argentina' }
-      ]
+      ];
+      vm.fileuploadDisabled = true;
     }
   }
 
@@ -93,4 +98,4 @@
   function onRemove(itemId) {
     console.log('on remove: ' + itemId);
   }
-} ());
+}());
