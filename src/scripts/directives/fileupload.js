@@ -128,7 +128,7 @@
         let contentType = this.mimeTypeMap[img.path.toLowerCase().substring(_.lastIndexOf(img.path, '.') + 1)];
         let blob = new Blob(['pre_existing_image'], { type: contentType });
         blob.name = img.path;
-        blob.image_url = this.options.publicPath + img.path;
+        blob.image_url = this.options.publicPath + '/' + img.path;
         let file = new Flow.FlowFile(flow, blob);
         file.fromServer = true;
         flow.files.push(file);
