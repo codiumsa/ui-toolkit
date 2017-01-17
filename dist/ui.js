@@ -488,7 +488,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         var contentType = _this3.mimeTypeMap[img.path.toLowerCase().substring(_.lastIndexOf(img.path, '.') + 1)];
         var blob = new Blob(['pre_existing_image'], { type: contentType });
         blob.name = img.path;
-        blob.image_url = _this3.options.publicPath + img.path;
+        blob.image_url = _this3.options.publicPath + '/' + img.path;
         var file = new Flow.FlowFile(flow, blob);
         file.fromServer = true;
         flow.files.push(file);
