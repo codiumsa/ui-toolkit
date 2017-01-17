@@ -1490,8 +1490,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         scope.preload = false;
 
         scope.$watch('ngModel', function (newVal) {
-          if (newVal && !scope.preload) {
+          if (newVal && !scope.preload && !scope.ngModelIgnoreSync) {
             scope.preload = true;
+            scope.ngModelIgnoreSync = false;
             scope.loadFiles(angular.isArray(scope.ngModel) ? scope.ngModel : [scope.ngModel]);
           }
         });
@@ -1525,6 +1526,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       if (angular.isFunction(this.options.onComplete)) {
         this.options.onComplete(files);
       }
+      this.ngModelIgnoreSync = true;
       this.ngModel = files;
     }
 
