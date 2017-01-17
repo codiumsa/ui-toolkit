@@ -11,9 +11,9 @@
     .module('ui')
     .directive('fileupload', fileupload);
 
-  fileupload.$inject = ['ngNotify'];
+  fileupload.$inject = ['ngNotify', '$http'];
 
-  function fileupload(ngNotify) {
+  function fileupload(ngNotify, $http) {
     return {
       templateUrl: 'views/fileupload.html',
       restrict: 'E',
@@ -26,6 +26,8 @@
          *  - {boolean} showFilesSummary
          *  - {string} publicPath
          *  - {Function} onComplete
+         *  - {Function} onDelete
+         *  - {Function} onDeleteError
          */
         options: '=',
         title: '@',
@@ -48,11 +50,14 @@
         };
         scope.files = [];
         scope.adjuntosBaseURL = scope.options.publicPath;
+        scope.options.onDelete = scope.options.onDelete || angular.noop;
+        scope.options.onDeleteError = scope.options.onDeleteError || angular.noop;
         scope.fileAdded = fileAdded.bind(scope);
         scope.uploadCompleted = uploadCompleted.bind(scope);
         scope.loadFiles = loadFiles.bind(scope);
         scope.getCurrentFiles = getCurrentFiles.bind(scope);
         scope.getFilename = getFilename.bind(scope);
+        scope.remove = remove.bind(scope);
         scope.mimeTypeMap = {
           jpg: 'image/jpg',
           jpeg: 'image/jpeg',
@@ -148,6 +153,18 @@
       basename = basename.replace(/[^a-zA-Z/-_\\.0-9]+/g, '');
       basename = basename.replace(/\s/g, '');
       return basename;
+    }
+
+    /**
+     * Se encarga de eliminar el archivo en el servidor.
+     * 
+     * @param {object} file - El archivo a eliminar
+     */
+    function remove(file) {
+      file.cancel();
+      const data = { flowFilename: this.getFilename(file) };
+      $http.delete(this.options.target, { params: data })
+        .then(this.options.onDelete, this.options.onDeleteError);
     }
   }
 }());

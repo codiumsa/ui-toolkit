@@ -58,7 +58,7 @@
           console.log('UPLOADED', files);
         },
         target: 'http://127.0.0.1:8080/spa-backend/api/adjuntos',
-        publicPath: 'http://127.0.0.1:8080/public/spa-frontend/',
+        publicPath: 'http://127.0.0.1:8080/public/spa-frontend',
         imageOnly: true
       };
 
@@ -75,7 +75,7 @@
         { id: 2, nombre: 'Brasil' },
         { id: 3, nombre: 'Argentina' }
       ];
-      vm.fileuploadDisabled = true;
+      vm.fileuploadDisabled = false;
     }
   }
 
