@@ -10,13 +10,10 @@
       selector: 'passwordGenerator',
       bindings: {
         /**
-         * El modelo donde se copiará la contraseña generada
+         * Handler a llamar cuando se genera una contraseña. Recibe como parámetro
+         * el password generado.
          */
-        ngModel: '=',
-        /**
-         * 
-         */
-        onChange: '&'
+        afterGenerate: '&'
       },
       controller: PasswordGeneratorCtrl,
       controllerAs: 'vm'
@@ -38,16 +35,13 @@
     this.generate = generate.bind(this);
     this.onSuccess = onSuccess.bind(this);
     this.showTooltip = showTooltip.bind(this);
-    this.handleChanges = handleChanges.bind(this);
 
     this.$onDestroy = () => {
       if (this.clipboardObj) {
         this.clipboardObj.destroy();
       }
     };
-    this.$onChanges = this.hangleChanges;
   }
-
 
   function generate() {
     let buffer = lowerCharacters;
@@ -60,7 +54,11 @@
     do {
       password += buffer[Math.floor(Math.random() * buffer.length)];
     } while (password.length < len);
-    this.ngModel = password;
+    this.model = password;
+
+    if (angular.isFunction(this.afterGenerate)) {
+      this.afterGenerate({ password });
+    }
   }
 
 
@@ -77,12 +75,4 @@
       elem.setAttribute('class', classes);
     }, 1000);
   }
-
-  function handleChanges(changes) {
-
-    if (changes.ngModel) {
-      this.onChange({ $value: changes.ngModel });
-    }
-  }
-
 }());
