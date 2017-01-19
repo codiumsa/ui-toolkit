@@ -12,7 +12,11 @@
         /**
          * El modelo donde se copiará la contraseña generada
          */
-        ngModel: '='
+        ngModel: '=',
+        /**
+         * 
+         */
+        onChange: '&'
       },
       controller: PasswordGeneratorCtrl,
       controllerAs: 'vm'
@@ -34,12 +38,14 @@
     this.generate = generate.bind(this);
     this.onSuccess = onSuccess.bind(this);
     this.showTooltip = showTooltip.bind(this);
+    this.handleChanges = handleChanges.bind(this);
 
     this.$onDestroy = () => {
       if (this.clipboardObj) {
         this.clipboardObj.destroy();
       }
     };
+    this.$onChanges = this.hangleChanges;
   }
 
 
@@ -70,6 +76,13 @@
     this.$timeout(() => {
       elem.setAttribute('class', classes);
     }, 1000);
+  }
+
+  function handleChanges(changes) {
+
+    if (changes.ngModel) {
+      this.onChange({ $value: changes.ngModel });
+    }
   }
 
 }());

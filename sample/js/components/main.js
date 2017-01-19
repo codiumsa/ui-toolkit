@@ -76,6 +76,7 @@
         { id: 3, nombre: 'Argentina' }
       ];
       vm.fileuploadDisabled = false;
+      vm.onPasswordChange = (password) => console.log('cambio', password);
     }
   }
 
