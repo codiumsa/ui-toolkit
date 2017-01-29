@@ -2811,8 +2811,13 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
   function controllerFunc($state) {
     var vm = this;
 
-    vm.isActive = function (estado) {
-      return $state.includes(estado);
+    /**
+     * Verifica si el estado dado como parametro es el estado actual
+     * 
+     * @param {string} state - nombre relativo o completo
+     */
+    vm.isActive = function (state) {
+      return state.startsWith('.') ? $state.is($state.get('^').name + state) : $state.is(state);
     };
 
     vm.go = function (dest) {
@@ -2823,7 +2828,6 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
     };
   }
 })();
-
 (function () {
   'use strict';
 
