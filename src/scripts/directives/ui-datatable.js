@@ -562,6 +562,12 @@
                       html = '<th><div id="' + id + '" name="' + title + '" class="filtro-ancho"></div></th>';
                       $('#' + tableId + ' tfoot tr').append(html);
                       html = '';
+                      var headers = { 'Content-Type': 'application/json' };
+                      var TokenService = $injector.get('TokenService');
+
+                      if (TokenService) {
+                        headers.Authorization = 'Bearer ' + TokenService.getToken();
+                      }
 
                       $('#' + id).select2({
                           minimumResultsForSearch: -1,
@@ -577,7 +583,7 @@
                           ajax: {
                             url: baseurl.getUrl() + '/' + customFilter.filterUrl,
                             dataType: 'json',
-                            params: { headers: { 'Content-Type': 'application/json' } },
+                            params: { headers: headers },
                             quietMillis: 250,
                             data: function(term, page) { // page is the one-based page number tracked by Select2
                               return {

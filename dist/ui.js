@@ -69,6 +69,3842 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     schemaFormDecoratorsProvider.createDirective('datepicker', 'views/directives/datepicker.html');
   }]);
 })(angular);
+(function () {
+  'use strict';
+
+  angular.module('ui').controller('BasicController', ['$rootScope', '$scope', 'formFactory', '$location', '$state', '$injector', function ($rootScope, $scope, formFactory, $location, $state, $injector) {
+
+    $scope.activate = function () {
+      $scope.schema = $scope.factory.schema();
+      $scope.options = formFactory.defaultOptions();
+
+      if ($state.is($scope.newProperties.state)) {
+        activateNew();
+      } else if ($state.is($scope.editProperties.state)) {
+        activateEdit();
+      } else if ($state.is($scope.viewProperties.state)) {
+        activateView();
+      }
+
+      $rootScope.isProcessing = false;
+    };
+
+    function activateNew() {
+      if (!formFactory.canCreate($scope.resources)) {
+        var notify = $injector.get('notify');
+        // error de autorización
+        notify({
+          message: 'No tiene permiso de creación',
+          classes: ['alert-danger'],
+          position: 'right'
+        });
+        $location.path('/');
+      }
+      $scope.title = $scope.newProperties.title;
+      $scope.form = $scope.factory.form('new');
+      $scope.model = {};
+      $scope.schema.readonly = false;
+    }
+
+    function activateEdit() {
+      if (!formFactory.canEdit($scope.resources)) {
+        var notify = $injector.get('notify');
+        // error de autorización
+        notify({
+          message: 'No tiene permiso de edición',
+          classes: ['alert-danger'],
+          position: 'right'
+        });
+        $location.path('/');
+      }
+      $scope.model = $scope.prepService;
+      $scope.entidadId = $scope.model.id;
+      $scope.entidad = $scope.editProperties.entidad;
+      $scope.form = $scope.factory.form('edit');
+      $scope.title = $scope.editProperties.title;
+      $scope.schema.readonly = false;
+    }
+
+    function activateView() {
+      if (!formFactory.canList($scope.resources)) {
+        var notify = $injector.get('notify');
+        // error de autorización
+        notify({
+          message: 'No tiene permiso de vista',
+          classes: ['alert-danger'],
+          position: 'right'
+        });
+        $location.path('/');
+      }
+      $scope.options = formFactory.defaultViewOptions();
+      $scope.model = $scope.prepService;
+      $scope.entidadId = $scope.model.id;
+      $scope.entidad = $scope.viewProperties.entidad;
+      $scope.form = $scope.factory.form('view');
+      $scope.title = $scope.viewProperties.title;
+      $scope.view = true;
+      $scope.schema.readonly = true;
+    }
+
+    $scope.submit = function (form) {
+      formFactory.defaultSubmit($scope.resource, $scope, form, $scope.factory);
+    };
+
+    $scope.cancel = function () {
+      $location.path('/' + $scope.resource);
+    };
+  }]);
+})();
+(function () {
+  'use strict';
+
+  angular.module('ui').directive('aDisabled', function () {
+    return {
+      compile: function compile(tElement, tAttrs, transclude) {
+        //Disable ngClick
+        tAttrs['ngClick'] = '!(' + tAttrs['aDisabled'] + ') && (' + tAttrs['ngClick'] + ')';
+
+        //return a link function
+        return function (scope, iElement, iAttrs) {
+
+          //Toggle 'disabled' to class when aDisabled becomes true
+          scope.$watch(iAttrs['aDisabled'], function (newValue) {
+            if (newValue !== undefined) {
+              iElement.toggleClass('disabled', newValue);
+            }
+          });
+
+          //Disable href on click
+          iElement.on('click', function (e) {
+            if (scope.$eval(iAttrs['aDisabled'])) {
+              e.preventDefault();
+            }
+          });
+        };
+      }
+    };
+  });
+
+  angular.module('ui').directive('uiRequired', function () {
+    return {
+      require: 'ngModel',
+      link: function link(scope, elm, attrs, ctrl) {
+        ctrl.$validators.required = function (modelValue, viewValue) {
+          return !((viewValue && viewValue.length === 0 || false) && attrs.uiRequired === 'true');
+        };
+
+        attrs.$observe('uiRequired', function () {
+          ctrl.$setValidity('required', !(attrs.uiRequired === 'true' && ctrl.$viewValue && ctrl.$viewValue.length === 0));
+        });
+      }
+    };
+  });
+})();
+
+(function () {
+  angular.module('ui').directive('advancedDatatablesSearch', advancedDatatablesSearch);
+
+  function advancedDatatablesSearch() {
+    var directive = {
+      restrict: 'E',
+      controllerAs: 'vm',
+      scope: {
+        model: '=',
+        options: '=',
+        factory: '=',
+        disabledBtn: '=',
+        multipleSelection: '=?',
+        size: '@',
+        serializationView: '@',
+        style: '@'
+      },
+      bindToController: true,
+      templateUrl: 'views/directives/advanced-datatables-search.html',
+      link: linkFunc,
+      controller: AdvancedDatatablesSearchController
+    };
+
+    function linkFunc(scope, elem, attr) {
+      scope.vm.multipleSelection = angular.isDefined(scope.vm.multipleSelection) ? scope.vm.multipleSelection : false;
+    }
+
+    return directive;
+  }
+
+  AdvancedDatatablesSearchController.$inject = ['$log', '$scope', '$modal', '$state'];
+  function AdvancedDatatablesSearchController($log, $scope, $modal, $state) {
+    var vm = this;
+    if (!vm.size) {
+      vm.size = "btn-xs";
+    }
+    vm.valorScope = "hola";
+    vm.pick = pick;
+    vm.showSearch = showSearch;
+    vm.addAll = addAll;
+    if (!vm.multipleSelection) {
+      vm.options.extraRowOptions = [{
+        templateToRender: "<button class='btn btn-primary' style='margin-right: 5px;' ng-click='pick(<%=dataId%>)'> <span class='glyphicon glyphicon-ok'></span> </button>",
+        functionName: "pick",
+        functionDef: function functionDef(itemId) {
+          vm.pick(itemId);
+        }
+      }];
+    } else {
+      if (vm.multipleSelection) {
+        vm.options.isSelectable = true;
+        vm.options.selection = {};
+        vm.options.extraMenuOptions = [{
+          'title': "GSDG",
+          'icon': 'glyphicon glyphicon-plus',
+          'showCondition': function showCondition() {
+            return true;
+          },
+          'action': function action() {
+            if (vm.isProcesoImportacion) {
+              $state.go("app.importaciones.proceso.ordenescompra.new");
+            } else {
+              $state.go("app.orden_compra_importacion.new");
+            }
+          }
+        }];
+      }
+    }
+    vm.options.hideAddMenu = true;
+    vm.options.hideEditMenu = true;
+    vm.options.hideRemoveMenu = true;
+    vm.options.hideHeader = true;
+
+    var createFilters = function createFilters(filters) {
+      var filtersArr = [];
+      _.each(filters, function (search, data) {
+        filtersArr.push({ path: data, like: search });
+      });
+      var filters = filterFactory.and(filtersArr).value();
+      return filters;
+    };
+
+    activate();
+
+    function activate() {
+      vm.modalInstance = undefined;
+    }
+
+    function pick(item) {
+      vm.model = vm.factory.get(item, vm.serializationView);
+
+      if (vm.modalInstance) {
+        vm.modalInstance.close();
+      }
+    }
+
+    function showSearch() {
+      vm.modalInstance = $modal.open({
+        templateUrl: 'views/datatables-modal.html',
+        scope: $scope,
+        size: 'lg'
+      });
+    }
+
+    function addAll() {
+      //convertimos los datos a un array de indicesSelected
+      var indicesSelected = _.filter(_.map(vm.options.selection, function (val, idx) {
+        return val == true ? parseInt(idx) : false;
+      }), function (val) {
+        return val;
+      });
+      vm.model = _.map(indicesSelected, function (idx) {
+        return vm.factory.get(idx, vm.serializationView);
+      });
+
+      if (vm.modalInstance) {
+        vm.modalInstance.close();
+      }
+    }
+  }
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').value('$datepickerSuppressError', true).directive('pickDate', ['$filter', function ($filter) {
+    return {
+      restrict: 'A',
+      require: 'ngModel',
+      link: function link(scope, element, attrs, ngModel) {
+        moment.locale('es');
+        if (scope.model[scope.form.key[0]]) {
+          scope.model[scope.form.key[0]] = new Date(scope.model[scope.form.key[0]]);
+        }
+
+        scope.status = {
+          opened: false
+        };
+
+        scope.open = function () {
+          scope.status.opened = true;
+        };
+        var defaultFormat = 'dd/MM/yyyy';
+
+        ngModel.$parsers.push(function () {
+          console.log(scope.schema.formatDate);
+          return $filter('date')(element.val(), scope.form.schema.formatDate || defaultFormat);
+        });
+      }
+    };
+  }]);
+})();
+
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc directive
+   * @name ui.directive:fileupload
+   * @description
+   * # fileupload
+   */
+
+  angular.module('ui').directive('fileupload', fileupload);
+
+  fileupload.$inject = ['ngNotify', '$http'];
+
+  function fileupload(ngNotify, $http) {
+    return {
+      templateUrl: 'views/fileupload.html',
+      restrict: 'E',
+      tranclude: true,
+      scope: {
+        /**
+         * Objeto de configuración:
+         *  - {boolean} singleFile
+         *  - {string} method
+         *  - {boolean} showFilesSummary
+         *  - {string} publicPath
+         *  - {Function} onComplete
+         *  - {Function} onDelete
+         *  - {Function} onDeleteError
+         */
+        options: '=',
+        title: '@',
+        ngModel: '=',
+        disabled: '='
+      },
+      link: function postLink(scope, element, attrs) {
+        var defaults = {
+          singleFile: false,
+          method: 'octet',
+          showFilesSummary: false
+        };
+        defaults.target = scope.options.target;
+        scope.uploader = {};
+        scope.title = attrs.title;
+        scope.fileModel = {};
+
+        scope.progressWith = function (progress) {
+          return progress * 100 + '%';
+        };
+        scope.files = [];
+        scope.adjuntosBaseURL = scope.options.publicPath;
+        scope.options.onDelete = scope.options.onDelete || angular.noop;
+        scope.options.onDeleteError = scope.options.onDeleteError || angular.noop;
+        scope.fileAdded = fileAdded.bind(scope);
+        scope.uploadCompleted = uploadCompleted.bind(scope);
+        scope.loadFiles = loadFiles.bind(scope);
+        scope.getCurrentFiles = getCurrentFiles.bind(scope);
+        scope.getFilename = getFilename.bind(scope);
+        scope.remove = remove.bind(scope);
+        scope.mimeTypeMap = {
+          jpg: 'image/jpg',
+          jpeg: 'image/jpeg',
+          png: 'image/png',
+          gif: 'image/gif'
+        };
+        scope.preload = false;
+
+        scope.$watch('ngModel', function (newVal) {
+          if (newVal && !scope.preload && !scope.ngModelIgnoreSync) {
+            scope.preload = true;
+            scope.ngModelIgnoreSync = false;
+            scope.loadFiles(angular.isArray(scope.ngModel) ? scope.ngModel : [scope.ngModel]);
+          }
+        });
+      }
+    };
+
+    function fileAdded(file, event, $flow) {
+      // controlamos que no se supere el limite de tamano          
+      if (this.options.FILE_UPLOAD_LIMIT && file.size > this.options.FILE_UPLOAD_LIMIT * 1000 * 1000) {
+        event.preventDefault();
+        ngNotify.set('El tamaño del archivo supera el límite de ' + this.options.FILE_UPLOAD_LIMIT + ' MB.', 'error');
+        return false;
+      }
+      var ext = file.getExtension();
+      // si es imagen controlamos que sea alguna de las extensiones permitidas
+      if (this.options.imageOnly && ['png', 'gif', 'jpg', 'jpeg'].indexOf(ext) < 0) {
+        ngNotify.set('Solo se permiten archivos con extensión: png, gif, jpg o jpeg.', 'error');
+        return false;
+      }
+      // controlamos que el tamanio del nombre no supere 255 caracteres
+      if (file.name.length > 255) {
+        ngNotify.set('El nombre del archivo supera los 255 caracteres', 'error');
+        return false;
+      }
+    }
+
+    function uploadCompleted(files) {
+      ngNotify.set('Archivo cargado correctamente', 'success');
+      var files = this.getCurrentFiles(files);
+
+      if (angular.isFunction(this.options.onComplete)) {
+        this.options.onComplete(files);
+      }
+      this.ngModelIgnoreSync = true;
+      this.ngModel = files;
+    }
+
+    /**
+     * Retorna una lista compacta de los archivos cargados correctamente.
+     * 
+     * @param {object[]} files - FlowFile list
+     */
+    function getCurrentFiles(flowFiles) {
+      var _this2 = this;
+
+      var files = []; // Lista de objetos de tipo { path: '' }
+
+      if (flowFiles.length > 0) {
+        angular.forEach(flowFiles, function (file) {
+          files.push({
+            path: _this2.getFilename(file)
+          });
+        });
+      }
+      return files;
+    }
+
+    /**
+     * Se encarga de cargar en el objeto flow el array de imagenes. Esto es necesario
+     * cuando tenemos imagenes que precargar (ya se encuentran en el server)
+     **/
+    function loadFiles(images) {
+      var _this3 = this;
+
+      var flow = this.uploader.flow;
+      angular.forEach(images, function (img) {
+        var contentType = _this3.mimeTypeMap[img.path.toLowerCase().substring(_.lastIndexOf(img.path, '.') + 1)];
+        var blob = new Blob(['pre_existing_image'], { type: contentType });
+        blob.name = img.path;
+        blob.image_url = _this3.options.publicPath + '/' + img.path;
+        var file = new Flow.FlowFile(flow, blob);
+        file.fromServer = true;
+        flow.files.push(file);
+      });
+    }
+
+    /**
+     * Retorna el nombre del archivo. Esto se corresponde con la logica en el backend para 
+     * el generación del nombre final del archivo.
+     **/
+    function getFilename(file) {
+
+      if (file.fromServer) {
+        return file.name;
+      }
+      var basename = file.size + '-' + file.name;
+      basename = basename.replace(/[^a-zA-Z/-_\\.0-9]+/g, '');
+      basename = basename.replace(/\s/g, '');
+      return basename;
+    }
+
+    /**
+     * Se encarga de eliminar el archivo en el servidor.
+     * 
+     * @param {object} file - El archivo a eliminar
+     */
+    function remove(file) {
+      file.cancel();
+      var data = { flowFilename: this.getFilename(file) };
+      $http.delete(this.options.target, { params: data }).then(this.options.onDelete, this.options.onDeleteError);
+    }
+  }
+})();
+(function () {
+  'use strict';
+
+  angular.module('ui').directive('focusOn', ['$timeout', function ($timeout) {
+    return function (scope, elem, attrs) {
+      scope.$on(attrs.focusOn, function (e) {
+        $timeout(function () {
+          elem[0].focus();
+        }, 10);
+      });
+    };
+  }]);
+})();
+
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc directive
+   * @name ui.directive:menuBuilder
+   * @description
+   * # menuBuilder
+   */
+
+  angular.module('ui').directive('menuBuilder', ['$timeout', function ($timeout) {
+    return {
+      templateUrl: 'views/menu-builder.html',
+      restrict: 'EA',
+      replace: true,
+      scope: { options: '=', menu: '=', save: '=' },
+      link: function postLink(scope, element, attrs) {
+        //scope.menu = {};
+        var setLeafs = function setLeafs(nodes) {
+          _.each(nodes, function (n) {
+            n.data = { estado: n.estado };
+            if (n.children) setLeafs(n.children);else n.type = 'leaf';
+          });
+          return nodes;
+        };
+
+        function drawJSTree(treeData) {
+          $('#menu-builder').jstree({
+            'core': {
+              'animation': 0,
+              'check_callback': function check_callback(operation, node, parent, position) {
+                switch (operation) {
+                  case 'move_node':
+                    return !parent.parent || parent.original.type !== 'leaf';
+                  case 'create_node':
+                    return parent.original.type !== 'leaf';
+                  case 'rename_node':
+                    return node.original.type !== 'leaf';
+                  case 'delete_node':
+                    return _.isEmpty(node.children) && node.original.type !== 'leaf';
+                }
+                return false;
+              },
+              'themes': { 'stripes': true },
+              'data': setLeafs(treeData)
+            },
+            'types': {
+              'default': {
+                'icon': 'glyphicon glyphicon-record'
+              },
+              'leaf': {
+                'icon': 'glyphicon glyphicon-asterisk'
+              }
+            },
+            'plugins': ['dnd', 'search', 'state', 'types', 'wholerow']
+          });
+        }
+
+        function nodeRename() {
+          var ref = $('#menu-builder').jstree(true),
+              sel = ref.get_selected();
+          if (!sel.length) {
+            return false;
+          }
+          sel = sel[0];
+          //console.log(ref.get_node(sel));
+          if (ref.get_node(sel).original.type !== 'leaf') ref.edit(sel);
+        }
+
+        $('#menu-builder').delegate("li", "dblclick", function (e) {
+          nodeRename();
+          return false;
+        });
+
+        scope.nodeCreate = function () {
+          var ref = $('#menu-builder').jstree(true),
+              sel = ref.get_selected();
+          if (!sel.length) {
+            return false;
+          }
+          sel = sel[0];
+          sel = ref.create_node(sel);
+          if (sel) {
+            ref.edit(sel);
+          }
+        };
+
+        scope.nodeDelete = function () {
+          var ref = $('#menu-builder').jstree(true),
+              sel = ref.get_selected();
+          if (!sel.length) {
+            return false;
+          }
+          ref.delete_node(sel);
+        };
+
+        scope.getMenu = function () {
+          var getMenuNode = function getMenuNode(e) {
+            var result = {
+              text: e.text,
+              estado: e.data.estado
+            };
+
+            if (!_.isEmpty(e.children)) {
+              result.children = _.map(e.children, function (c) {
+                return getMenuNode(c);
+              });
+            }
+
+            return result;
+          };
+
+          var ref = $('#menu-builder').jstree(true);
+          var menu = _.map(ref.get_json(), getMenuNode);
+
+          scope.save(menu);
+          //scope.menu = menu;
+        };
+
+        scope.$watch('menu', function (menu) {
+          if (menu) drawJSTree(menu);
+        });
+      }
+    };
+  }]);
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').directive('mmenu', function () {
+    return {
+      restrict: 'A',
+      link: function link(scope, element, attrs) {
+        $(element).mmenu({
+          "extensions": ["pagedim-black", "effect-listitems-slide", "multiline", "pageshadow"],
+          "counters": true,
+          "iconPanels": { add: true,
+            hideNavbars: true
+          },
+          "navbar": {
+            "title": attrs.navbarTitle
+          },
+          "navbars": [{
+            "position": "top",
+            "content": ["searchfield"]
+          }, true],
+          searchfield: {
+            resultsPanel: {
+              title: "Resultados",
+              add: true },
+            placeholder: "Buscar menú",
+            noResults: "Sin coincidencias"
+
+          }
+        }, {
+          searchfield: {
+            clear: true
+          }
+        });
+      }
+    };
+  });
+})();
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc directive
+   * @name qualita.directive:offlineFormRecovery
+   * @description
+   * # offlineFormRecovery
+   */
+
+  angular.module('ui').directive('offlineFormRecovery', ['$localForage', function ($localForage) {
+    return {
+      template: '<div class="btn-group" role="group" aria-label="First group">' + '<button ng-disabled="!pending.length || position == 0" type="button" class="glyphicon glyphicon-arrow-left btn btn-default btn-recovery" ng-click="previous()"></button>' + '<button ng-disabled="!pending.length || position == pending.length" type="button" class="glyphicon glyphicon-arrow-right btn btn-default btn-recovery" ng-click="next()"></button>' + '<button ng-disabled="!pending.length || position == 0" type="button" class="glyphicon glyphicon-remove btn btn-default btn-recovery" ng-click="remove()"></button>' + '</div>',
+      restrict: 'EA',
+      link: function postLink(scope, element, attrs) {
+        scope.position = 0;
+
+        if (scope.resource) {
+          $localForage.getItem(scope.resource).then(function (value) {
+            scope.pending = _(value).filter(function (e) {
+              return !e.id;
+            }).map(function (e, i) {
+              e.index = i;return e;
+            }).value();
+          });
+        } else {
+          console.log('scope.resource no definido');
+        }
+
+        scope.next = function () {
+          scope.position++;
+          scope.model = scope.position == 0 ? {} : scope.pending[scope.position - 1];
+        };
+
+        scope.previous = function () {
+          scope.position--;
+          scope.model = scope.position == 0 ? {} : scope.pending[scope.position - 1];
+        };
+
+        scope.remove = function () {
+          $localForage.getItem(scope.resource).then(function (value) {
+            scope.pending = _.filter(value, function (e, i) {
+              return i !== scope.position - 1;
+            });
+            $localForage.setItem(scope.resource, scope.pending);
+            scope.previous();
+          });
+        };
+      }
+    };
+  }]);
+})();
+
+(function () {
+  'use strict';
+
+  /**
+   * Directiva que genera un campo "Generador de contraseñas" 
+   */
+
+  angular.module('ui').component('passwordGenerator', {
+    templateUrl: 'views/password-generator.html',
+    selector: 'passwordGenerator',
+    bindings: {
+      /**
+       * Handler a llamar cuando se genera una contraseña. Recibe como parámetro
+       * el password generado.
+       */
+      afterGenerate: '&'
+    },
+    controller: PasswordGeneratorCtrl,
+    controllerAs: 'vm'
+  });
+
+  // lista de caracteres extraído de 
+  // https://github.com/rkammer/AngularJS-Password-Generator/blob/master/js/application.js
+  var lowerCharacters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+  var upperCharacters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+  var numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  var symbols = ['!', '"', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~'];
+
+  PasswordGeneratorCtrl.$inject = ['$timeout'];
+
+  function PasswordGeneratorCtrl($timeout) {
+    var _this4 = this;
+
+    this.$timeout = $timeout;
+    this.passwordLength = 10;
+    this.generate = generate.bind(this);
+    this.onSuccess = onSuccess.bind(this);
+    this.showTooltip = showTooltip.bind(this);
+
+    this.$onDestroy = function () {
+      if (_this4.clipboardObj) {
+        _this4.clipboardObj.destroy();
+      }
+    };
+  }
+
+  function generate() {
+    var buffer = lowerCharacters;
+    buffer = buffer.concat(this.includeCapitalLetters ? upperCharacters : []).concat(this.includeNumbers ? numbers : []).concat(this.includeSymbols ? symbols : []);
+    var len = this.passwordLength;
+    var password = '';
+
+    do {
+      password += buffer[Math.floor(Math.random() * buffer.length)];
+    } while (password.length < len);
+    this.model = password;
+
+    if (angular.isFunction(this.afterGenerate)) {
+      this.afterGenerate({ password: password });
+    }
+  }
+
+  function onSuccess(event) {
+    event.clearSelection();
+    this.showTooltip(event.trigger, 'Copiado!');
+  }
+
+  function showTooltip(elem, msg) {
+    var classes = elem.className;
+    elem.setAttribute('class', classes + ' btn tooltipped tooltipped-s');
+    elem.setAttribute('aria-label', msg);
+    this.$timeout(function () {
+      elem.setAttribute('class', classes);
+    }, 1000);
+  }
+})();
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc directive
+   * @name ui.directive:reportViewer
+   * @description
+   * # reportViewer
+   */
+
+  angular.module('ui').directive('reportViewer', ['$modal', '$sce', function ($modal, $sce) {
+    return {
+      template: '',
+      restrict: 'E',
+      scope: {
+        url: '=',
+        title: '@',
+        background: '='
+      },
+      link: function postLink(scope, element) {
+
+        scope.close = function () {
+          scope.modalInstance.dismiss('close');
+        };
+
+        scope.$watch('url', function () {
+
+          if (scope.url) {
+            scope.trustedUrl = $sce.trustAsResourceUrl(scope.url);
+
+            if (!scope.background) {
+              scope.modalInstance = $modal.open({
+                template: '<div class="modal-header">' + '<div class="close glyphicon glyphicon-remove" ng-click="close()"></div>' + '<h3 class="modal-title">{{title}}</h3>' + '</div>' + '<div class="modal-body">' + '<iframe src="{{trustedUrl}}" width="100%" height="450"></iframe>' + '</div>' + '<div class="modal-footer">' + '<button class="btn btn-primary" ng-click="close()">Cerrar</button>' + '</div>',
+                scope: scope
+              });
+            } else {
+              element.append('<iframe src="' + scope.trustedUrl + '" hidden></iframe>');
+            }
+          }
+        });
+      }
+    };
+  }]);
+})();
+(function () {
+  'use strict';
+
+  angular.module('ui').directive('resize', ['$window', function ($window) {
+    return {
+      link: function link(scope, element, attrs) {
+        var w = angular.element($window);
+        scope.getWindowDimensions = function () {
+          return { 'h': w.height(), 'w': w.width() };
+        };
+        scope.$watch(scope.getWindowDimensions, function (newValue, oldValue) {
+          scope.windowHeight = newValue.h;
+          scope.windowWidth = newValue.w;
+
+          scope.style = function () {
+            return {
+              'height': newValue.h + 'px',
+              'width': newValue.w + 'px'
+            };
+          };
+          scope.getHeight = function (padding) {
+            return {
+              'height': newValue.h + padding + 'px'
+            };
+          };
+          scope.getWidth = function (padding) {
+            return {
+              'width': newValue.w + padding + 'px'
+            };
+          };
+        }, true);
+
+        w.bind('resize', function () {
+          scope.$apply();
+        });
+      }
+    };
+  }]);
+})();
+
+angular.module('ui').run(["$templateCache", function ($templateCache) {
+
+  $templateCache.put("views/directives/uiselect.html", "<div class=\"form-group\"\n" + "     ng-class=\"{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess(), 'has-feedback': form.feedback !== false}\"\n" + "     ng-init=\"selectedOptions=form.titleMap; insideModel=$$value$$;\" ng-controller=\"dynamicSelectController\">\n" + "  <label class=\"control-label\" ng-show=\"showTitle()\">{{form.title}}</label>\n" + "\n" + "  <div class=\"form-group\">\n" + "    <ui-select ng-model=\"select_model.selected\"\n" + "               ng-if=\"!(form.options.tagging||false)\" theme=\"bootstrap\" ng-disabled=\"form.disabled\"\n" + "               on-select=\"$$value$$=$item.value\" class=\"{{form.options.uiClass}}\">\n" + "      <ui-select-match\n" + "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" + "        {{select_model.selected.name}}\n" + "      </ui-select-match>\n" + "      <ui-select-choices refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" + "                         refresh-delay=\"form.options.refreshDelay\" group-by=\"form.options.groupBy\"\n" + "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" + "        <div ng-bind-html=\"item.name | highlight: $select.search\"></div>\n" + "        <div ng-if=\"item.description\">\n" + "          <span\n" + "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS'))+ '</small>'\"></span>\n" + "        </div>\n" + "      </ui-select-choices>\n" + "    </ui-select>\n" + "    <ui-select ng-model=\"select_model.selected\"\n" + "               ng-if=\"(form.options.tagging||false) && !(form.options.groupBy || false)\"\n" + "               tagging=\"form.options.tagging||false\" tagging-label=\"form.options.taggingLabel\"\n" + "               tagging-tokens=\"form.options.taggingTokens\"\n" + "               theme=\"bootstrap\" ng-disabled=\"form.disabled\" on-select=\"$$value$$=$item.value\"\n" + "               class=\"{{form.options.uiClass}}\">\n" + "      <ui-select-match\n" + "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" + "        {{select_model.selected.name}}&nbsp;\n" + "        <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>\n" + "      </ui-select-match>\n" + "      <!--repeat code because tagging does not display properly under group by but is still useful -->\n" + "      <ui-select-choices refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" + "                         refresh-delay=\"form.options.refreshDelay\"\n" + "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescription===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" + "        <div ng-if=\"item.isTag\"\n" + "             ng-bind-html=\"'<div>' + (item.name   | highlight: $select.search) + ' ' + form.options.taggingLabel + '</div><div class=&quot;divider&quot;></div>'\"></div>\n" + "        <div ng-if=\"!item.isTag\" ng-bind-html=\"item.name + item.isTag| highlight: $select.search\"></div>\n" + "        <div ng-if=\"item.description\">\n" + "          <span\n" + "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS')) + '</small>'\"></span>\n" + "        </div>\n" + "      </ui-select-choices>\n" + "    </ui-select>\n" + "\n" + "    <!--repeat code because tagging does not display properly under group by but is still useful -->\n" + "\n" + "    <ui-select ng-model=\"select_model.selected\"\n" + "               ng-if=\"(form.options.tagging||false) && (form.options.groupBy || false)\"\n" + "               tagging=\"form.options.tagging||false\" tagging-label=\"form.options.taggingLabel\"\n" + "               tagging-tokens=\"form.options.taggingTokens\"\n" + "               theme=\"bootstrap\" ng-disabled=\"form.disabled\" on-select=\"$$value$$=$item.value\"\n" + "               class=\"{{form.options.uiClass}}\">\n" + "      <ui-select-match\n" + "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" + "        {{select_model.selected.name}}&nbsp;\n" + "        <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>\n" + "      </ui-select-match>\n" + "      <ui-select-choices group-by=\"form.options.groupBy\"\n" + "                         refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" + "                         refresh-delay=\"form.options.refreshDelay\"\n" + "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescription===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" + "        <div ng-if=\"item.isTag\"\n" + "             ng-bind-html=\"'<div>' + (item.name  | highlight: $select.search) + ' ' + form.options.taggingLabel + '</div><div class=&quot;divider&quot;></div>'\"></div>\n" + "        <div ng-if=\"!item.isTag\" ng-bind-html=\"item.name + item.isTag| highlight: $select.search\"></div>\n" + "        <div ng-if=\"item.description\">\n" + "          <span\n" + "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS')) + '</small>'\"></span>\n" + "        </div>\n" + "      </ui-select-choices>\n" + "    </ui-select>\n" + "    <input type=\"hidden\" toggle-single-model sf-changed=\"form\" ng-model=\"insideModel\" schema-validate=\"form\"/>\n" + "    <span ng-if=\"form.feedback !== false\"\n" + "          class=\"form-control-feedback\"\n" + "          ng-class=\"evalInScope(form.feedback) || {'glyphicon': true, 'glyphicon-ok': hasSuccess(), 'glyphicon-remove': hasError() }\"></span>\n" + "\n" + "    <div class=\"help-block\"\n" + "         ng-show=\"(hasError() && errorMessage(schemaError())) || form.description\"\n" + "         ng-bind-html=\"(hasError() && errorMessage(schemaError())) || form.description\"></div>\n" + "  </div>\n" + "</div>\n");
+
+  $templateCache.put('ngTagsInput/tags-input.html', "<div class=\"host\" tabindex=\"-1\" ng-click=\"eventHandlers.host.click()\" ti-transclude-append><div class=\"tags\" ng-class=\"{focused: hasFocus}\"><ul class=\"tag-list\"><li class=\"tag-item\" ng-repeat=\"tag in tagList.items track by track(tag)\" ng-class=\"{ selected: tag == tagList.selected }\" ng-click=\"eventHandlers.tag.click(tag)\"><ti-tag-item data=\"::tag\"></ti-tag-item></li></ul><input class=\"tag-input-text input\" autocomplete=\"off\" ng-model=\"newTag.text\" ng-model-options=\"{getterSetter: true}\" ng-keydown=\"eventHandlers.input.keydown($event)\" ng-focus=\"eventHandlers.input.focus($event)\" ng-blur=\"eventHandlers.input.blur($event)\" ng-paste=\"eventHandlers.input.paste($event)\" ng-trim=\"false\" ng-class=\"{'invalid-tag': newTag.invalid}\" ng-disabled=\"disabled\" ti-bind-attrs=\"{type: options.type, tabindex: options.tabindex, spellcheck: options.spellcheck}\" ti-autosize></div></div>");
+
+  $templateCache.put('ngTagsInput/tag-item.html', "<span ng-bind=\"$getDisplayText()\"></span> <span class=\"remove-button close ui-select-match-close\" ng-click=\"$removeTag()\" ng-bind=\"::$$removeTagSymbol\"></span>");
+
+  $templateCache.put('ngTagsInput/auto-complete.html', "<div class=\"autocomplete\" ng-if=\"suggestionList.visible\"><ul class=\"suggestion-list\"><li class=\"suggestion-item\" ng-repeat=\"item in suggestionList.items track by track(item)\" ng-class=\"{selected: item == suggestionList.selected}\" ng-click=\"addSuggestionByIndex($index)\" ng-mouseenter=\"suggestionList.select($index)\"><ti-autocomplete-match data=\"::item\"></ti-autocomplete-match></li></ul></div>");
+
+  $templateCache.put('ngTagsInput/auto-complete-match.html', "<span ng-bind-html=\"$highlight($getDisplayText())\"></span>");
+
+  $templateCache.put("bootstrap/select-multiple.tpl.html", "<div class=\"ui-select-container ui-select-multiple ui-select-bootstrap dropdown form-control\" ng-class=\"{open: $select.open}\"><div><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" autocorrect=\"off\" autocapitalize=\"off\" spellcheck=\"false\" class=\"ui-select-search input-xs\" placeholder=\"{{$selectMultiple.getPlaceholder()}}\" ng-disabled=\"$select.disabled\" ng-hide=\"$select.disabled\" ng-click=\"$select.activate()\" ng-model=\"$select.search\" role=\"combobox\" aria-label=\"{{ $select.baseTitle }}\" ondrop=\"return false;\"></div><div class=\"ui-select-choices\"></div></div>");
+  $templateCache.put("bootstrap/select.tpl.html", "<div class=\"ui-select-container ui-select-bootstrap dropdown\" ng-class=\"{open: $select.open}\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" aria-expanded=\"true\" aria-label=\"{{ $select.baseTitle }}\" aria-owns=\"ui-select-choices-{{ $select.generatedId }}\" aria-activedescendant=\"ui-select-choices-row-{{ $select.generatedId }}-{{ $select.activeIndex }}\" class=\"form-control ui-select-search ui-select-search-single\" placeholder=\"{{$select.placeholder}}\" ng-model=\"$select.search\" ng-show=\"$select.searchEnabled && $select.open\"><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");
+}]);
+
+angular.module('ui').config(['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider', function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
+
+  var select = function select(name, schema, options) {
+    if (schema.type === 'string' && "enum" in schema) {
+      var f = schemaFormProvider.stdFormObj(name, schema, options);
+      f.key = options.path;
+      f.type = 'strapselect';
+      options.lookup[sfPathProvider.stringify(options.path)] = f;
+      return f;
+    }
+  };
+
+  schemaFormProvider.defaults.string.unshift(select);
+
+  //Add to the bootstrap directive
+  schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapselect', 'views/directives/strapselect.html');
+  schemaFormDecoratorsProvider.createDirective('strapselect', 'views/directives/strapselect.html');
+
+  schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapmultiselect', 'views/directives/strapmultiselect.html');
+  schemaFormDecoratorsProvider.createDirective('strapmultiselect', 'views/directives/strapmultiselect.html');
+
+  schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapselectdynamic', 'views/directives/strapselect.html');
+  schemaFormDecoratorsProvider.createDirective('strapselectdynamic', 'views/directives/strapselect.html');
+
+  schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapmultiselectdynamic', 'views/directives/strapmultiselect.html');
+  schemaFormDecoratorsProvider.createDirective('strapmultiselectdynamic', 'views/directives/strapmultiselect.html');
+
+  // UI SELECT
+  //Add to the bootstrap directive
+  schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'uiselect', 'views/directives/uiselect.html');
+
+  schemaFormDecoratorsProvider.createDirective('uiselect', 'views/directives/uiselect.html');
+
+  schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'uiselectmultiple', 'views/directives/uiselectmultiple.html');
+
+  schemaFormDecoratorsProvider.createDirective('uiselectmultiple', 'views/directives/uiselectmultiple.html');
+}]).directive("toggleSingleModel", function () {
+  // some how we get this to work ...
+  return {
+    require: 'ngModel',
+    restrict: "A",
+    scope: {},
+    replace: true,
+    controller: ['$scope', function ($scope) {
+      $scope.$parent.$watch('select_model.selected', function () {
+        if ($scope.$parent.select_model.selected != undefined) {
+          $scope.$parent.insideModel = $scope.$parent.select_model.selected.value;
+          $scope.$parent.ngModel.$setViewValue($scope.$parent.select_model.selected.value);
+        }
+      });
+    }]
+  };
+}).directive("toggleModel", function () {
+  // some how we get this to work ...
+  return {
+    require: 'ngModel',
+    restrict: "A",
+    scope: {},
+    controller: ['$scope', 'sfSelect', function ($scope, sfSelect) {
+
+      var list = sfSelect($scope.$parent.form.key, $scope.$parent.model);
+      //as per base array implemenation if the array is undefined it must be set as empty for data binding to work
+      if (angular.isUndefined(list)) {
+        list = [];
+        sfSelect($scope.$parent.form.key, $scope.$parent.model, list);
+      }
+      $scope.$parent.$watch('form.selectedOptions', function () {
+        if (!$scope.$parent.form.selectedOptions) {} else if ($scope.$parent.form.selectedOptions.length == 0) {
+
+          if ($scope.$parent.ngModel.$viewValue != undefined) {
+            $scope.$parent.ngModel.$setViewValue($scope.$parent.form.selectedOptions);
+          }
+        } else {
+          $scope.$parent.$$value$$ = [];
+          $scope.$parent.form.selectedOptions.forEach(function (item) {
+            $scope.$parent.$$value$$.push(item.value);
+          });
+          $scope.$parent.ngModel.$setViewValue($scope.$parent.$$value$$);
+        }
+      }, true);
+    }]
+  };
+}).directive('multipleOn', function () {
+  return {
+    link: function link($scope, $element, $attrs) {
+      $scope.$watch(function () {
+        return $element.attr('multiple-on');
+      }, function (newVal) {
+
+        if (newVal == "true") {
+          var select_scope = angular.element($element).scope().$$childTail;
+          select_scope.$isMultiple = true;
+          select_scope.options.multiple = true;
+          select_scope.$select.$element.addClass('select-multiple');
+        } else {
+          angular.element($element).scope().$$childTail.$isMultiple = false;
+        }
+      });
+    }
+  };
+}).filter('whereMulti', function () {
+  return function (items, key, values) {
+    var out = [];
+
+    if (angular.isArray(values) && items !== undefined) {
+      values.forEach(function (value) {
+        for (var i = 0; i < items.length; i++) {
+          if (value == items[i][key]) {
+            out.push(items[i]);
+            break;
+          }
+        }
+      });
+    } else {
+      // Let the output be the input untouched
+      out = items;
+    }
+
+    return out;
+  };
+}).filter('propsFilter', function () {
+  return function (items, props) {
+    var out = [];
+
+    if (angular.isArray(items)) {
+      items.forEach(function (item) {
+        var itemMatches = false;
+
+        var keys = Object.keys(props);
+        for (var i = 0; i < keys.length; i++) {
+          var prop = keys[i];
+          if (item && item.hasOwnProperty(prop)) {
+            //only match if this property is actually in the item to avoid
+            var text = props[prop].toLowerCase();
+            //search for either a space before the text or the textg at the start of the string so that the middle of words are not matched
+            if (item[prop] && (item[prop].toString().toLowerCase().indexOf(text) === 0 || item[prop].toString().toLowerCase().indexOf(' ' + text) !== -1)) {
+              itemMatches = true;
+              break;
+            }
+          }
+        }
+
+        if (itemMatches) {
+          out.push(item);
+        }
+      });
+    } else {
+      // Let the output be the input untouched
+      out = items;
+    }
+
+    return out;
+  };
+}).filter('filterRelated', function () {
+
+  return function (items, props) {
+    if (typeof props.form.options.filterRelated === 'function') {
+      return props.form.options.filterRelated(items);
+    }
+    return items;
+  };
+});
+
+angular.module('ui').controller('dynamicSelectController', ['$scope', '$http', '$timeout', function ($scope, $http, $timeout) {
+
+  $scope.select_model = {};
+
+  $scope.triggerTitleMap = function () {
+    console.log("listener triggered");
+    // Ugly workaround to trigger titleMap expression re-evaluation so that the selectFilter it reapplied.
+    $scope.form.titleMap.push({ "value": "345890u340598u3405u9", "name": "34095u3p4ouij" });
+    $timeout(function () {
+      $scope.form.titleMap.pop();
+    });
+  };
+
+  $scope.initFiltering = function (localModel) {
+    if ($scope.form.options.filterTriggers) {
+      $scope.form.options.filterTriggers.forEach(function (trigger) {
+        $scope.$parent.$watch(trigger, $scope.triggerTitleMap);
+      });
+    }
+    // This is set here, as the model value may become unitialized and typeless if validation fails.
+    $scope.localModelType = Object.prototype.toString.call(localModel);
+    $scope.filteringInitialized = true;
+  };
+
+  /**
+   * Función implementada para solucionar el problema de pre-seleccionar el elemento.
+   * Dejamos el elemento a pre-seleccionar en la primera posición del titleMap.
+   **/
+  function initSelection(data, scope, options) {
+    var model = getModel(options);
+    var map = options.map;
+    if (angular.isArray(model)) {
+      return data;
+    } else {
+
+      if (!model) {
+        return [{ value: undefined, name: $scope.form.placeholder }].concat(data);
+      }
+
+      var isEdit = false;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i][map.valueProperty] === model[map.valueProperty]) {
+          isEdit = true;
+          break;
+        }
+      }
+      var tmp = data[0];
+      data[0] = data[i];
+      data[i] = tmp;
+
+      if (isEdit) {
+        $scope.select_model.selected = data[0];
+      }
+      return data;
+    }
+  }
+
+  function getModel(options) {
+    var form = $scope.form;
+    var modelKey = form.key[0];
+    var _scope = angular.element('form[name=' + options.formName + ']').scope();
+    return _scope.model[modelKey];
+  }
+
+  /**
+   * Función implementada para solucionar el problema de pre-seleccionar el elemento.
+   **/
+  function initEnumSelection(data, options) {
+    var model = getModel(options);
+    $scope.select_model.selected = { value: model, name: model };
+  }
+
+  $scope.remap = function (options, data) {
+
+    if (options && "map" in options && options.map) {
+      var current_row = null;
+      var result = [];
+      data.forEach(function (current_row) {
+        current_row["value"] = current_row[options.map.valueProperty];
+        current_row["name"] = current_row[options.map.nameProperty];
+        result.push(current_row);
+      });
+
+      if (options.formName) {
+        var _scope = angular.element('form[name=' + options.formName + ']').scope();
+        result = initSelection(data, _scope, options);
+      }
+      return result;
+    } else {
+      data.forEach(function (item) {
+        if ("text" in item) {
+          item.name = item.text;
+        }
+      });
+      return data;
+    }
+  };
+
+  $scope.clone = function (obj) {
+    if (null == obj || "object" != (typeof obj === 'undefined' ? 'undefined' : _typeof(obj))) return obj;
+    var copy = obj.constructor();
+    for (var attr in obj) {
+      if (obj.hasOwnProperty(attr)) copy[attr] = $scope.clone(obj[attr]);
+    }
+    return copy;
+  };
+
+  $scope.getCallback = function (callback, name) {
+    if (typeof callback == "string") {
+      var _result = $scope.$parent.evalExpr(callback);
+      if (typeof _result == "function") {
+        return _result;
+      } else {
+        throw "A callback string must match name of a function in the parent scope";
+      }
+    } else if (typeof callback == "function") {
+      return callback;
+    } else {
+      throw "A callback must either be a string matching the name of a function in the parent scope or a " + "direct function reference";
+    }
+  };
+
+  $scope.getOptions = function (options) {
+    // If defined, let the a callback function manipulate the options
+    if (options.httpPost && options.httpPost.optionsCallback) {
+      newOptionInstance = $scope.clone(options);
+      return $scope.getCallback(options.httpPost.optionsCallback)(newOptionInstance);
+    }
+    if (options.httpGet && options.httpGet.optionsCallback) {
+      newOptionInstance = $scope.clone(options);
+      return $scope.getCallback(options.httpGet.optionsCallback)(newOptionInstance);
+    } else {
+      return options;
+    }
+  };
+
+  $scope.test = function (form) {
+    form.titleMap.pop();
+  };
+
+  $scope.populateTitleMap = function (form) {
+
+    if ("enum" in form.schema) {
+      form.titleMap = [];
+      form.schema.enum.forEach(function (item) {
+        form.titleMap.push({ "value": item, "name": item });
+      });
+      initEnumSelection(form.titleMap, form.options);
+    } /* else if (form.titleMap) {
+      console.log("dynamicSelectController.populateTitleMap(key:" + form.key + ") : There is already a titleMap");
+      }*/
+    else if (!form.options) {
+
+        console.log("dynamicSelectController.populateTitleMap(key:" + form.key + ") : No options set, needed for dynamic selects");
+      } else if (form.options.callback) {
+        form.titleMap = $scope.getCallback(form.options.callback)(form.options);
+        console.log('callback items', form.titleMap);
+      } else if (form.options.asyncCallback) {
+        return $scope.getCallback(form.options.asyncCallback)(form.options).then(function (_data) {
+          form.titleMap = $scope.remap(form.options, _data.data);
+
+          if (form.options.multiple) {
+            $scope.uiMultiSelectInitInternalModel(getModel(form.options));
+          } else {
+            //$scope.select_model.selected = form.titleMap[0];
+          }
+          console.log('asyncCallback items', form.titleMap);
+        }, function (data, status) {
+          alert("Loading select items failed(Options: '" + String(form.options) + "\nError: " + status);
+        });
+      } else if (form.options.httpPost) {
+        var finalOptions = $scope.getOptions(form.options);
+
+        return $http.post(finalOptions.httpPost.url, finalOptions.httpPost.parameter).then(function (_data) {
+
+          form.titleMap = $scope.remap(finalOptions, _data.data);
+          console.log('httpPost items', form.titleMap);
+        }, function (data, status) {
+          alert("Loading select items failed (URL: '" + String(finalOptions.httpPost.url) + "' Parameter: " + String(finalOptions.httpPost.parameter) + "\nError: " + status);
+        });
+      } else if (form.options.httpGet) {
+        var finalOptions = $scope.getOptions(form.options);
+        return $http.get(finalOptions.httpGet.url, finalOptions.httpGet.parameter).then(function (data) {
+          form.titleMap = $scope.remap(finalOptions, data.data);
+          console.log('httpGet items', form.titleMap);
+        }, function (data, status) {
+          alert("Loading select items failed (URL: '" + String(finalOptions.httpGet.url) + "\nError: " + status);
+        });
+      }
+  };
+  $scope.uiMultiSelectInitInternalModel = function (_model) {
+
+    function find_in_titleMap(value) {
+      for (i = 0; i < $scope.form.titleMap.length; i++) {
+        if ($scope.form.titleMap[i].value == value) {
+          return $scope.form.titleMap[i].name;
+        }
+      }
+    }
+
+    $scope.internalModel = [];
+
+    if (_model !== undefined && angular.isArray(_model)) {
+      _model.forEach(function (value) {
+        $scope.internalModel.push({ "value": value, "name": find_in_titleMap(value) });
+      });
+    }
+  };
+}]);
+
+angular.module('ui').filter('selectFilter', [function ($filter) {
+  return function (inputArray, controller, localModel, strLocalModel) {
+    // As the controllers' .model is the global and its form is the local, we need to get the local model as well.
+    // We also need tp be able to set it if is undefined after a validation failure,so for that we need
+    // its string representation as well as we do not know its name. A typical value if strLocalModel is model['groups']
+    // This is very ugly, though. TODO: Find out why the model is set to undefined after validation failure.
+
+    if (!angular.isDefined(inputArray) || !angular.isDefined(controller.form.options) || !angular.isDefined(controller.form.options.filter) || controller.form.options.filter == '') {
+      return inputArray;
+    }
+
+    console.log("----- In filtering for " + controller.form.key + "(" + controller.form.title + "), model value: " + JSON.stringify(localModel) + "----");
+    console.log("Filter:" + controller.form.options.filter);
+    if (!controller.filteringInitialized) {
+      console.log("Initialize filter");
+      controller.initFiltering(localModel);
+    }
+    var data = [];
+
+    angular.forEach(inputArray, function (curr_item) {
+      console.log("Compare: curr_item: " + JSON.stringify(curr_item) + "with : " + JSON.stringify(controller.$eval(controller.form.options.filterTriggers[0])));
+      if (controller.$eval(controller.form.options.filter, { item: curr_item })) {
+        data.push(curr_item);
+      } else if (localModel) {
+        // If not in list, also remove the set value
+
+        if (controller.localModelType == "[object Array]" && localModel.indexOf(curr_item.value) > -1) {
+          localModel.splice(localModel.indexOf(curr_item.value), 1);
+        } else if (localModel == curr_item.value) {
+          console.log("Setting model of type " + controller.localModelType + "to null.");
+          localModel = null;
+        }
+      }
+    });
+
+    if (controller.localModelType == "[object Array]" && !localModel) {
+      // An undefined local model seems to mess up bootstrap select's indicators
+      console.log("Resetting model of type " + controller.localModelType + " to [].");
+
+      controller.$eval(strLocalModel + "=[]");
+    }
+
+    console.log("Input: " + JSON.stringify(inputArray));
+    console.log("Output: " + JSON.stringify(data));
+    console.log("Model value out : " + JSON.stringify(localModel));
+    console.log("----- Exiting filter for " + controller.form.title + "-----");
+
+    return data;
+  };
+}]);
+
+(function () {
+  'use strict';
+
+  /**
+   * Anularjs Module for pop up timepicker
+   */
+
+  angular.module('ui').factory('timepickerState', function () {
+    var pickers = [];
+    return {
+      addPicker: function addPicker(picker) {
+        pickers.push(picker);
+      },
+      closeAll: function closeAll() {
+        for (var i = 0; i < pickers.length; i++) {
+          pickers[i].close();
+        }
+      }
+    };
+  }).directive('timeFormat', ['$filter', function ($filter) {
+    return {
+      restrict: 'A',
+      require: 'ngModel',
+      scope: {
+        showMeridian: '='
+      },
+      link: function link(scope, element, attrs, ngModel) {
+        var parseTime = function parseTime(viewValue) {
+
+          if (!viewValue) {
+            ngModel.$setValidity('time', true);
+            return null;
+          } else if (angular.isDate(viewValue) && !isNaN(viewValue)) {
+            ngModel.$setValidity('time', true);
+            return viewValue;
+          } else if (angular.isString(viewValue)) {
+            var timeRegex = /^(0?[0-9]|1[0-2]):[0-5][0-9] ?[a|p]m$/i;
+            if (!scope.showMeridian) {
+              timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+            }
+            if (!timeRegex.test(viewValue)) {
+              ngModel.$setValidity('time', false);
+              return undefined;
+            } else {
+              ngModel.$setValidity('time', true);
+              var date = new Date();
+              var sp = viewValue.split(":");
+              var apm = sp[1].match(/[a|p]m/i);
+              if (apm) {
+                sp[1] = sp[1].replace(/[a|p]m/i, '');
+                if (apm[0].toLowerCase() == 'pm') {
+                  sp[0] = sp[0] + 12;
+                }
+              }
+              date.setHours(sp[0], sp[1]);
+              return date;
+            };
+          } else {
+            ngModel.$setValidity('time', false);
+            return undefined;
+          };
+        };
+
+        ngModel.$parsers.push(parseTime);
+
+        var showTime = function showTime(data) {
+          parseTime(data);
+          var timeFormat = !scope.showMeridian ? "HH:mm" : "hh:mm a";
+          return $filter('date')(data, timeFormat);
+        };
+        ngModel.$formatters.push(showTime);
+        scope.$watch('showMeridian', function (value) {
+          var myTime = ngModel.$modelValue;
+          if (myTime) {
+            element.val(showTime(myTime));
+          }
+        });
+      }
+    };
+  }]).directive('timepickerPop', ['$document', 'timepickerState', function ($document, timepickerState) {
+    return {
+      restrict: 'E',
+      transclude: false,
+      scope: {
+        inputTime: '=',
+        showMeridian: '=',
+        disabled: '='
+      },
+      controller: function controller($scope, $element) {
+        $scope.isOpen = false;
+        $scope.disabledInt = angular.isUndefined($scope.disabled) ? false : $scope.disabled;
+        $scope.toggle = function () {
+          if ($scope.isOpen) {
+            $scope.close();
+          } else {
+            $scope.open();
+          }
+        };
+      },
+      link: function link(scope, element, attrs) {
+        console.log('link de la directiva timepicker');
+        var picker = {
+          open: function open() {
+            timepickerState.closeAll();
+            scope.isOpen = true;
+          },
+          close: function close() {
+            scope.isOpen = false;
+          }
+
+        };
+        timepickerState.addPicker(picker);
+
+        scope.open = picker.open;
+        scope.close = picker.close;
+
+        scope.$watch("disabled", function (value) {
+          scope.disabledInt = angular.isUndefined(scope.disabled) ? false : scope.disabled;
+        });
+
+        scope.$watch("inputTime", function (value) {
+          if (!scope.inputTime) {
+            element.addClass('has-error');
+          } else {
+            element.removeClass('has-error');
+          }
+        });
+
+        element.bind('click', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        });
+
+        $document.bind('click', function (event) {
+          scope.$apply(function () {
+            scope.isOpen = false;
+          });
+        });
+      },
+      template: "<input type='text' class='form-control' ng-model='inputTime' ng-disabled='disabledInt' time-format show-meridian='showMeridian' ng-focus='open()' />" + "  <div class='input-group-btn' ng-class='{open:isOpen}'> " + "    <button type='button' ng-disabled='disabledInt' class='btn btn-default form-control' ng-class=\"{'btn-primary':isOpen}\" data-toggle='dropdown' ng-click='toggle()'> " + "        <i class='glyphicon glyphicon-time'></i></button> " + "          <div class='dropdown-menu pull-right'> " + "            <timepicker ng-model='inputTime' show-meridian='showMeridian' style='margin-left: 15%;'></timepicker> " + "           </div> " + "  </div>"
+    };
+  }]);
+})();
+(function () {
+  'use strict';
+  /**
+   * @ngdoc directive
+   * @name ui.directive:uiDatatable
+   * @description
+   * # uiDatatable
+   */
+
+  angular.module('ui').directive('uiDatatable', ['$timeout', '$uibModal', '$compile', '$state', '$resource', 'DTOptionsBuilder', 'DTColumnBuilder', 'baseurl', '$rootScope', '$injector', function ($timeout, $modal, $compile, $state, $resource, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope, $injector) {
+
+    return {
+      template: '<div>' + '<div class="widget">' + '<div class="widget-header bordered-top bordered-palegreen" ng-if="!options.hideHeader">' + '<span class="widget-caption">{{options.title}}</span>' + '<div class="widget-buttons">' + '<a href="" ng-show="canCreate()" ng-click="new()" title="Nuevo">' + '<i class="glyphicon glyphicon-plus"></i>' + '</a>' + '<a ng-repeat="menuOption in options.extraMenuOptions" href="" ng-show="menuOption.showCondition()" ng-click="menuOption.action()" title="{{menuOption.title}}">' + '<p><i class="{{menuOption.icon}}"></i>' + '  {{menuOption.data}}&nbsp;&nbsp;&nbsp;</p>' + '</a>' + '</div>' + '</div>' + '<div class="widget-body">' + '<div class="table-responsive">' + '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-hover table-responsive table-condensed no-footer">' + '</table>' + '</div>' + '<div ng-if="selected">' + '<h3>Detalles</h3>' + '<table class="table table-striped table-bordered table-detail">' + '<tbody>' + '<tr ng-repeat="row in options.detailRows">' + '<td ng-if="selected[row.data]" class="row-title">{{row.title}}</td>' + '<td ng-if="selected[row.data] && row.renderWith">{{row.renderWith(selected[row.data])}}</td>' + '<td ng-if="selected[row.data] && !row.renderWith">{{selected[row.data]}}</td>' + '</tr>' + '</tbody>' + '</table>' + '</div>' + '</div>' + '</div>',
+      restrict: 'AE',
+      replace: true,
+      scope: {
+        options: '='
+      },
+      controller: function controller($scope, $element) {
+        var actionsColumn, selectionColumn, urlTemplate;
+        // Se arma la ruta según tenga o no filtros estáticos
+        updateStaticFilters();
+
+        $scope.dtInstance = {};
+        $scope.selectAll = false;
+        $scope.options.selection = {};
+
+        $scope.headerCompiled = false;
+        $scope.customFilters = {};
+
+        function defaultCondition() {
+          return true;
+        }
+        $scope.options.canEditCondition = $scope.options.canEditCondition || defaultCondition;
+        $scope.options.canAddCondition = $scope.options.canAddCondition || defaultCondition;
+        $scope.options.canRemoveCondition = $scope.options.canRemoveCondition || defaultCondition;
+        $scope.options.canListCondition = $scope.options.canListCondition || defaultCondition;
+        var rangeSeparator = "~";
+        var dateFormat = "DD/MM/YYYY";
+        var defaultFilterType = 'string';
+        var table;
+        var tableId;
+
+        var ajaxRequest = function ajaxRequest(data, callback) {
+
+          if (table) {
+            $scope.options.tableAjaxParams = table.ajax.params();
+
+            _.forEach(table.colReorder.order(), function (columnIndex, index) {
+              if ($scope.customFilters[columnIndex]) {
+                data.columns[index]['type'] = $scope.customFilters[columnIndex].filterType;
+              } else {
+                data.columns[index]['type'] = defaultFilterType;
+              }
+            });
+          }
+          data.rangeSeparator = rangeSeparator;
+          data.columns = _.filter(data.columns, function (c) {
+            return !!c.data;
+          });
+          var reqBody = null;
+
+          if ($scope.options.staticFilter) {
+            reqBody = $scope.options.staticFilter;
+          }
+          var xhr = $resource(urlTemplate($scope.options), data, {
+            query: {
+              isArray: false,
+              method: 'POST'
+            }
+          });
+
+          xhr.query(reqBody).$promise.then(function (response) {
+            var datos = response.data;
+            if (datos) {
+              datos.forEach(function (registro) {
+                Object.keys(registro).forEach(function (key) {
+                  if (registro[key] === true) {
+                    registro[key] = "Sí";
+                  } else if (registro[key] === false) {
+                    registro[key] = "No";
+                  }
+                });
+              });
+            }
+            callback(response);
+          }).catch(function (response) {
+            console.log(response);
+          });
+        };
+        var ajaxConfig = $scope.options.ajax ? $scope.options.ajax : ajaxRequest;
+
+        //modelos de los filtros de rangos de fechas
+        $scope.dateRangeFilters = {
+          'i': {
+            startDate: null,
+            endDate: null
+          }
+        };
+
+        //callback para el boton apply en el widget de rango de fechas
+        var datePickerApplyEvent = function datePickerApplyEvent(ev, picker) {
+          var ini = ev.model.startDate.format(dateFormat);
+          var end = ev.model.endDate.format(dateFormat);
+
+          var index = table.colReorder.order().indexOf(ev.opts.index);
+          table.column(index).search(ini + rangeSeparator + end).draw();
+        };
+
+        //callback para el boton cancel en el widget de rango de fechas, que borra el filtro
+        var datePickerCancelEvent = function datePickerCancelEvent(ev, picker) {
+          var index = table.colReorder.order().indexOf(ev.opts.index);
+          table.column(index).search("").draw();
+          $("#daterange_" + ev.opts.index).val("");
+          $scope.dateRangeFilters[ev.opts.index].startDate = null;
+          $scope.dateRangeFilters[ev.opts.index].endDate = null;
+        };
+
+        //callback para borrar el rango previamente seleccionado
+        var datePickerShowEvent = function datePickerShowEvent(ev, picker) {
+
+          if ($scope.dateRangeFilters[ev.opts.index].startDate === null) {
+            var widgetIndex = $scope.dateRangePickerWidgetsOrder.indexOf(ev.opts.index);
+            var widget = $($(".daterangepicker").get(widgetIndex));
+            widget.parent().find('.in-range').removeClass("in-range");
+            widget.parent().find('.active').removeClass("active");
+            widget.parent().find('.input-mini').removeClass("active").val("");
+          }
+        };
+
+        moment.locale('es');
+        var dateRangeLocaleOptions = {
+          cancelLabel: 'Limpiar',
+          applyLabel: 'Aplicar',
+          format: dateFormat,
+          separator: ' a ',
+          weekLabel: 'S',
+          daysOfWeek: moment.weekdaysMin(),
+          monthNames: moment.monthsShort(),
+          firstDay: moment.localeData().firstDayOfWeek()
+        };
+
+        $scope.dateRangeOptions = {};
+
+        var dateRangeDefaultOptions = {
+          eventHandlers: {
+            'apply.daterangepicker': datePickerApplyEvent,
+            'cancel.daterangepicker': datePickerCancelEvent,
+            'show.daterangepicker': datePickerShowEvent
+          },
+          opens: "right",
+          index: 0,
+          showDropdowns: true,
+          locale: dateRangeLocaleOptions
+        };
+
+        $scope.dateRangePickerWidgetsOrder = [];
+
+        //modelos del filtro de rango numericos
+        $scope.numberRangeFilters = {
+          'i': {
+            startRange: null,
+            endRange: null
+          }
+        };
+
+        //callback para el boton apply en el widget de rango de numeros
+        var rangePickerApplyEvent = function rangePickerApplyEvent(ev, picker) {
+          //console.log("apply");
+          var ini = ev.model.startRange;
+          var end = ev.model.endRange;
+
+          var index = table.colReorder.order().indexOf(ev.opts.index);
+          table.column(index).search(ini + rangeSeparator + end).draw();
+        };
+
+        //callback para el boton cancel en el widget de rango de numeros, que borra el filtro
+        var rangePickerCancelEvent = function rangePickerCancelEvent(ev, picker) {
+          //console.log("cancel");
+          var index = table.colReorder.order().indexOf(ev.opts.index);
+          table.column(index).search("").draw();
+          $("#numberrange_" + ev.opts.index).val("");
+          $scope.numberRangeFilters[ev.opts.index].startRange = null;
+          $scope.numberRangeFilters[ev.opts.index].endRange = null;
+
+          var widgetIndex = $scope.rangePickerWidgetsOrder.indexOf(ev.opts.index);
+          var widget = $($(".rangepicker").get(widgetIndex));
+          widget.parent().find('input[name=rangepicker_start]').val();
+          widget.parent().find('input[name=rangepicker_end]').val();
+        };
+
+        var rangeLocaleOptions = {
+          cancelLabel: 'Limpiar',
+          applyLabel: 'Aplicar',
+          separator: ' a '
+        };
+
+        $scope.rangeOptions = {};
+
+        var rangeDefaultOptions = {
+          eventHandlers: {
+            'apply.rangepicker': rangePickerApplyEvent,
+            'cancel.rangepicker': rangePickerCancelEvent
+          },
+          opens: "right",
+          index: 0,
+          showDropdowns: true,
+          locale: rangeLocaleOptions
+        };
+
+        $scope.rangePickerWidgetsOrder = [];
+
+        $scope.dtOptions = DTOptionsBuilder.newOptions().withDataProp('data').withOption('language', {
+          'sProcessing': 'Procesando...',
+          'sLengthMenu': 'Registros _MENU_',
+          'sZeroRecords': 'No se encontraron resultados',
+          'sEmptyTable': 'Ningún dato disponible en esta tabla',
+          'sInfo': 'Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros',
+          'sInfoEmpty': 'Mostrando registros del 0 al 0 de un total de 0 registros',
+          'sInfoFiltered': '(filtrado de un total de _MAX_ registros)',
+          'sInfoPostFix': '.',
+          'sSearch': 'Buscar:',
+          'sInfoThousands': ',',
+          'sLoadingRecords': 'Cargando...',
+          'oPaginate': {
+            'sFirst': 'Primero',
+            'sLast': 'Último',
+            'sNext': 'Siguiente',
+            'sPrevious': 'Anterior'
+          },
+          'oAria': {
+            'sSortAscending': ': Activar para ordenar la columna de manera ascendente',
+            'sSortDescending': ': Activar para ordenar la columna de manera descendente'
+          }
+        }).withOption('createdRow', function (row, data, dataIndex) {
+          $compile(angular.element(row).contents())($scope);
+        }).withOption('headerCallback', function (header) {
+          if (!$scope.headerCompiled) {
+            // Use this headerCompiled field to only compile header once
+            $scope.headerCompiled = true;
+            $compile(angular.element(header).contents())($scope);
+          }
+        }).withPaginationType('full_numbers').withButtons(['colvis']).withBootstrap();
+
+        if ($scope.options.resource === '@') {
+          // @ indica que es los datos para el datatable son locales
+          $scope.dtOptions.withOption('data', $scope.options.factory.all());
+        } else {
+          $scope.dtOptions.withOption('ajax', ajaxConfig);
+          $scope.dtOptions.withOption('serverSide', true);
+          $scope.dtOptions.withOption('processing', true);
+        }
+
+        if ($scope.options.detailRows) {
+          $scope.dtOptions = $scope.dtOptions.withOption('rowCallback', rowCallback);
+        }
+
+        //inicializan la cantidad de columnas visibles
+        $scope.visibleColumns = 0; //$scope.options.columns.length;
+
+        $scope.dtColumns = [];
+        //indices
+        $scope.defaultColumnOrderIndices = [];
+        $scope.originalIndexKey = {};
+
+        //si tiene checkboxes para seleccion
+        var indexPadding = 0;
+        if ($scope.options.isSelectable) {
+
+          var titleHtml = '<label><input type="checkbox" ng-model="selectAll" ng-click="toggleAll()"><span class="text"></span></label>';
+
+          selectionColumn = DTColumnBuilder.newColumn(null).withTitle(titleHtml).notSortable().withOption('searchable', false).renderWith(function (data, type, full, meta) {
+            var checkbox = '<label>' + '<input id="' + data.id + '" type="checkbox" ng-model="options.selection[' + data.id + ']" ng-click="toggleOne()">' + '<span class="text"></span></label>';
+            return checkbox;
+          }).withOption('name', 'checkbox');
+
+          $scope.dtColumns.push(selectionColumn);
+          $scope.visibleColumns += 1;
+          indexPadding = 1;
+          $scope.originalIndexKey[0] = null; //'checkbox';
+          $scope.defaultColumnOrderIndices.push(0);
+          $scope.dtOptions.withColReorderOption('iFixedColumnsLeft', 1);
+        }
+
+        /* RENDERS BASICOS */
+        var dateRender = function dateRender(dateFormat) {
+          return function (data) {
+            //return moment.utc(data).format(dateFormat);
+            return moment(data).format(dateFormat);
+          };
+        };
+
+        var emptyRender = function emptyRender(data) {
+          if (data == undefined) return "";else return data;
+        };
+
+        var numberRender = function numberRender(data) {
+          if (data) return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");else return '';
+        };
+
+        var monedaRender = function monedaRender(pathAtt) {
+          return function (data, type, row) {
+            if (data) {
+              var moneda = "Gs. ";
+              if (row[pathAtt] === 'dolares') {
+                moneda = "Usd. ";
+                data = parseFloat(data).toFixed(2);
+              } else if (row[pathAtt] === 'pesos') {
+                moneda = "Pes. ";
+                data = parseFloat(data).toFixed(2);
+              } else if (row[pathAtt] === 'real') {
+                moneda = "Rel. ";
+                data = parseFloat(data).toFixed(2);
+              } else if (row[pathAtt] === 'euro') {
+                moneda = "Eur. ";
+                data = parseFloat(data).toFixed(2);
+              }
+              return moneda + data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            } else return "";
+          };
+        };
+
+        var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable', 'searchable'];
+        _.map($scope.options.columns, function (c, index) {
+
+          var column = DTColumnBuilder.newColumn(c.data);
+          //el indice original para la columna
+          var originalIndex = indexPadding + index;
+          $scope.originalIndexKey[originalIndex] = c.data;
+
+          if (c.title) column = column.withTitle(c.title);
+          if (c.class) column = column.withClass(c.class);
+          if (c.renderWith) {
+            if (c.renderWith === 'dateRender') column = column.renderWith(dateRender(c.dateFormat));else if (c.renderWith === 'emptyRender') column = column.renderWith(emptyRender);else if (c.renderWith === 'numberRender') column = column.renderWith(numberRender);else if (c.renderWith === 'monedaRender') column = column.renderWith(monedaRender(c.pathAttMoneda));else column = column.renderWith(c.renderWith);
+          }
+          if (c.sortable === false) column = column.notSortable();
+
+          //si hay un orden definido y no está dentro de ese orden o si especifica que no es visible
+          if (!_.contains($scope.options.defaultColumnOrder, c.data) || c.visible === false) column = column.notVisible();else $scope.visibleColumns += 1;
+
+          _.forOwn(c, function (value, key) {
+            if (!_.contains(commonAttrs, key)) column = column.withOption(key, value);
+          });
+
+          if (c.searchable === false) {
+            column = column.withOption('bSearchable', false);
+          } else {
+            column = column.withOption('bSearchable', true);
+          }
+
+          if (c.type) {
+            var customFilter = { 'filterType': c.type, 'filterUrl': c.filterUrl };
+
+            if (c.type === 'date-range') {
+              $scope.dateRangeFilters[originalIndex] = { startDate: null, endDate: null };
+            } else if (c.type === 'number-range') {
+              $scope.numberRangeFilters[originalIndex] = { startRange: null, endRange: null };
+            }
+
+            $scope.customFilters[originalIndex] = customFilter;
+          }
+          $scope.dtColumns.push(column);
+        });
+
+        //console.log($scope.dtColumns);
+        if ($scope.options.hasOptions) {
+          $scope.originalIndexKey[$scope.visibleColumns] = null; //'actions';
+          // Fix last right column
+          $scope.dtOptions.withColReorderOption('iFixedColumnsRight', 1);
+          $scope.visibleColumns += 1;
+        }
+
+        //columnas reordenables, por defecto habilitado
+        if ($scope.options.colReorder === true || $scope.options.colReorder === undefined) {
+          $scope.dtOptions.withColReorder();
+        }
+
+        actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable().withOption('searchable', false).renderWith(function (data, type, full, meta) {
+          var basicOpts = '<button class="btn-row-datatable btn btn-success btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canEdit(' + data.id + ')}" ng-click="edit(' + data.id + ', $event)">' + '   <span class="glyphicon glyphicon-pencil"></span>' + '</button>' + '<button class="btn-row-datatable btn btn-danger btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canRemove(' + data.id + ')}" ng-click="remove(' + data.id + ', $event)">' + '   <span class="glyphicon glyphicon-trash"></span>' + '</button>' + '<button class="btn-row-datatable btn btn-info btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canList(' + data.id + ')}" ng-click="view(' + data.id + ', $event)">' + '   <span class="glyphicon glyphicon-eye-open"></span>' + '</button>';
+          if ($scope.options.extraRowOptions) {
+            _.forEach($scope.options.extraRowOptions, function (menuOpt) {
+              var compilado = _.template(menuOpt.templateToRender);
+              $scope[menuOpt.functionName] = menuOpt.functionDef;
+              var customAttribute = menuOpt.customAttribute;
+              var compiled = { 'dataId': data.id, '$state': $state, '$scope': $scope };
+              if (customAttribute && customAttribute.constructor === Array) {
+                compiled.dataCustom = JSON.stringify(_.map(customAttribute, function (ca) {
+                  return data[ca];
+                }));
+              } else {
+                compiled.dataCustom = JSON.stringify(data[menuOpt.customAttribute]);
+              }
+              basicOpts = basicOpts + compilado(compiled);
+              $scope[menuOpt.conditionName] = menuOpt.conditionDef;
+            });
+          }
+          return basicOpts;
+        });
+
+        $scope.canEdit = function (data) {
+          return $scope.options.canEditCondition(data) && !$scope.options.hideEditMenu;
+        };
+
+        $scope.canRemove = function (data) {
+          return $scope.options.canRemoveCondition(data) && !$scope.options.hideRemoveMenu;
+        };
+
+        $scope.canCreate = function (data) {
+          return $scope.options.canAddCondition(data) && !$scope.options.hideAddMenu;
+        };
+
+        $scope.canList = function (data) {
+          return $scope.options.canListCondition(data) && !$scope.options.hideViewMenu;
+        };
+
+        if ($scope.options.hasOptions) {
+          $scope.dtColumns.push(actionsColumn);
+          $scope.visibleColumns += 1;
+        }
+
+        $scope.new = function () {
+          if (angular.isFunction($scope.options.onNew)) {
+            $scope.options.onNew();
+          } else {
+            console.warn("No se especificó función options.onNew");
+          }
+        };
+
+        $scope.edit = function (itemId) {
+
+          if (angular.isFunction($scope.options.onEdit)) {
+            $scope.options.onEdit(itemId);
+          } else {
+            console.warn("No se especificó función options.onEdit");
+          }
+        };
+
+        $scope.view = function (itemId) {
+
+          if (angular.isFunction($scope.options.onView)) {
+            $scope.options.onView(itemId);
+          } else {
+            console.warn("No se especificó función options.onView");
+          }
+        };
+
+        $scope.toggleAll = function () {
+          if ($scope.selectAll) {
+            //If true then select visible
+            _.each(table.rows().data(), function (value, index) {
+              $scope.options.selection[value.id] = true;
+            });
+          } else {
+            _.each(table.rows().data(), function (value, index) {
+              $scope.options.selection[value.id] = false;
+            });
+          }
+        };
+
+        $scope.toggleOne = function () {
+          var notSelectAll = _.some(table.rows().data(), function (value, index) {
+            return !$scope.options.selection[value.id];
+          });
+          $scope.selectAll = !notSelectAll;
+        };
+
+        //funcion para crear los filtros
+        var createFilters = function createFilters() {
+          $('#' + tableId + ' tfoot tr').empty();
+          $scope.dateRangePickerWidgetsOrder = [];
+          $(".daterangepicker").remove();
+          $scope.options.currentColumnOrder = [];
+
+          _.forEach(table.context[0].aoColumns, function (column) {
+            var realIndex = column._ColReorder_iOrigCol;
+            var data = column.mData;
+            var html = '<th></th>';
+
+            if (column.bVisible) {
+              if (data) {
+                $scope.options.currentColumnOrder.push(data);
+              }
+
+              var title = column.name;
+              if (!name) {
+                title = column.sTitle;
+              }
+
+              var customFilter = $scope.customFilters[realIndex];
+
+              if (customFilter) {
+                if (customFilter.filterType === 'combo') {
+                  var id = 'combo_' + realIndex;
+                  html = '<th><div id="' + id + '" name="' + title + '" class="filtro-ancho"></div></th>';
+                  $('#' + tableId + ' tfoot tr').append(html);
+                  html = '';
+                  var headers = { 'Content-Type': 'application/json' };
+                  var TokenService = $injector.get('TokenService');
+
+                  if (TokenService) {
+                    headers.Authorization = 'Bearer ' + TokenService.getToken();
+                  }
+
+                  $('#' + id).select2({
+                    minimumResultsForSearch: -1,
+                    id: function id(text) {
+                      return text[column.idField];
+                    },
+                    data: function data() {
+                      return $http({
+                        url: baseurl.getUrl() + customFilter.filterUrl,
+                        method: "GET"
+                      });
+                    },
+                    ajax: {
+                      url: baseurl.getUrl() + '/' + customFilter.filterUrl,
+                      dataType: 'json',
+                      params: { headers: headers },
+                      quietMillis: 250,
+                      data: function data(term, page) {
+                        // page is the one-based page number tracked by Select2
+                        return {
+                          q: term
+                        };
+                      },
+                      results: function results(data, page) {
+                        // parse the results into the format expected by Select2.
+                        // since we are using custom formatting functions we do not need to alter the remote JSON data
+                        return { results: data };
+                      },
+                      cache: true
+                    },
+
+                    initSelection: function initSelection(element, callback) {
+                      var value = table.column(column.idx).search();
+                      $.ajax(baseurl.getUrl() + '/' + customFilter.filterUrl, {
+                        beforeSend: function beforeSend(xhr) {
+                          xhr.setRequestHeader('Content-Type', 'application/json');
+                          var TokenService = $injector.get('TokenService');
+
+                          if (TokenService) {
+                            xhr.setRequestHeader('Authorization', 'Bearer ' + TokenService.getToken());
+                          }
+                        },
+                        dataType: 'json'
+                      }).done(function (data) {
+                        callback(data);
+                      });
+                    },
+                    formatResult: function formatResult(text) {
+                      return '<div class="select2-user-result">' + text[column.textField] + '</div>';
+                    },
+                    formatSelection: function formatSelection(text) {
+                      return text[column.idField];
+                    },
+                    escapeMarkup: function escapeMarkup(m) {
+                      return m;
+                    }
+                  }).on('change', function (e) {
+                    var value = $('#' + id).select2('val');
+                    //los ids de los inputs tiene la forma "combo_[realIndex]"
+                    var realIndex = parseInt(id.substring(6));
+                    var index = table.colReorder.order().indexOf(realIndex);
+
+                    if (this.value.length >= 1) {
+                      table.column(index).search(this.value).draw();
+                    } else {
+                      table.column(index).search("").draw();
+                    }
+                  });
+                } else if (customFilter.filterType === 'date-range') {
+                  $scope.dateRangeOptions[realIndex] = _.clone(dateRangeDefaultOptions, true);
+                  $scope.dateRangeOptions[realIndex].index = realIndex;
+
+                  //si esta despues de la mitad abrir a la izquierda
+                  if (realIndex > $scope.options.columns.length / 2) {
+                    $scope.dateRangeOptions[realIndex].opens = 'left';
+                  }
+
+                  $scope.dateRangePickerWidgetsOrder.push[realIndex];
+                  var input = '<th><input id="daterange_' + realIndex + '" date-range-picker class="column-filter form-control input-sm date-picker" options="dateRangeOptions[' + realIndex + ']" type="text" ng-model="dateRangeFilters[' + realIndex + ']" /></th>';
+
+                  html = $compile(input)($scope);
+                } else if (customFilter.filterType === 'number-range') {
+                  $scope.rangeOptions[realIndex] = _.clone(rangeDefaultOptions, true);
+                  $scope.rangeOptions[realIndex].index = realIndex;
+
+                  //si esta despues de la mitad abrir a la izquierda
+                  if (realIndex > $scope.options.columns.length / 2) {
+                    $scope.rangeOptions[realIndex].opens = 'left';
+                  }
+
+                  $scope.rangePickerWidgetsOrder.push[realIndex];
+                  var input = '<th><input  id="numberrange_' + realIndex + '" range-picker class="column-filter form-control input-sm " options="rangeOptions[' + realIndex + ']" type="text" ng-model="numberRangeFilters[' + realIndex + ']" /></th>';
+
+                  html = $compile(input)($scope);
+                }
+              } else if (column.mData && column.bSearchable) {
+                var value = table.column(column.idx).search();
+
+                html = '<th><input id="filtro_' + realIndex + '" class="column-filter form-control input-sm" type="text" style="min-width:60px; width: 100%;" value="' + value + '"/></th>';
+              } else {
+                html = '<th></th>';
+              }
+
+              $('#' + tableId + ' tfoot tr').append(html);
+            }
+          });
+
+          //bind de eventos para filtros
+          _.forEach($("[id^='filtro']"), function (el) {
+            $(el).on('keyup change', function (e) {
+              //los ids de los inputs tiene la forma "filtro_[realIndex]"
+              var realIndex = parseInt(el.id.substring(7));
+              var index = table.colReorder.order().indexOf(realIndex);
+
+              if (this.value.length >= 1 || e.keyCode == 13) {
+                table.column(index).search(this.value).draw();
+              }
+
+              // Ensure we clear the search if they backspace far enough
+              if (this.value == "") {
+                table.column(index).search("").draw();
+              }
+            });
+          });
+        };
+
+        /* Funcion de actualizacion de URL Base con o sin filtros estaticos */
+        function updateStaticFilters() {
+          urlTemplate = _.template(baseurl.getUrl() + '/<%= resource %>/datatables');
+        }
+
+        $scope.dtInstanceCallback = function (dtInstance) {
+          $('thead+tfoot').remove();
+          tableId = dtInstance.id;
+          table = dtInstance.DataTable;
+
+          //creacion de filtros
+          $('#' + tableId).append('<tfoot><tr></tr></tfoot>');
+          createFilters();
+          $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
+
+          _.each($scope.dtColumns, function (col, index) {
+            if (col.filter) {
+              var a = $('.input-sm')[index + 1]; // data: estado
+              a.value = col.filter;
+            }
+          });
+
+          //Texto del boton de visibilidad de columnas
+          $(".dt-button.buttons-colvis").removeClass().addClass("columns-selection").html('<i class="glyphicon glyphicon-th-list"></i>');
+
+          /* funcion para actualizar la tabla manualmente */
+          $scope.options.reloadData = function () {
+
+            if ($scope.options.resource !== '@') {
+              updateStaticFilters();
+              $('#' + tableId).DataTable().ajax.reload();
+            }
+          };
+
+          /* whatcher para actualizar la tabla automaticamente cuando los filtros estaticos cambian */
+          $scope.$watch("options.staticFilter", function handleStaticFilterChange(newValue, oldValue) {
+
+            if ($scope.options.resource !== '@') {
+              updateStaticFilters();
+              $('#' + tableId).DataTable().ajax.reload();
+            }
+          });
+
+          table.on('draw', function () {
+            $timeout(function () {
+              if (table.rows().data().length > 0) {
+                var selectAll = true;
+                _.each(table.rows().data(), function (value, index) {
+
+                  if ($scope.options.selection[value.id] === undefined) {
+                    $scope.options.selection[value.id] = false;
+                    selectAll = false;
+                  } else if ($scope.options.selection[value.id] == false) {
+                    selectAll = false;
+                  }
+                });
+
+                $scope.selectAll = selectAll;
+              } else {
+                $scope.selectAll = false;
+              }
+            });
+          });
+
+          table.on('column-visibility', function (e, settings, column, state) {
+            createFilters();
+          });
+
+          table.on('column-reorder', function (e, settings, details) {
+            createFilters();
+          });
+
+          $scope.dtInstance = dtInstance;
+
+          // obtiene los filtros actuales
+          $scope.options.getFilters = function getFilters() {
+            var filters = {};
+            _.forEach(table.context[0].aoColumns, function (column) {
+              var realIndex = column._ColReorder_iOrigCol;
+              var data = column.mData;
+              if (data !== undefined && data !== "" && data !== null) {
+                filters[data] = table.column(realIndex).search();
+              }
+            });
+            return filters;
+          };
+
+          if ($scope.options.defaultOrderColumn !== undefined && $scope.options.defaultOrderDir !== undefined) {
+            table.order([[$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir]]);
+          }
+        };
+
+        $scope.remove = function (itemId) {
+          $scope.disableButton = false;
+          $scope.selectedItemId = itemId;
+          $scope.tituloModal = "Confirmación de Borrado";
+          $scope.mensajeModal = "Esta operación eliminará el registro seleccionado. ¿Desea continuar?";
+          $scope.modalInstanceBorrar1 = $modal.open({
+            template: '<div class="modal-header">' + '<h3 class="modal-title">{{::tituloModal}}</h3>' + '</div>' + '<div class="modal-body">{{::mensajeModal}}</div>' + '<div class="modal-footer">' + '<button class="btn btn-primary" ng-disabled="disableButton" ng-click="ok(selectedItemId)">Aceptar</button>' + '<button class="btn btn-warning" ng-disabled="disableButton" ng-click="cancel()">Cancelar</button>' + '</div>',
+            scope: $scope
+          });
+
+          $scope.cancel = function () {
+            $scope.disableButton = true;
+            $scope.modalInstanceBorrar1.dismiss('cancel');
+          };
+
+          $scope.ok = function (itemId) {
+            $scope.disableButton = true;
+
+            if (angular.isFunction($scope.options.onRemove)) {
+              $scope.options.onRemove(itemId);
+              $scope.modalInstanceBorrar1.close(itemId);
+            }
+            // var model = $scope.options.factory.create({ id: itemId });
+            // $scope.options.factory.remove(model).then(function () {
+            //   // se refresca la tabla
+            //   $('#' + tableId).DataTable().ajax.reload();
+            //   $scope.modalInstanceBorrar1.close(itemId);
+            // }, function (error) {
+            //   $scope.modalInstanceBorrar1.dismiss('cancel');
+            //   $scope.tituloModal = "No se pudo borrar el registro";
+            //   $scope.mensajeModal = $scope.options.failedDeleteError;
+            //   var modalInstance = $modal.open({
+            //     template: '<div class="modal-header">' +
+            //     '<h3 class="modal-title">{{::tituloModal}}</h3>' +
+            //     '</div>' +
+            //     '<div class="modal-body">{{::mensajeModal}}</div>' +
+            //     '<div class="modal-footer">' +
+            //     '<button class="btn btn-primary" ng-click="cancel()">Aceptar</button>' +
+            //     '</div>',
+            //     scope: $scope
+            //   });
+            //   $scope.cancel = function () {
+            //     modalInstance.dismiss('cancel');
+            //   };
+            // });
+          };
+        };
+
+        function rowCallback(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
+          $('td', nRow).unbind('click');
+          $('td', nRow).bind('click', function () {
+            $scope.$apply(function () {
+              $scope.selected = aData;
+              $timeout(function () {
+                $(document).scrollTop($('.table-detail').offset().top);
+              });
+            });
+          });
+          return nRow;
+        }
+
+        if ($scope.options.detailRows) {
+          if ($scope.options.detailRows === true) {
+            $scope.options.detailRows = $scope.options.columns;
+          } else {
+            $scope.options.detailRows = _.union($scope.options.columns, $scope.options.detailRows);
+          }
+        }
+      }
+    };
+  }]);
+})();
+(function () {
+  'use strict';
+
+  angular.module('ui').directive('validatedDateInput', validatedDateInput);
+
+  function validatedDateInput() {
+    var directive = {
+      restrict: 'E',
+      scope: {
+        model: '=',
+        form: '=',
+        name: '@',
+        label: '@',
+        isRequired: '=',
+        submittedFlag: '=',
+        classes: '@',
+        onChange: '&',
+        isDisabled: '=',
+        dateOptions: '@',
+        format: '@',
+        opened: '@'
+      },
+      controllerAs: 'vm',
+      bindToController: true,
+      templateUrl: 'views/validated-date-input.html',
+      link: linkFunc,
+      controller: ValidatedDateInputController
+    };
+
+    function linkFunc(scope, elem, attr, controller, dateFilter) {
+      //controller.$formatters.shift();
+      if (controller.model) {
+        controller.model = new Date(controller.model);
+      }
+    }
+
+    return directive;
+  }
+
+  ValidatedDateInputController.$inject = ['$scope', '$timeout'];
+  function ValidatedDateInputController($scope, $timeout) {
+    var vm = this;
+
+    if (!vm.format) vm.format = "dd/MM/yyyy";
+
+    vm.showWeeks = false;
+
+    vm.open = function () {
+      vm.opened = true;
+    };
+
+    vm.focus = false;
+    vm.focus = function () {
+      vm.opened = true;
+      vm.focus = true;
+    };
+
+    vm.today = function () {
+      vm.model = new Date();
+    };
+
+    vm.clear = function () {
+      vm.model = null;
+    };
+
+    vm.dateOptions = {
+      formatYear: 'yy',
+      startingDay: 1
+    };
+
+    activate();
+    vm.updateListener = updateListener;
+
+    function activate() {
+      moment.locale('es');
+    }
+
+    function updateListener() {
+      vm.focus = false;
+      $timeout(vm.onChange, 0);
+    }
+  }
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').directive('validatedTextInput', validatedTextInput);
+
+  function validatedTextInput() {
+    var directive = {
+      restrict: 'E',
+      scope: {
+        model: '=',
+        form: '=',
+        name: '@',
+        label: '@',
+        isRequired: '=',
+        submittedFlag: '=',
+        placeholder: '@',
+        classes: '@',
+        inputType: '@',
+        onChange: '&',
+        maxLength: '@',
+        minLength: '@',
+        focusElement: '@',
+        isDisabled: '=',
+        pattern: '@',
+        min: '=',
+        max: '='
+      },
+      controllerAs: 'vm',
+      bindToController: true,
+      templateUrl: 'views/validated-text-input.html',
+      link: linkFunc,
+      controller: ValidatedTextInputController
+    };
+
+    function linkFunc(scope, elem, attr) {}
+
+    return directive;
+  }
+
+  ValidatedTextInputController.$inject = ['$scope', '$timeout'];
+  function ValidatedTextInputController($scope, $timeout) {
+    var vm = this;
+
+    activate();
+    vm.updateListener = updateListener;
+
+    function activate() {}
+
+    function updateListener() {
+      $timeout(vm.onChange, 0);
+    }
+  };
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').directive('validatedTextareaInput', validatedTextareaInput);
+
+  function validatedTextareaInput() {
+    var directive = {
+      restrict: 'E',
+      scope: {
+        model: '=',
+        form: '=',
+        name: '@',
+        label: '@',
+        isRequired: '=',
+        submittedFlag: '=',
+        classes: '@',
+        inputType: '@',
+        onChange: '&',
+        maxLength: '@',
+        minLength: '@',
+        isDisabled: '='
+      },
+      controllerAs: 'vm',
+      bindToController: true,
+      templateUrl: 'views/validated-textarea-input.html',
+      link: linkFunc,
+      controller: ValidatedTextareaInputController
+    };
+
+    function linkFunc(scope, elem, attr) {}
+
+    return directive;
+  }
+
+  ValidatedTextareaInputController.$inject = ['$scope', '$timeout'];
+  function ValidatedTextareaInputController($scope, $timeout) {
+    var vm = this;
+
+    activate();
+    vm.updateListener = updateListener;
+
+    function activate() {
+      vm.campo = vm.form[vm.name];
+    }
+
+    function updateListener() {
+      $timeout(vm.onChange, 0);
+    }
+  }
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').directive('validatedTimeInput', validatedTimeInput);
+
+  function validatedTimeInput() {
+    var directive = {
+      restrict: 'E',
+      scope: {
+        model: '=',
+        form: '=',
+        name: '@',
+        label: '@',
+        isRequired: '=',
+        submittedFlag: '=',
+        classes: '@',
+        onChange: '&',
+        isDisabled: '=',
+        dateOptions: '@',
+        format: '@',
+        opened: '@'
+      },
+      controllerAs: 'vm',
+      bindToController: true,
+      templateUrl: 'views/validated-time-input.html',
+      link: linkFunc,
+      controller: validatedTimeInputController
+    };
+
+    function linkFunc(scope, elem, attr, controller, dateFilter) {
+      if (controller.model) {
+        controller.model = new Date(controller.model);
+      }
+    }
+    return directive;
+  }
+
+  validatedTimeInputController.$inject = ['$scope', '$timeout', '$element', '$document'];
+  function validatedTimeInputController($scope, $timeout, element, $document) {
+    var vm = this;
+
+    if (!vm.format) {
+      vm.format = 'HH:mm';
+    }
+
+    vm.date = new Date();
+
+    vm.showWeeks = false;
+
+    vm.open = function () {
+      if (vm.opened === false) {
+        vm.opened = true;
+      } else {
+        vm.opened = false;
+      }
+    };
+
+    vm.focus = false;
+    vm.focus = function () {
+      vm.opened = true;
+      vm.focus = true;
+    };
+
+    vm.blur = function () {
+      vm.opened = false;
+      vm.focus = false;
+    };
+
+    vm.today = function () {
+      vm.date = new Date();
+      vm.model = moment(vm.date).format(vm.format);
+    };
+
+    vm.clear = function () {
+      vm.date = null;
+      vm.model = null;
+    };
+
+    vm.close = function () {
+      vm.opened = false;
+      vm.focus = false;
+    };
+
+    activate();
+    vm.updateListener = updateListener;
+
+    function activate() {
+      moment.locale('es');
+      vm.opened = false;
+    }
+
+    function updateListener() {
+      vm.model = moment(vm.date).format(vm.format);
+      $timeout(vm.onChange, 0);
+    }
+
+    vm.keydown = function (evt) {
+      if (evt.which === 27 || evt.which === 9 || evt.which === 13) {
+        vm.close();
+      }
+    };
+
+    element.bind('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+
+    $document.bind('click', function (event) {
+      $scope.$apply(function () {
+        vm.opened = false;
+      });
+    });
+  }
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').directive('validatedUiselectInput', validatedUiselectInput);
+
+  function validatedUiselectInput() {
+    var directive = {
+      restrict: 'E',
+      scope: {
+        model: '=',
+        form: '=',
+        name: '@',
+        label: '@',
+        isRequired: '=',
+        submittedFlag: '=',
+        fieldToShow: '@',
+        options: '=',
+        classes: '@',
+        onSelect: '&',
+        focusElement: '@',
+        isDisabled: '='
+      },
+      controllerAs: 'vm',
+      bindToController: true,
+      templateUrl: 'views/validated-uiselect-input.html',
+      link: linkFunc,
+      controller: ValidatedUiselectInputController,
+      compile: compileFunc
+    };
+
+    function linkFunc(scope, elem, attr) {}
+
+    function compileFunc(element, attrs) {}
+
+    return directive;
+  }
+
+  ValidatedUiselectInputController.$inject = ['$scope', '$timeout'];
+  function ValidatedUiselectInputController($scope, $timeout) {
+    var vm = this;
+
+    vm.getChoice = getChoice;
+
+    vm.selectListener = selectListener;
+
+    vm.getFilter = getFilter;
+
+    activate();
+
+    function activate() {}
+
+    function getChoice(obj) {
+      return _.get(obj, vm.fieldToShow);
+    }
+
+    function selectListener() {
+      $timeout(vm.onSelect, 0);
+    }
+
+    function getFilter(param) {
+      var obj = {};
+      obj[vm.fieldToShow] = param;
+      return obj;
+    }
+  }
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').directive('validatedUiselectMultipleInput', validatedUiselectMultipleInput);
+
+  function validatedUiselectMultipleInput() {
+    var directive = {
+      restrict: 'E',
+      scope: {
+        model: '=',
+        form: '=',
+        name: '@',
+        label: '@',
+        isRequired: '=',
+        submittedFlag: '=',
+        fieldToShow: '@',
+        options: '=',
+        classes: '@',
+        onSelect: '&',
+        isDisabled: '='
+      },
+      controllerAs: 'vm',
+      bindToController: true,
+      templateUrl: 'views/validated-uiselect-multiple-input.html',
+      link: linkFunc,
+      controller: ValidatedUiselectMultipleInputController
+    };
+
+    function linkFunc(scope, elem, attr) {}
+
+    return directive;
+  }
+
+  ValidatedUiselectMultipleInputController.$inject = ['$scope', '$timeout'];
+  function ValidatedUiselectMultipleInputController($scope, $timeout) {
+    var vm = this;
+
+    vm.getChoice = getChoice;
+
+    vm.selectListener = selectListener;
+
+    vm.printTest = printTest;
+
+    vm.getFilter = getFilter;
+
+    activate();
+
+    function activate() {}
+
+    function getChoice(obj) {
+      return _.get(obj, vm.fieldToShow);
+    }
+
+    function selectListener() {
+      $timeout(vm.onSelect, 0);
+    }
+
+    function getFilter(param) {
+      var obj = {};
+      obj[vm.fieldToShow] = param;
+      return obj;
+    }
+
+    function printTest() {
+      console.log('este es un test');
+    }
+  }
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').directive('wizard', wizard);
+
+  function wizard() {
+    var directive = {
+      restrict: 'E',
+      scope: {},
+      controllerAs: 'vm',
+      bindToController: true,
+      templateUrl: 'views/wizard.html',
+      controller: WizardController,
+      transclude: true
+    };
+    return directive;
+  }
+
+  WizardController.$inject = ['$scope', '$timeout'];
+
+  function WizardController($scope, $timeout) {
+    var vm = this;
+    vm.tabs = [];
+
+    activate();
+    vm.addTab = addTab;
+
+    function activate() {}
+
+    function addTab() {
+      // TODO Agregar TAB
+    }
+  }
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').directive('wizardContent', wizardContent);
+
+  function wizardContent() {
+    var directive = {
+      restrict: 'E',
+      transclude: true,
+      scope: {},
+      templateUrl: 'views/wizardcontent.html',
+      link: linkFunc
+    };
+
+    return directive;
+  }
+
+  function linkFunc(scope, element, attrs) {}
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').directive('wizardPane', wizardPane);
+
+  wizardPane.$inject = ['$state'];
+
+  function wizardPane($state) {
+    var directive = {
+      required: '^^wizard',
+      restrict: 'E',
+      scope: {
+        title: '@',
+        number: '@',
+        activeIf: '@',
+        disabledIf: '=',
+        state: '@'
+      },
+      templateUrl: 'views/wizardpane.html',
+      controller: controllerFunc,
+      controllerAs: 'vm',
+      bindToController: true
+    };
+
+    return directive;
+  }
+
+  controllerFunc.$inject = ['$state'];
+
+  function controllerFunc($state) {
+    var vm = this;
+
+    /**
+     * Verifica si el estado dado como parametro es el estado actual
+     * 
+     * @param {string} state - nombre relativo o completo
+     */
+    vm.isActive = function (state) {
+      return state.startsWith('.') ? $state.is($state.get('^').name + state) : $state.is(state);
+    };
+
+    vm.go = function (dest) {
+      if (vm.disabledIf) {
+        return;
+      }
+      $state.go(dest);
+    };
+  }
+})();
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc service
+   * @name ui.Authentication
+   * @description
+   * # Authentication
+   */
+
+  angular.module('ui').service('AuthenticationService', function ($resource, $rootScope, $http, baseurl) {
+    var Authentication = $resource(baseurl.getBaseUrl() + '/:action', { action: '@action' });
+
+    return {
+
+      login: function login(username, password) {
+        $rootScope.auxiliarUsername = username;
+        var auth = new Authentication({ username: username, password: password });
+        return auth.$save({ action: 'login' });
+      },
+
+      postLogin: function postLogin(authParams) {
+        return new Authentication.save({ action: 'loginApp' }, { username: authParams.username });
+      },
+
+      token: function token(authParams) {
+        var auth = new Authentication({
+          username: authParams.username,
+          accessToken: authParams.accessToken,
+          requestToken: authParams.requestToken
+        });
+        return auth.$save({ action: 'token' });
+      },
+
+      logout: function logout() {
+        var authParams = this.getCurrentUser();
+        var auth = new Authentication({
+          username: authParams.username,
+          accessToken: authParams.accessToken
+        });
+        $rootScope.AuthParams = {};
+        localStorage.removeItem('AUTH_PARAMS');
+
+        return auth.$save({ action: 'logout' });
+      },
+
+      getCurrentUser: function getCurrentUser() {
+        var user = $rootScope.AuthParams;
+
+        if (!user || Object.keys(user).length === 0) {
+          user = JSON.parse(localStorage.getItem('AUTH_PARAMS')) || undefined;
+
+          if (user) {
+            $http.defaults.headers.common.Authorization = 'Bearer ' + user.accessToken;
+          }
+        }
+        return user;
+      }
+
+    };
+  });
+})();
+
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc service
+   * @name ui.Authorization
+   * @description
+   * # Authorization
+   */
+
+  angular.module('ui').service('AuthorizationService', function ($rootScope, $resource, $http, baseurl, AuthenticationService) {
+
+    var Authorization = $resource(baseurl.getBaseUrl() + '/authorization/:action', { action: '@action' });
+
+    return {
+      /**
+       * Retorna true si el usuario actual de la aplicación posee el permiso dado como
+       * parámetro.
+       **/
+      hasPermission: function hasPermission(permission, userToCheck) {
+        var user = userToCheck || AuthenticationService.getCurrentUser();
+        var permissions = [];
+
+        if (user) {
+          permissions = user.permissions || [];
+        }
+        return permissions.indexOf(permission) >= 0;
+      },
+
+      principal: function principal() {
+        return Authorization.get({ action: 'principal' }).$promise;
+      },
+
+      setupCredentials: function setupCredentials(username, requestToken, accessToken, callback) {
+
+        var AuthParams = {
+          username: username,
+          requestToken: requestToken,
+          accessToken: accessToken
+        };
+
+        $rootScope.AuthParams = AuthParams;
+        localStorage.setItem('AUTH_PARAMS', JSON.stringify(AuthParams));
+        $http.defaults.headers.common.Authorization = 'Bearer ' + accessToken;
+        // cargamos los permisos del usuario
+        this.principal().then(function (response) {
+          AuthParams.permissions = response.permisos;
+          AuthParams.stamp = response.stamp;
+          localStorage.setItem('AUTH_PARAMS', JSON.stringify(AuthParams));
+          callback(AuthParams);
+        });
+      },
+
+      cleanupCredentials: function cleanupCredentials() {
+        localStorage.removeItem('AUTH_PARAMS');
+      },
+
+      authorize: function authorize(loginRequired, requiredPermissions) {
+        var user = AuthenticationService.getCurrentUser();
+
+        if (loginRequired === true && user === undefined) {
+          return this.enums.LOGIN_REQUIRED;
+        } else if (loginRequired && user !== undefined && (requiredPermissions === undefined || requiredPermissions.length === 0)) {
+          return this.enums.AUTHORIZED;
+        } else if (requiredPermissions) {
+          var isAuthorized = true;
+
+          for (var i = 0; i < requiredPermissions.length; i++) {
+            isAuthorized = this.hasPermission(requiredPermissions[i], user);
+
+            if (isAuthorized === false) {
+              break;
+            }
+          }
+          return isAuthorized ? this.enums.AUTHORIZED : this.enums.NOT_AUTHORIZED;
+        }
+      },
+
+      enums: {
+        LOGIN_REQUIRED: 'loginRequired',
+        NOT_AUTHORIZED: 'notAuthorized',
+        AUTHORIZED: 'authorized'
+      }
+    };
+  });
+})();
+
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc service
+   * @name ui.baseurl
+   * @description
+   * # baseurl
+   */
+
+  angular.module('ui').provider('baseurl', function () {
+    this.config = {};
+
+    this.setConfig = function (config) {
+      this.config = config;
+    };
+
+    this.$get = function () {
+      var Config = this.config;
+      return {
+        getUrl: function getUrl() {
+          return 'http://' + Config.serverIp + ':' + Config.serverPort + '/' + Config.serverName + '/' + Config.serverAPI;
+        },
+
+
+        getBaseUrl: function getBaseUrl() {
+          var hostname = window.location.hostname;
+
+          //si es el servidor de homologacion
+          if (hostname === Config.serverIp) {
+            return 'http://' + hostname + '/' + Config.serverName + '/' + Config.serverAPI;
+          } else {
+            //si es localhost es desarrollo local
+            return 'http://' + hostname + ':' + Config.serverPort + '/' + Config.serverName + '/' + Config.serverAPI;
+          }
+        },
+
+        getPublicBaseUrl: function getPublicBaseUrl() {
+          var hostname = window.location.hostname;
+
+          //si es el servidor de homologacion
+          if (hostname === Config.serverIp) {
+            return 'http://' + hostname + '/public/';
+          } else {
+            //si es localhost es desarrollo local
+            return 'http://' + hostname + ':' + Config.serverPort + '/public/';
+          }
+        },
+
+        getBareServerUrl: function getBareServerUrl() {
+          var hostname = window.location.hostname;
+          //si es el servidor de homologacion
+          if (hostname === Config.serverIp) {
+            return 'ws://' + hostname + '/' + Config.serverWSName + '/';
+          } else {
+            //si es localhost es desarrollo local
+            return 'ws://' + hostname + ':' + Config.serverPort + '/' + Config.serverName + '/';
+          }
+        }
+      };
+    };
+  });
+})();
+
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc service
+   * @name ui.ConfigProvider
+   * @description
+   * # ConfigProvider
+   */
+
+  angular.module('ui').provider('Config', function () {
+
+    var options = {};
+
+    this.config = function (opt) {
+      angular.extend(options, opt);
+    };
+
+    this.$get = [function () {
+      return options;
+    }];
+  });
+})();
+
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc service
+   * @name ui.fileUpload
+   * @description
+   * # fileUpload
+   */
+
+  angular.module('ui').config(['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider', 'flowFactoryProvider', function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider, flowFactoryProvider) {
+
+    flowFactoryProvider.defaults = {
+      method: 'octet'
+    };
+
+    var fileupload = function fileupload(name, schema, options) {
+      if (schema.type === 'object' && schema.format === 'fileupload') {
+        var f = schemaFormProvider.stdFormObj(name, schema, options);
+        f.key = options.path;
+        f.type = 'fileupload';
+        options.lookup[sfPathProvider.stringify(options.path)] = f;
+        return f;
+      }
+    };
+    schemaFormProvider.defaults.object.unshift(fileupload);
+
+    //Add to the bootstrap directive
+    schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'fileupload', 'views/directives/fileupload.html');
+    schemaFormDecoratorsProvider.createDirective('fileupload', 'views/directives/fileupload.html');
+  }]).factory('fileupload', function () {});
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').factory('Filter', FilterFactory);
+
+  function FilterFactory() {
+    var FilterTypes = {
+      EQUALS: 'equals',
+      NOT_EQUALS: 'notEquals',
+      NULL: 'null',
+      NOT_NULL: 'notNull',
+      LIKE: 'like',
+      NOT_LIKE: 'notLike',
+      GT: 'gt',
+      GTE: 'gte',
+      LT: 'lt',
+      LTE: 'lte',
+      IN: 'in'
+    };
+
+    function joinFilters(builder, filters, joinType) {
+      if (!angular.isArray(filters)) {
+        filters = [filters];
+      }
+
+      angular.forEach(filters, function (f) {
+        builder.booleanJoins.push({
+          joinType: joinType,
+          filter: f
+        });
+      });
+    }
+
+    function addCondition(builder, condition, other) {
+      var cond = { condition: condition };
+
+      if (other) {
+        cond.comparingObject = other;
+
+        if (_.isBoolean(other)) {
+          cond.type = 'boolean';
+        } else if (_.isString(other)) {
+          cond.type = 'string';
+        } else if (_.isDate(other)) {
+          cond.type = 'date';
+        } else if (_.isNumber(other)) {
+          cond.type = 'integer';
+        }
+      }
+      builder.conditions.push(cond);
+    }
+
+    // Filter class
+    function Filter(path) {
+      this.path = path;
+      this.conditions = [];
+      this.booleanJoins = [];
+    }
+
+    var prototype = {
+      or: function or(filters) {
+        joinFilters(this, filters, 'or');
+        return this;
+      },
+
+      and: function and(filters) {
+        joinFilters(this, filters, 'and');
+        return this;
+      },
+
+      eq: function eq(other) {
+        addCondition(this, FilterTypes.EQUALS, other);
+        return this;
+      },
+
+      notEq: function notEq(other) {
+        addCondition(this, FilterTypes.NOT_EQUALS, other);
+        return this;
+      },
+
+      isNull: function isNull() {
+        addCondition(this, FilterTypes.NULL);
+        return this;
+      },
+
+      notNull: function notNull() {
+        addCondition(this, FilterTypes.NOT_NULL);
+        return this;
+      },
+
+      like: function like(other) {
+        addCondition(this, FilterTypes.LIKE, other);
+        return this;
+      },
+
+      notLike: function notLike(other) {
+        addCondition(this, FilterTypes.NOT_LIKE, other);
+        return this;
+      },
+
+      gt: function gt(other) {
+        addCondition(this, FilterTypes.GT, other);
+        return this;
+      },
+
+      gte: function gte(other) {
+        addCondition(this, FilterTypes.GTE, other);
+        return this;
+      },
+
+      lt: function lt(other) {
+        addCondition(this, FilterTypes.LT, other);
+        return this;
+      },
+
+      lte: function lte(other) {
+        addCondition(this, FilterTypes.LTE, other);
+        return this;
+      },
+
+      /**
+       * sql IN
+       *
+       * @param other{Array} the elements to include
+       **/
+      in: function _in(other) {
+        addCondition(this, FilterTypes.IN, other);
+        return this;
+      }
+    };
+    Filter.prototype = prototype;
+
+    return {
+      path: function path(filterPath) {
+        return new Filter(filterPath);
+      }
+    };
+  }
+})();
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc service
+   * @name ui.filterFactory
+   * @description
+   * # filterFactory
+   * Factory in the qualita.
+   */
+
+  angular.module('ui').factory('filterFactory', function () {
+    var logicalOp = function logicalOp(type, filters) {
+      var result = {
+        _inner: {
+          type: type
+        }
+      };
+
+      if (filters.constructor !== Array) {
+        filters = [filters];
+      }
+
+      result._inner.filters = this && this._inner ? [this._inner, filters] : filters;
+      if (!result.or && type === 'and') result.or = or;
+      if (!result.value) result.value = value;
+      if (!result.add) result.add = add;
+      result.paginate = paginate;
+      return result;
+    };
+
+    var and = function and(filters) {
+      return logicalOp.call(this, 'and', filters);
+    };
+
+    var or = function or(filters) {
+      return logicalOp.call(this, 'or', filters);
+    };
+
+    var add = function add(filter) {
+      this._inner.filters.push(filter);
+      return this;
+    };
+
+    var single = function single(filter) {
+      return and([filter]);
+    };
+
+    var value = function value() {
+      return this._inner;
+    };
+
+    var paginate = function paginate(limit, offset) {
+      this._inner.limit = limit;
+      this._inner.offset = offset;
+      return this;
+    };
+
+    // Public API here
+    return {
+      and: and,
+      or: or,
+      add: add,
+      single: single,
+      value: value
+    };
+  });
+})();
+
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc service
+   * @name ui.formFactory
+   * @description
+   * # formFactory
+   */
+
+  angular.module('ui').factory('formFactory', function ($location, $localForage, notify, $rootScope, AuthorizationService, $q) {
+    var hasPermission = AuthorizationService.hasPermission;
+
+    // Public API here
+    return {
+      defaultForm: function defaultForm() {
+        return ['*', {
+          type: 'submit',
+          title: 'Guardar',
+          htmlClass: 'pull-right'
+        }];
+      },
+      defaultOptions: function defaultOptions() {
+        return {
+          formDefaults: {
+            ngModelOptions: {
+              updateOn: 'blur'
+            },
+            disabled: false,
+            disableSuccessState: false,
+            disableErrorState: false,
+            feedback: true
+          },
+          validationMessage: {
+            302: 'El campo es obligatorio'
+          }
+        };
+      },
+      defaultViewOptions: function defaultViewOptions() {
+        return {
+          formDefaults: {
+            disabled: true,
+            disableSuccessState: true,
+            disableErrorState: true,
+            feedback: false
+          }
+        };
+      },
+      defaultSubmit: function defaultSubmit(resource, scope, form, factory, vm, errorHandler) {
+        var backEndValidatedField = [];
+
+        _.each(form.$error, function (error, errorKey) {
+
+          if (_.contains(scope.schema.backEndValidatedErrors, errorKey)) {
+            _.each(error, function (field, index) {
+              var fieldName = 'schemaForm.error.' + field.$name;
+              backEndValidatedField.push(fieldName);
+              console.log('schemaForm.error.' + field.$name + ' error: ' + errorKey);
+              scope.$broadcast(fieldName, errorKey.toString(), true, true);
+            });
+          }
+
+          _.each(backEndValidatedField, function (fieldName, index) {
+            console.log(fieldName + ' error: ' + index);
+            scope.$broadcast(fieldName, 'schemaForm', true, true);
+          });
+        });
+
+        // First we broadcast an event so all fields validate themselves
+        scope.$broadcast('schemaFormValidate');
+
+        // Then we check if the form is valid
+        if (form.$valid && !$rootScope.isProcessing) {
+          $rootScope.isProcessing = true;
+          // ... do whatever you need to do with your data.
+          if (scope.model) {
+            var model = factory.create(scope.model);
+          } else {
+            //si se usa controllerAs, se busca el modelo dentro del vm especificado
+            var model = factory.create(vm.model);
+          }
+
+          //se convierten los campos de fecha desde string a date
+          if (scope.schema) {
+            var schema = scope.schema;
+          } else {
+            var schema = vm.schema;
+          }
+          _.each(schema.properties, function (field, fieldName) {
+            if (field.format && (field.format === 'date' || field.format === 'date-time')) {
+              if (model[fieldName] && typeof model[fieldName] === 'string') {
+                //console.log(field.formatDate);
+                model[fieldName] = new moment(model[fieldName], field.formatDate || 'DD/MM/YYYY').toDate();
+              }
+            }
+          });
+
+          factory.save(model).then(function () {
+            $location.path('/' + resource);
+          }).catch(function (e) {
+            console.log(e);
+            $rootScope.isProcessing = false;
+
+            if (errorHandler) {
+              errorHandler(e);
+              return;
+            }
+
+            //se convierten los campos de fecha desde date a string
+            if (scope.schema) {
+              var schema = scope.schema;
+            } else {
+              var schema = vm.schema;
+            }
+            _.each(schema.properties, function (field, fieldName) {
+              if (field.format && (field.format === 'date' || field.format === 'date-time')) {
+                if (scope.model[fieldName] && scope.model[fieldName] instanceof Date) {
+                  scope.model[fieldName] = currentForm[fieldName].$viewValue; //.to('dd/MM/yyyy');
+                }
+              }
+            });
+
+            //se establecen los errores del backend
+            if (e.constructor === Array && e.data[0].constraint) {
+              scope.$broadcast('schemaForm.error.' + e.data[0].constraint, e.data[0].codigoError.toString(), false);
+            }
+
+            if (e.data && e.data.code !== 403) {
+              var msg = 'Error al persistir la operación.';
+              if (!scope.model.id) msg += '\n\nGuardando localmente, reintente más tarde.';
+              notify({ message: msg, classes: 'alert-danger', position: 'right' });
+              $localForage.getItem(resource).then(function (value) {
+                value = value || [];
+                value.unshift(scope.model);
+                if (!scope.model.id) $localForage.setItem(resource, value);
+              });
+            }
+
+            // manejo general de errores
+            else if (e && e.status === 500) {
+                var msg = '';
+                _.forEach(e.data, function (error) {
+                  msg += '\n\n' + error.message + '.';
+                });
+                notify({ message: msg, classes: 'alert-danger', position: 'right' });
+                // guardar en local storage
+                deferred.reject(msg);
+              }
+          });
+        }
+      },
+      defaultNSFSubmit: function defaultNSFSubmit(form, factory, resourceModel, errorHandler) {
+        var deferred = $q.defer();
+        // Then we check if the form is valid
+        if (form.$valid && !$rootScope.isProcessing) {
+          $rootScope.isProcessing = true;
+          // ... do whatever you need to do with your data.
+          var model = factory.create(resourceModel);
+
+          //se convierten los campos de fecha desde string a date
+          factory.save(model).then(function (response) {
+            // la redireccion se deja a cargo del controller
+            // $location.path('/' + resource);
+            deferred.resolve(response);
+          }).catch(function (e) {
+            console.log(e);
+            $rootScope.isProcessing = false;
+
+            if (errorHandler) {
+              errorHandler(e);
+              deferred.reject(msg);
+            } else {
+              //se establecen los errores del backend
+              if (e && e.status === 500) {
+                var msg = '';
+                _.forEach(e.data, function (error) {
+                  msg += '\n\n' + error.message + '.';
+                });
+                notify({ message: msg, classes: 'alert-danger', position: 'right' });
+                // guardar en local storage
+                deferred.reject(msg);
+              }
+            }
+          });
+        }
+        return deferred.promise;
+      },
+
+      canEdit: function canEdit(resource) {
+        var permission = hasPermission('update_' + resource);
+        return permission;
+      },
+
+      canList: function canList(resource) {
+        var permission = hasPermission('index_' + resource);
+        return permission;
+      },
+
+      canRemove: function canRemove(resource) {
+        var permission = hasPermission('delete_' + resource);
+        return permission;
+      },
+
+      canCreate: function canCreate(resource) {
+        var permission = hasPermission('create_' + resource);
+        return permission;
+      }
+    };
+  });
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').factory('LangService', Service);
+
+  Service.$inject = ['$translate', '$translatePartialLoader'];
+
+  function Service($translate, $translatePartialLoader) {
+
+    var service = {
+      getTranslations: getTranslations
+    };
+
+    return service;
+
+    /**
+     * Metodo que retorna un objeto con las traducciones para
+     * los keys dados como parametro.
+     *
+     * @param translationKeys {Array} claves para la traduccion.
+     * @param module {String} (opcional) nombre del modulo que contiene las traducciones.
+     **/
+    function getTranslations(translationKeys, module) {
+
+      if (module) {
+        $translatePartialLoader.addPart(module);
+      }
+      return $translate.refresh().then(function () {
+        return $translate(translationKeys);
+      });
+    }
+  }
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').factory('ModelTrimmer', ModelTrimmer);
+
+  function ModelTrimmer() {
+    var service = {
+      trimDetails: trimDetails
+    };
+
+    return service;
+
+    function trimDetails(model, ignoredFields) {
+      var response = {};
+      var keys = _.keys(model);
+
+      _.forEach(keys, function (key) {
+        var ignoredIndex = _.findIndex(ignoredFields, function (elem) {
+          return elem == key;
+        });
+        if (ignoredFields && ignoredIndex !== -1) {
+          response[key] = model[key];
+          return;
+        }
+
+        if (_.isArray(model[key]) == true) {
+          response[key] = [];
+          _.forEach(model[key], function (elem, index) {
+            //no se hace recursivo porque solo se debería de necesitar comprobar en primer nivel
+            fieldTrimmer(model[key], response[key], index, ignoredFields);
+          });
+        } else {
+          fieldTrimmer(model, response, key, ignoredFields);
+        }
+      });
+      return response;
+    }
+
+    function fieldTrimmer(model, newModel, fieldName, ignoredFields) {
+      if (_.isObject(model[fieldName]) && model[fieldName].hasOwnProperty("id")) {
+        newModel[fieldName] = model[fieldName].id;
+      } else {
+        newModel[fieldName] = model[fieldName];
+      }
+    }
+  }
+})();
+
+(function () {
+  angular.module('ui').factory('NotificacionesWSFactory', NotificacionesWSFactory);
+  NotificacionesWSFactory.$inject = ['$resource', 'baseurl', '$log', '$websocket', '$timeout'];
+
+  function NotificacionesWSFactory($resource, baseurl, $log, $websocket, $timeout) {
+    var service = {
+      all: all,
+      close: close,
+      create: create,
+      get: get,
+      getLatest: getLatest,
+      init: init,
+      remove: remove,
+      save: save,
+      sendAction: sendAction,
+      registerMessageObserver: registerMessageObserver
+    };
+
+    var notificaciones = $resource(baseurl.getBaseUrl() + "/notificaciones/:id", { id: '@id' }, {
+      update: {
+        method: 'PUT'
+      }
+    });
+
+    var closedByUser = false;
+
+    var retries = 0;
+
+    var websocket = undefined;
+
+    return service;
+
+    function all(params) {
+      return notificaciones.query(params);
+    }
+
+    function close(forceClose) {
+      closedByUser = true;
+      var forzar = false;
+      if (forceClose) {
+        forzar = forceClose;
+      }
+
+      websocket.close(forzar);
+    }
+
+    function create(attrs) {
+      return new notificaciones(attrs);
+    }
+
+    function get(id) {
+      return notificaciones.get({ id: id });
+    }
+
+    function getLatest(offset, limit) {
+      var obj = {
+        action: "get",
+        offset: offset,
+        limit: limit
+      };
+      websocket.send(JSON.stringify(obj));
+    }
+
+    function init(username) {
+      websocket = $websocket(baseurl.getBareServerUrl() + "wsnotificaciones");
+      var obj = {
+        action: "init",
+        username: username
+      };
+      websocket.onOpen(function () {
+        console.log("Socket abierto");
+        retries = 0;
+      });
+
+      websocket.onClose(function () {
+        console.log("Socket cerrado");
+        if (!closedByUser) {
+          if (retries < 4) {
+            retries = retries + 1;
+            $timeout(function () {
+              init(username);
+            }, 1000 * retries);
+          } else {
+            console.error("Tras 4 intentos no se pudo reestablecer conexion con websocket de notificaciones.");
+          }
+        } else {
+          closedByUser = false;
+        }
+      });
+      console.log(websocket);
+      websocket.send(JSON.stringify(obj));
+    }
+
+    function sendAction(accion, notificacion) {
+      var obj = {
+        action: accion,
+        notificacion: notificacion.id
+      };
+      $log.info("mensaje a mandar: ");
+      $log.info(obj);
+      websocket.send(JSON.stringify(obj));
+    }
+
+    function registerMessageObserver(functionHandler) {
+      if (!websocket) {
+        websocket = $websocket(baseurl.getBareServerUrl() + "wsnotificaciones");
+      }
+      websocket.onMessage(functionHandler);
+    }
+
+    function remove(notificacion) {
+      return notificacion.$remove();
+    }
+
+    function save(notificacion) {
+      return notificacion.id ? notificacion.$update() : notificacion.$save();
+    }
+  }
+})();
+
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc service
+   * @name ui.ReportTicketFactory
+   * @description
+   * # ReportTicketFactory
+   */
+
+  angular.module('ui').factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
+
+    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID?:query&currentColumnOrder=:currentColumnOrder', {
+      action: '@reportID'
+    });
+
+    return {
+      ticket: function ticket(reportID, filters, searchParams, currentColumnOrder) {
+        var report = new ReportTicket(filters);
+        var params = { reportID: reportID };
+
+        if (searchParams) {
+          params.query = decodeURIComponent($.param(searchParams));
+        }
+
+        if (currentColumnOrder) {
+          params.currentColumnOrder = currentColumnOrder;
+        }
+
+        return report.$save(params);
+      },
+
+      downloadURL: function downloadURL(reportTicket, exportType) {
+        console.log('downloadURL');
+        return baseurl.getBaseUrl() + '/generar/' + reportTicket + '/' + exportType;
+      },
+
+      downloadCustomReport: function downloadCustomReport(reportID, exportType, filters) {
+        console.log('dowloadCustomReport');
+        var downloadUrl = baseurl.getBaseUrl() + '/reportes/' + reportID;
+        if (filters) {
+          downloadUrl += "?";
+          _.forEach(filters, function (filter) {
+            //console.log(filter);
+            downloadUrl += filter + "&";
+          });
+          return downloadUrl;
+        }
+        return downloadUrl;
+      }
+    };
+  }]);
+})();
+(function () {
+  'use strict';
+
+  /**
+   * Provider que permite:
+   *
+   * 1) Que un controller/service pueda definir las claves de traduccion que necesita.
+   * 2) Que un controller/service pueda recuperar las claves de traduccion registradas por un modulo.
+   *
+   * @author Jorge Ramirez <jorge@codium.com.py>
+   **/
+
+  angular.module('ui').provider('tkeys', Provider);
+
+  function Provider() {
+    var keysMap = {};
+    this.addKeys = addKeys;
+    this.$get = [tkeysFactory];
+
+    /**
+     * Agrega la lista de claves de traduccion que el modulo va a necesitar
+     *
+     * @param module {String}: identificador del modulo.
+     * @param keys {Array}
+     **/
+    function addKeys(module, keys) {
+      keysMap[module] = keys;
+    }
+
+    /**
+     * Esta funcion es la que retorna el prototipo del servicio tkeys.
+     **/
+    function tkeysFactory() {
+      return keysMap;
+    }
+  }
+})();
+
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc service
+   * @name ui.usuariosFactory
+   * @description
+   * # usuariosFactory
+   */
+
+  angular.module('ui').factory('usuariosFactory', function ($resource, filterFactory, baseurl) {
+
+    var Usuario = $resource(baseurl.getBaseUrl() + '/usuarios/:id', { id: '@id' }, {
+      'update': { method: 'PUT' } });
+
+    // Public API here
+    return {
+      all: function all(params) {
+        return Usuario.query(params);
+      },
+
+      get: function get(id) {
+        return Usuario.get({ id: id });
+      },
+
+      getByUsername: function getByUsername(username) {
+        var params = {};
+        params.search = filterFactory.single({
+          path: 'username',
+          equals: username
+        }).value();
+        return Usuario.query(params);
+      },
+
+      create: function create(attrs) {
+        return new Usuario(attrs);
+      },
+
+      save: function save(usuario) {
+        return usuario.id ? usuario.$update() : usuario.$save();
+      },
+
+      remove: function remove(usuario) {
+        return usuario.$remove();
+      }
+    };
+  });
+})();
+
+(function () {
+  'use strict';
+
+  angular.module('ui').factory('Util', Util);
+
+  function Util() {
+    var service = {
+      toUnidadMedidaBase: toUnidadMedidaBase,
+      fromUnidadMedidaBase: fromUnidadMedidaBase
+    };
+
+    return service;
+
+    function toUnidadMedidaBase(cantidad, unidadMedida) {
+      var multiplicador = 1;
+      var unidadActual = unidadMedida;
+      while (!unidadActual.esBase) {
+        multiplicador = multiplicador * unidadActual.cantidad;
+        unidadActual = unidadActual.unidadContenida;
+      }
+      return cantidad * multiplicador;
+    }
+
+    function fromUnidadMedidaBase(cantidad, unidadObjetivo) {
+      var multiplicador = 1;
+      var unidadActual = unidadObjetivo;
+      while (!unidadActual.esBase) {
+        multiplicador = multiplicador * unidadActual.cantidad;
+        unidadActual = unidadActual.unidadContenida;
+      }
+      return cantidad / multiplicador;
+    }
+  }
+})();
+
 /**
  * Define la funcion bootstrap que permite realizar inicializaciones basicas
  * de la aplicacion. Es obligatoria la utilizacion de esta funcion.
@@ -3781,3833 +7617,3 @@ the specific language governing permissions and limitations under the Apache Lic
 
   $.extend($.fn.select2.defaults, $.fn.select2.locales['es']);
 })(jQuery);
-
-(function () {
-  'use strict';
-
-  angular.module('ui').controller('BasicController', ['$rootScope', '$scope', 'formFactory', '$location', '$state', '$injector', function ($rootScope, $scope, formFactory, $location, $state, $injector) {
-
-    $scope.activate = function () {
-      $scope.schema = $scope.factory.schema();
-      $scope.options = formFactory.defaultOptions();
-
-      if ($state.is($scope.newProperties.state)) {
-        activateNew();
-      } else if ($state.is($scope.editProperties.state)) {
-        activateEdit();
-      } else if ($state.is($scope.viewProperties.state)) {
-        activateView();
-      }
-
-      $rootScope.isProcessing = false;
-    };
-
-    function activateNew() {
-      if (!formFactory.canCreate($scope.resources)) {
-        var notify = $injector.get('notify');
-        // error de autorización
-        notify({
-          message: 'No tiene permiso de creación',
-          classes: ['alert-danger'],
-          position: 'right'
-        });
-        $location.path('/');
-      }
-      $scope.title = $scope.newProperties.title;
-      $scope.form = $scope.factory.form('new');
-      $scope.model = {};
-      $scope.schema.readonly = false;
-    }
-
-    function activateEdit() {
-      if (!formFactory.canEdit($scope.resources)) {
-        var notify = $injector.get('notify');
-        // error de autorización
-        notify({
-          message: 'No tiene permiso de edición',
-          classes: ['alert-danger'],
-          position: 'right'
-        });
-        $location.path('/');
-      }
-      $scope.model = $scope.prepService;
-      $scope.entidadId = $scope.model.id;
-      $scope.entidad = $scope.editProperties.entidad;
-      $scope.form = $scope.factory.form('edit');
-      $scope.title = $scope.editProperties.title;
-      $scope.schema.readonly = false;
-    }
-
-    function activateView() {
-      if (!formFactory.canList($scope.resources)) {
-        var notify = $injector.get('notify');
-        // error de autorización
-        notify({
-          message: 'No tiene permiso de vista',
-          classes: ['alert-danger'],
-          position: 'right'
-        });
-        $location.path('/');
-      }
-      $scope.options = formFactory.defaultViewOptions();
-      $scope.model = $scope.prepService;
-      $scope.entidadId = $scope.model.id;
-      $scope.entidad = $scope.viewProperties.entidad;
-      $scope.form = $scope.factory.form('view');
-      $scope.title = $scope.viewProperties.title;
-      $scope.view = true;
-      $scope.schema.readonly = true;
-    }
-
-    $scope.submit = function (form) {
-      formFactory.defaultSubmit($scope.resource, $scope, form, $scope.factory);
-    };
-
-    $scope.cancel = function () {
-      $location.path('/' + $scope.resource);
-    };
-  }]);
-})();
-(function () {
-  'use strict';
-
-  angular.module('ui').directive('aDisabled', function () {
-    return {
-      compile: function compile(tElement, tAttrs, transclude) {
-        //Disable ngClick
-        tAttrs['ngClick'] = '!(' + tAttrs['aDisabled'] + ') && (' + tAttrs['ngClick'] + ')';
-
-        //return a link function
-        return function (scope, iElement, iAttrs) {
-
-          //Toggle 'disabled' to class when aDisabled becomes true
-          scope.$watch(iAttrs['aDisabled'], function (newValue) {
-            if (newValue !== undefined) {
-              iElement.toggleClass('disabled', newValue);
-            }
-          });
-
-          //Disable href on click
-          iElement.on('click', function (e) {
-            if (scope.$eval(iAttrs['aDisabled'])) {
-              e.preventDefault();
-            }
-          });
-        };
-      }
-    };
-  });
-
-  angular.module('ui').directive('uiRequired', function () {
-    return {
-      require: 'ngModel',
-      link: function link(scope, elm, attrs, ctrl) {
-        ctrl.$validators.required = function (modelValue, viewValue) {
-          return !((viewValue && viewValue.length === 0 || false) && attrs.uiRequired === 'true');
-        };
-
-        attrs.$observe('uiRequired', function () {
-          ctrl.$setValidity('required', !(attrs.uiRequired === 'true' && ctrl.$viewValue && ctrl.$viewValue.length === 0));
-        });
-      }
-    };
-  });
-})();
-
-(function () {
-  angular.module('ui').directive('advancedDatatablesSearch', advancedDatatablesSearch);
-
-  function advancedDatatablesSearch() {
-    var directive = {
-      restrict: 'E',
-      controllerAs: 'vm',
-      scope: {
-        model: '=',
-        options: '=',
-        factory: '=',
-        disabledBtn: '=',
-        multipleSelection: '=?',
-        size: '@',
-        serializationView: '@',
-        style: '@'
-      },
-      bindToController: true,
-      templateUrl: 'views/directives/advanced-datatables-search.html',
-      link: linkFunc,
-      controller: AdvancedDatatablesSearchController
-    };
-
-    function linkFunc(scope, elem, attr) {
-      scope.vm.multipleSelection = angular.isDefined(scope.vm.multipleSelection) ? scope.vm.multipleSelection : false;
-    }
-
-    return directive;
-  }
-
-  AdvancedDatatablesSearchController.$inject = ['$log', '$scope', '$modal', '$state'];
-  function AdvancedDatatablesSearchController($log, $scope, $modal, $state) {
-    var vm = this;
-    if (!vm.size) {
-      vm.size = "btn-xs";
-    }
-    vm.valorScope = "hola";
-    vm.pick = pick;
-    vm.showSearch = showSearch;
-    vm.addAll = addAll;
-    if (!vm.multipleSelection) {
-      vm.options.extraRowOptions = [{
-        templateToRender: "<button class='btn btn-primary' style='margin-right: 5px;' ng-click='pick(<%=dataId%>)'> <span class='glyphicon glyphicon-ok'></span> </button>",
-        functionName: "pick",
-        functionDef: function functionDef(itemId) {
-          vm.pick(itemId);
-        }
-      }];
-    } else {
-      if (vm.multipleSelection) {
-        vm.options.isSelectable = true;
-        vm.options.selection = {};
-        vm.options.extraMenuOptions = [{
-          'title': "GSDG",
-          'icon': 'glyphicon glyphicon-plus',
-          'showCondition': function showCondition() {
-            return true;
-          },
-          'action': function action() {
-            if (vm.isProcesoImportacion) {
-              $state.go("app.importaciones.proceso.ordenescompra.new");
-            } else {
-              $state.go("app.orden_compra_importacion.new");
-            }
-          }
-        }];
-      }
-    }
-    vm.options.hideAddMenu = true;
-    vm.options.hideEditMenu = true;
-    vm.options.hideRemoveMenu = true;
-    vm.options.hideHeader = true;
-
-    var createFilters = function createFilters(filters) {
-      var filtersArr = [];
-      _.each(filters, function (search, data) {
-        filtersArr.push({ path: data, like: search });
-      });
-      var filters = filterFactory.and(filtersArr).value();
-      return filters;
-    };
-
-    activate();
-
-    function activate() {
-      vm.modalInstance = undefined;
-    }
-
-    function pick(item) {
-      vm.model = vm.factory.get(item, vm.serializationView);
-
-      if (vm.modalInstance) {
-        vm.modalInstance.close();
-      }
-    }
-
-    function showSearch() {
-      vm.modalInstance = $modal.open({
-        templateUrl: 'views/datatables-modal.html',
-        scope: $scope,
-        size: 'lg'
-      });
-    }
-
-    function addAll() {
-      //convertimos los datos a un array de indicesSelected
-      var indicesSelected = _.filter(_.map(vm.options.selection, function (val, idx) {
-        return val == true ? parseInt(idx) : false;
-      }), function (val) {
-        return val;
-      });
-      vm.model = _.map(indicesSelected, function (idx) {
-        return vm.factory.get(idx, vm.serializationView);
-      });
-
-      if (vm.modalInstance) {
-        vm.modalInstance.close();
-      }
-    }
-  }
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').value('$datepickerSuppressError', true).directive('pickDate', ['$filter', function ($filter) {
-    return {
-      restrict: 'A',
-      require: 'ngModel',
-      link: function link(scope, element, attrs, ngModel) {
-        moment.locale('es');
-        if (scope.model[scope.form.key[0]]) {
-          scope.model[scope.form.key[0]] = new Date(scope.model[scope.form.key[0]]);
-        }
-
-        scope.status = {
-          opened: false
-        };
-
-        scope.open = function () {
-          scope.status.opened = true;
-        };
-        var defaultFormat = 'dd/MM/yyyy';
-
-        ngModel.$parsers.push(function () {
-          console.log(scope.schema.formatDate);
-          return $filter('date')(element.val(), scope.form.schema.formatDate || defaultFormat);
-        });
-      }
-    };
-  }]);
-})();
-
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc directive
-   * @name ui.directive:fileupload
-   * @description
-   * # fileupload
-   */
-
-  angular.module('ui').directive('fileupload', fileupload);
-
-  fileupload.$inject = ['ngNotify', '$http'];
-
-  function fileupload(ngNotify, $http) {
-    return {
-      templateUrl: 'views/fileupload.html',
-      restrict: 'E',
-      tranclude: true,
-      scope: {
-        /**
-         * Objeto de configuración:
-         *  - {boolean} singleFile
-         *  - {string} method
-         *  - {boolean} showFilesSummary
-         *  - {string} publicPath
-         *  - {Function} onComplete
-         *  - {Function} onDelete
-         *  - {Function} onDeleteError
-         */
-        options: '=',
-        title: '@',
-        ngModel: '=',
-        disabled: '='
-      },
-      link: function postLink(scope, element, attrs) {
-        var defaults = {
-          singleFile: false,
-          method: 'octet',
-          showFilesSummary: false
-        };
-        defaults.target = scope.options.target;
-        scope.uploader = {};
-        scope.title = attrs.title;
-        scope.fileModel = {};
-
-        scope.progressWith = function (progress) {
-          return progress * 100 + '%';
-        };
-        scope.files = [];
-        scope.adjuntosBaseURL = scope.options.publicPath;
-        scope.options.onDelete = scope.options.onDelete || angular.noop;
-        scope.options.onDeleteError = scope.options.onDeleteError || angular.noop;
-        scope.fileAdded = fileAdded.bind(scope);
-        scope.uploadCompleted = uploadCompleted.bind(scope);
-        scope.loadFiles = loadFiles.bind(scope);
-        scope.getCurrentFiles = getCurrentFiles.bind(scope);
-        scope.getFilename = getFilename.bind(scope);
-        scope.remove = remove.bind(scope);
-        scope.mimeTypeMap = {
-          jpg: 'image/jpg',
-          jpeg: 'image/jpeg',
-          png: 'image/png',
-          gif: 'image/gif'
-        };
-        scope.preload = false;
-
-        scope.$watch('ngModel', function (newVal) {
-          if (newVal && !scope.preload && !scope.ngModelIgnoreSync) {
-            scope.preload = true;
-            scope.ngModelIgnoreSync = false;
-            scope.loadFiles(angular.isArray(scope.ngModel) ? scope.ngModel : [scope.ngModel]);
-          }
-        });
-      }
-    };
-
-    function fileAdded(file, event, $flow) {
-      // controlamos que no se supere el limite de tamano          
-      if (this.options.FILE_UPLOAD_LIMIT && file.size > this.options.FILE_UPLOAD_LIMIT * 1000 * 1000) {
-        event.preventDefault();
-        ngNotify.set('El tamaño del archivo supera el límite de ' + this.options.FILE_UPLOAD_LIMIT + ' MB.', 'error');
-        return false;
-      }
-      var ext = file.getExtension();
-      // si es imagen controlamos que sea alguna de las extensiones permitidas
-      if (this.options.imageOnly && ['png', 'gif', 'jpg', 'jpeg'].indexOf(ext) < 0) {
-        ngNotify.set('Solo se permiten archivos con extensión: png, gif, jpg o jpeg.', 'error');
-        return false;
-      }
-      // controlamos que el tamanio del nombre no supere 255 caracteres
-      if (file.name.length > 255) {
-        ngNotify.set('El nombre del archivo supera los 255 caracteres', 'error');
-        return false;
-      }
-    }
-
-    function uploadCompleted(files) {
-      ngNotify.set('Archivo cargado correctamente', 'success');
-      var files = this.getCurrentFiles(files);
-
-      if (angular.isFunction(this.options.onComplete)) {
-        this.options.onComplete(files);
-      }
-      this.ngModelIgnoreSync = true;
-      this.ngModel = files;
-    }
-
-    /**
-     * Retorna una lista compacta de los archivos cargados correctamente.
-     * 
-     * @param {object[]} files - FlowFile list
-     */
-    function getCurrentFiles(flowFiles) {
-      var _this2 = this;
-
-      var files = []; // Lista de objetos de tipo { path: '' }
-
-      if (flowFiles.length > 0) {
-        angular.forEach(flowFiles, function (file) {
-          files.push({
-            path: _this2.getFilename(file)
-          });
-        });
-      }
-      return files;
-    }
-
-    /**
-     * Se encarga de cargar en el objeto flow el array de imagenes. Esto es necesario
-     * cuando tenemos imagenes que precargar (ya se encuentran en el server)
-     **/
-    function loadFiles(images) {
-      var _this3 = this;
-
-      var flow = this.uploader.flow;
-      angular.forEach(images, function (img) {
-        var contentType = _this3.mimeTypeMap[img.path.toLowerCase().substring(_.lastIndexOf(img.path, '.') + 1)];
-        var blob = new Blob(['pre_existing_image'], { type: contentType });
-        blob.name = img.path;
-        blob.image_url = _this3.options.publicPath + '/' + img.path;
-        var file = new Flow.FlowFile(flow, blob);
-        file.fromServer = true;
-        flow.files.push(file);
-      });
-    }
-
-    /**
-     * Retorna el nombre del archivo. Esto se corresponde con la logica en el backend para 
-     * el generación del nombre final del archivo.
-     **/
-    function getFilename(file) {
-
-      if (file.fromServer) {
-        return file.name;
-      }
-      var basename = file.size + '-' + file.name;
-      basename = basename.replace(/[^a-zA-Z/-_\\.0-9]+/g, '');
-      basename = basename.replace(/\s/g, '');
-      return basename;
-    }
-
-    /**
-     * Se encarga de eliminar el archivo en el servidor.
-     * 
-     * @param {object} file - El archivo a eliminar
-     */
-    function remove(file) {
-      file.cancel();
-      var data = { flowFilename: this.getFilename(file) };
-      $http.delete(this.options.target, { params: data }).then(this.options.onDelete, this.options.onDeleteError);
-    }
-  }
-})();
-(function () {
-  'use strict';
-
-  angular.module('ui').directive('focusOn', ['$timeout', function ($timeout) {
-    return function (scope, elem, attrs) {
-      scope.$on(attrs.focusOn, function (e) {
-        $timeout(function () {
-          elem[0].focus();
-        }, 10);
-      });
-    };
-  }]);
-})();
-
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc directive
-   * @name ui.directive:menuBuilder
-   * @description
-   * # menuBuilder
-   */
-
-  angular.module('ui').directive('menuBuilder', ['$timeout', function ($timeout) {
-    return {
-      templateUrl: 'views/menu-builder.html',
-      restrict: 'EA',
-      replace: true,
-      scope: { options: '=', menu: '=', save: '=' },
-      link: function postLink(scope, element, attrs) {
-        //scope.menu = {};
-        var setLeafs = function setLeafs(nodes) {
-          _.each(nodes, function (n) {
-            n.data = { estado: n.estado };
-            if (n.children) setLeafs(n.children);else n.type = 'leaf';
-          });
-          return nodes;
-        };
-
-        function drawJSTree(treeData) {
-          $('#menu-builder').jstree({
-            'core': {
-              'animation': 0,
-              'check_callback': function check_callback(operation, node, parent, position) {
-                switch (operation) {
-                  case 'move_node':
-                    return !parent.parent || parent.original.type !== 'leaf';
-                  case 'create_node':
-                    return parent.original.type !== 'leaf';
-                  case 'rename_node':
-                    return node.original.type !== 'leaf';
-                  case 'delete_node':
-                    return _.isEmpty(node.children) && node.original.type !== 'leaf';
-                }
-                return false;
-              },
-              'themes': { 'stripes': true },
-              'data': setLeafs(treeData)
-            },
-            'types': {
-              'default': {
-                'icon': 'glyphicon glyphicon-record'
-              },
-              'leaf': {
-                'icon': 'glyphicon glyphicon-asterisk'
-              }
-            },
-            'plugins': ['dnd', 'search', 'state', 'types', 'wholerow']
-          });
-        }
-
-        function nodeRename() {
-          var ref = $('#menu-builder').jstree(true),
-              sel = ref.get_selected();
-          if (!sel.length) {
-            return false;
-          }
-          sel = sel[0];
-          //console.log(ref.get_node(sel));
-          if (ref.get_node(sel).original.type !== 'leaf') ref.edit(sel);
-        }
-
-        $('#menu-builder').delegate("li", "dblclick", function (e) {
-          nodeRename();
-          return false;
-        });
-
-        scope.nodeCreate = function () {
-          var ref = $('#menu-builder').jstree(true),
-              sel = ref.get_selected();
-          if (!sel.length) {
-            return false;
-          }
-          sel = sel[0];
-          sel = ref.create_node(sel);
-          if (sel) {
-            ref.edit(sel);
-          }
-        };
-
-        scope.nodeDelete = function () {
-          var ref = $('#menu-builder').jstree(true),
-              sel = ref.get_selected();
-          if (!sel.length) {
-            return false;
-          }
-          ref.delete_node(sel);
-        };
-
-        scope.getMenu = function () {
-          var getMenuNode = function getMenuNode(e) {
-            var result = {
-              text: e.text,
-              estado: e.data.estado
-            };
-
-            if (!_.isEmpty(e.children)) {
-              result.children = _.map(e.children, function (c) {
-                return getMenuNode(c);
-              });
-            }
-
-            return result;
-          };
-
-          var ref = $('#menu-builder').jstree(true);
-          var menu = _.map(ref.get_json(), getMenuNode);
-
-          scope.save(menu);
-          //scope.menu = menu;
-        };
-
-        scope.$watch('menu', function (menu) {
-          if (menu) drawJSTree(menu);
-        });
-      }
-    };
-  }]);
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').directive('mmenu', function () {
-    return {
-      restrict: 'A',
-      link: function link(scope, element, attrs) {
-        $(element).mmenu({
-          "extensions": ["pagedim-black", "effect-listitems-slide", "multiline", "pageshadow"],
-          "counters": true,
-          "iconPanels": { add: true,
-            hideNavbars: true
-          },
-          "navbar": {
-            "title": attrs.navbarTitle
-          },
-          "navbars": [{
-            "position": "top",
-            "content": ["searchfield"]
-          }, true],
-          searchfield: {
-            resultsPanel: {
-              title: "Resultados",
-              add: true },
-            placeholder: "Buscar menú",
-            noResults: "Sin coincidencias"
-
-          }
-        }, {
-          searchfield: {
-            clear: true
-          }
-        });
-      }
-    };
-  });
-})();
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc directive
-   * @name qualita.directive:offlineFormRecovery
-   * @description
-   * # offlineFormRecovery
-   */
-
-  angular.module('ui').directive('offlineFormRecovery', ['$localForage', function ($localForage) {
-    return {
-      template: '<div class="btn-group" role="group" aria-label="First group">' + '<button ng-disabled="!pending.length || position == 0" type="button" class="glyphicon glyphicon-arrow-left btn btn-default btn-recovery" ng-click="previous()"></button>' + '<button ng-disabled="!pending.length || position == pending.length" type="button" class="glyphicon glyphicon-arrow-right btn btn-default btn-recovery" ng-click="next()"></button>' + '<button ng-disabled="!pending.length || position == 0" type="button" class="glyphicon glyphicon-remove btn btn-default btn-recovery" ng-click="remove()"></button>' + '</div>',
-      restrict: 'EA',
-      link: function postLink(scope, element, attrs) {
-        scope.position = 0;
-
-        if (scope.resource) {
-          $localForage.getItem(scope.resource).then(function (value) {
-            scope.pending = _(value).filter(function (e) {
-              return !e.id;
-            }).map(function (e, i) {
-              e.index = i;return e;
-            }).value();
-          });
-        } else {
-          console.log('scope.resource no definido');
-        }
-
-        scope.next = function () {
-          scope.position++;
-          scope.model = scope.position == 0 ? {} : scope.pending[scope.position - 1];
-        };
-
-        scope.previous = function () {
-          scope.position--;
-          scope.model = scope.position == 0 ? {} : scope.pending[scope.position - 1];
-        };
-
-        scope.remove = function () {
-          $localForage.getItem(scope.resource).then(function (value) {
-            scope.pending = _.filter(value, function (e, i) {
-              return i !== scope.position - 1;
-            });
-            $localForage.setItem(scope.resource, scope.pending);
-            scope.previous();
-          });
-        };
-      }
-    };
-  }]);
-})();
-
-(function () {
-  'use strict';
-
-  /**
-   * Directiva que genera un campo "Generador de contraseñas" 
-   */
-
-  angular.module('ui').component('passwordGenerator', {
-    templateUrl: 'views/password-generator.html',
-    selector: 'passwordGenerator',
-    bindings: {
-      /**
-       * Handler a llamar cuando se genera una contraseña. Recibe como parámetro
-       * el password generado.
-       */
-      afterGenerate: '&'
-    },
-    controller: PasswordGeneratorCtrl,
-    controllerAs: 'vm'
-  });
-
-  // lista de caracteres extraído de 
-  // https://github.com/rkammer/AngularJS-Password-Generator/blob/master/js/application.js
-  var lowerCharacters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
-  var upperCharacters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-  var numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-  var symbols = ['!', '"', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~'];
-
-  PasswordGeneratorCtrl.$inject = ['$timeout'];
-
-  function PasswordGeneratorCtrl($timeout) {
-    var _this4 = this;
-
-    this.$timeout = $timeout;
-    this.passwordLength = 10;
-    this.generate = generate.bind(this);
-    this.onSuccess = onSuccess.bind(this);
-    this.showTooltip = showTooltip.bind(this);
-
-    this.$onDestroy = function () {
-      if (_this4.clipboardObj) {
-        _this4.clipboardObj.destroy();
-      }
-    };
-  }
-
-  function generate() {
-    var buffer = lowerCharacters;
-    buffer = buffer.concat(this.includeCapitalLetters ? upperCharacters : []).concat(this.includeNumbers ? numbers : []).concat(this.includeSymbols ? symbols : []);
-    var len = this.passwordLength;
-    var password = '';
-
-    do {
-      password += buffer[Math.floor(Math.random() * buffer.length)];
-    } while (password.length < len);
-    this.model = password;
-
-    if (angular.isFunction(this.afterGenerate)) {
-      this.afterGenerate({ password: password });
-    }
-  }
-
-  function onSuccess(event) {
-    event.clearSelection();
-    this.showTooltip(event.trigger, 'Copiado!');
-  }
-
-  function showTooltip(elem, msg) {
-    var classes = elem.className;
-    elem.setAttribute('class', classes + ' btn tooltipped tooltipped-s');
-    elem.setAttribute('aria-label', msg);
-    this.$timeout(function () {
-      elem.setAttribute('class', classes);
-    }, 1000);
-  }
-})();
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc directive
-   * @name ui.directive:reportViewer
-   * @description
-   * # reportViewer
-   */
-
-  angular.module('ui').directive('reportViewer', ['$modal', '$sce', function ($modal, $sce) {
-    return {
-      template: '',
-      restrict: 'E',
-      scope: {
-        url: '=',
-        title: '@',
-        background: '='
-      },
-      link: function postLink(scope, element) {
-
-        scope.close = function () {
-          scope.modalInstance.dismiss('close');
-        };
-
-        scope.$watch('url', function () {
-
-          if (scope.url) {
-            scope.trustedUrl = $sce.trustAsResourceUrl(scope.url);
-
-            if (!scope.background) {
-              scope.modalInstance = $modal.open({
-                template: '<div class="modal-header">' + '<div class="close glyphicon glyphicon-remove" ng-click="close()"></div>' + '<h3 class="modal-title">{{title}}</h3>' + '</div>' + '<div class="modal-body">' + '<iframe src="{{trustedUrl}}" width="100%" height="450"></iframe>' + '</div>' + '<div class="modal-footer">' + '<button class="btn btn-primary" ng-click="close()">Cerrar</button>' + '</div>',
-                scope: scope
-              });
-            } else {
-              element.append('<iframe src="' + scope.trustedUrl + '" hidden></iframe>');
-            }
-          }
-        });
-      }
-    };
-  }]);
-})();
-(function () {
-  'use strict';
-
-  angular.module('ui').directive('resize', ['$window', function ($window) {
-    return {
-      link: function link(scope, element, attrs) {
-        var w = angular.element($window);
-        scope.getWindowDimensions = function () {
-          return { 'h': w.height(), 'w': w.width() };
-        };
-        scope.$watch(scope.getWindowDimensions, function (newValue, oldValue) {
-          scope.windowHeight = newValue.h;
-          scope.windowWidth = newValue.w;
-
-          scope.style = function () {
-            return {
-              'height': newValue.h + 'px',
-              'width': newValue.w + 'px'
-            };
-          };
-          scope.getHeight = function (padding) {
-            return {
-              'height': newValue.h + padding + 'px'
-            };
-          };
-          scope.getWidth = function (padding) {
-            return {
-              'width': newValue.w + padding + 'px'
-            };
-          };
-        }, true);
-
-        w.bind('resize', function () {
-          scope.$apply();
-        });
-      }
-    };
-  }]);
-})();
-
-angular.module('ui').run(["$templateCache", function ($templateCache) {
-
-  $templateCache.put("views/directives/uiselect.html", "<div class=\"form-group\"\n" + "     ng-class=\"{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess(), 'has-feedback': form.feedback !== false}\"\n" + "     ng-init=\"selectedOptions=form.titleMap; insideModel=$$value$$;\" ng-controller=\"dynamicSelectController\">\n" + "  <label class=\"control-label\" ng-show=\"showTitle()\">{{form.title}}</label>\n" + "\n" + "  <div class=\"form-group\">\n" + "    <ui-select ng-model=\"select_model.selected\"\n" + "               ng-if=\"!(form.options.tagging||false)\" theme=\"bootstrap\" ng-disabled=\"form.disabled\"\n" + "               on-select=\"$$value$$=$item.value\" class=\"{{form.options.uiClass}}\">\n" + "      <ui-select-match\n" + "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" + "        {{select_model.selected.name}}\n" + "      </ui-select-match>\n" + "      <ui-select-choices refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" + "                         refresh-delay=\"form.options.refreshDelay\" group-by=\"form.options.groupBy\"\n" + "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" + "        <div ng-bind-html=\"item.name | highlight: $select.search\"></div>\n" + "        <div ng-if=\"item.description\">\n" + "          <span\n" + "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS'))+ '</small>'\"></span>\n" + "        </div>\n" + "      </ui-select-choices>\n" + "    </ui-select>\n" + "    <ui-select ng-model=\"select_model.selected\"\n" + "               ng-if=\"(form.options.tagging||false) && !(form.options.groupBy || false)\"\n" + "               tagging=\"form.options.tagging||false\" tagging-label=\"form.options.taggingLabel\"\n" + "               tagging-tokens=\"form.options.taggingTokens\"\n" + "               theme=\"bootstrap\" ng-disabled=\"form.disabled\" on-select=\"$$value$$=$item.value\"\n" + "               class=\"{{form.options.uiClass}}\">\n" + "      <ui-select-match\n" + "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" + "        {{select_model.selected.name}}&nbsp;\n" + "        <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>\n" + "      </ui-select-match>\n" + "      <!--repeat code because tagging does not display properly under group by but is still useful -->\n" + "      <ui-select-choices refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" + "                         refresh-delay=\"form.options.refreshDelay\"\n" + "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescription===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" + "        <div ng-if=\"item.isTag\"\n" + "             ng-bind-html=\"'<div>' + (item.name   | highlight: $select.search) + ' ' + form.options.taggingLabel + '</div><div class=&quot;divider&quot;></div>'\"></div>\n" + "        <div ng-if=\"!item.isTag\" ng-bind-html=\"item.name + item.isTag| highlight: $select.search\"></div>\n" + "        <div ng-if=\"item.description\">\n" + "          <span\n" + "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS')) + '</small>'\"></span>\n" + "        </div>\n" + "      </ui-select-choices>\n" + "    </ui-select>\n" + "\n" + "    <!--repeat code because tagging does not display properly under group by but is still useful -->\n" + "\n" + "    <ui-select ng-model=\"select_model.selected\"\n" + "               ng-if=\"(form.options.tagging||false) && (form.options.groupBy || false)\"\n" + "               tagging=\"form.options.tagging||false\" tagging-label=\"form.options.taggingLabel\"\n" + "               tagging-tokens=\"form.options.taggingTokens\"\n" + "               theme=\"bootstrap\" ng-disabled=\"form.disabled\" on-select=\"$$value$$=$item.value\"\n" + "               class=\"{{form.options.uiClass}}\">\n" + "      <ui-select-match\n" + "        placeholder=\"{{form.placeholder || form.schema.placeholder || ('' | translate)}}\">\n" + "        {{select_model.selected.name}}&nbsp;\n" + "        <small>{{(select_model.selected.isTag===true ? form.options.taggingLabel : '')}}</small>\n" + "      </ui-select-match>\n" + "      <ui-select-choices group-by=\"form.options.groupBy\"\n" + "                         refresh=\"populateTitleMap(form, form.options, $select.search)\"\n" + "                         refresh-delay=\"form.options.refreshDelay\"\n" + "                         repeat=\"item in form.titleMap | filterRelated: {form: form} | propsFilter: {name: $select.search, description: (form.options.searchDescription===true ? $select.search : 'NOTSEARCHINGFORTHIS') }\">\n" + "        <div ng-if=\"item.isTag\"\n" + "             ng-bind-html=\"'<div>' + (item.name  | highlight: $select.search) + ' ' + form.options.taggingLabel + '</div><div class=&quot;divider&quot;></div>'\"></div>\n" + "        <div ng-if=\"!item.isTag\" ng-bind-html=\"item.name + item.isTag| highlight: $select.search\"></div>\n" + "        <div ng-if=\"item.description\">\n" + "          <span\n" + "            ng-bind-html=\"'<small>' + (''+item.description | highlight: (form.options.searchDescriptions===true ? $select.search : 'NOTSEARCHINGFORTHIS')) + '</small>'\"></span>\n" + "        </div>\n" + "      </ui-select-choices>\n" + "    </ui-select>\n" + "    <input type=\"hidden\" toggle-single-model sf-changed=\"form\" ng-model=\"insideModel\" schema-validate=\"form\"/>\n" + "    <span ng-if=\"form.feedback !== false\"\n" + "          class=\"form-control-feedback\"\n" + "          ng-class=\"evalInScope(form.feedback) || {'glyphicon': true, 'glyphicon-ok': hasSuccess(), 'glyphicon-remove': hasError() }\"></span>\n" + "\n" + "    <div class=\"help-block\"\n" + "         ng-show=\"(hasError() && errorMessage(schemaError())) || form.description\"\n" + "         ng-bind-html=\"(hasError() && errorMessage(schemaError())) || form.description\"></div>\n" + "  </div>\n" + "</div>\n");
-
-  $templateCache.put('ngTagsInput/tags-input.html', "<div class=\"host\" tabindex=\"-1\" ng-click=\"eventHandlers.host.click()\" ti-transclude-append><div class=\"tags\" ng-class=\"{focused: hasFocus}\"><ul class=\"tag-list\"><li class=\"tag-item\" ng-repeat=\"tag in tagList.items track by track(tag)\" ng-class=\"{ selected: tag == tagList.selected }\" ng-click=\"eventHandlers.tag.click(tag)\"><ti-tag-item data=\"::tag\"></ti-tag-item></li></ul><input class=\"tag-input-text input\" autocomplete=\"off\" ng-model=\"newTag.text\" ng-model-options=\"{getterSetter: true}\" ng-keydown=\"eventHandlers.input.keydown($event)\" ng-focus=\"eventHandlers.input.focus($event)\" ng-blur=\"eventHandlers.input.blur($event)\" ng-paste=\"eventHandlers.input.paste($event)\" ng-trim=\"false\" ng-class=\"{'invalid-tag': newTag.invalid}\" ng-disabled=\"disabled\" ti-bind-attrs=\"{type: options.type, tabindex: options.tabindex, spellcheck: options.spellcheck}\" ti-autosize></div></div>");
-
-  $templateCache.put('ngTagsInput/tag-item.html', "<span ng-bind=\"$getDisplayText()\"></span> <span class=\"remove-button close ui-select-match-close\" ng-click=\"$removeTag()\" ng-bind=\"::$$removeTagSymbol\"></span>");
-
-  $templateCache.put('ngTagsInput/auto-complete.html', "<div class=\"autocomplete\" ng-if=\"suggestionList.visible\"><ul class=\"suggestion-list\"><li class=\"suggestion-item\" ng-repeat=\"item in suggestionList.items track by track(item)\" ng-class=\"{selected: item == suggestionList.selected}\" ng-click=\"addSuggestionByIndex($index)\" ng-mouseenter=\"suggestionList.select($index)\"><ti-autocomplete-match data=\"::item\"></ti-autocomplete-match></li></ul></div>");
-
-  $templateCache.put('ngTagsInput/auto-complete-match.html', "<span ng-bind-html=\"$highlight($getDisplayText())\"></span>");
-
-  $templateCache.put("bootstrap/select-multiple.tpl.html", "<div class=\"ui-select-container ui-select-multiple ui-select-bootstrap dropdown form-control\" ng-class=\"{open: $select.open}\"><div><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" autocorrect=\"off\" autocapitalize=\"off\" spellcheck=\"false\" class=\"ui-select-search input-xs\" placeholder=\"{{$selectMultiple.getPlaceholder()}}\" ng-disabled=\"$select.disabled\" ng-hide=\"$select.disabled\" ng-click=\"$select.activate()\" ng-model=\"$select.search\" role=\"combobox\" aria-label=\"{{ $select.baseTitle }}\" ondrop=\"return false;\"></div><div class=\"ui-select-choices\"></div></div>");
-  $templateCache.put("bootstrap/select.tpl.html", "<div class=\"ui-select-container ui-select-bootstrap dropdown\" ng-class=\"{open: $select.open}\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" aria-expanded=\"true\" aria-label=\"{{ $select.baseTitle }}\" aria-owns=\"ui-select-choices-{{ $select.generatedId }}\" aria-activedescendant=\"ui-select-choices-row-{{ $select.generatedId }}-{{ $select.activeIndex }}\" class=\"form-control ui-select-search ui-select-search-single\" placeholder=\"{{$select.placeholder}}\" ng-model=\"$select.search\" ng-show=\"$select.searchEnabled && $select.open\"><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");
-}]);
-
-angular.module('ui').config(['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider', function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
-
-  var select = function select(name, schema, options) {
-    if (schema.type === 'string' && "enum" in schema) {
-      var f = schemaFormProvider.stdFormObj(name, schema, options);
-      f.key = options.path;
-      f.type = 'strapselect';
-      options.lookup[sfPathProvider.stringify(options.path)] = f;
-      return f;
-    }
-  };
-
-  schemaFormProvider.defaults.string.unshift(select);
-
-  //Add to the bootstrap directive
-  schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapselect', 'views/directives/strapselect.html');
-  schemaFormDecoratorsProvider.createDirective('strapselect', 'views/directives/strapselect.html');
-
-  schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapmultiselect', 'views/directives/strapmultiselect.html');
-  schemaFormDecoratorsProvider.createDirective('strapmultiselect', 'views/directives/strapmultiselect.html');
-
-  schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapselectdynamic', 'views/directives/strapselect.html');
-  schemaFormDecoratorsProvider.createDirective('strapselectdynamic', 'views/directives/strapselect.html');
-
-  schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'strapmultiselectdynamic', 'views/directives/strapmultiselect.html');
-  schemaFormDecoratorsProvider.createDirective('strapmultiselectdynamic', 'views/directives/strapmultiselect.html');
-
-  // UI SELECT
-  //Add to the bootstrap directive
-  schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'uiselect', 'views/directives/uiselect.html');
-
-  schemaFormDecoratorsProvider.createDirective('uiselect', 'views/directives/uiselect.html');
-
-  schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'uiselectmultiple', 'views/directives/uiselectmultiple.html');
-
-  schemaFormDecoratorsProvider.createDirective('uiselectmultiple', 'views/directives/uiselectmultiple.html');
-}]).directive("toggleSingleModel", function () {
-  // some how we get this to work ...
-  return {
-    require: 'ngModel',
-    restrict: "A",
-    scope: {},
-    replace: true,
-    controller: ['$scope', function ($scope) {
-      $scope.$parent.$watch('select_model.selected', function () {
-        if ($scope.$parent.select_model.selected != undefined) {
-          $scope.$parent.insideModel = $scope.$parent.select_model.selected.value;
-          $scope.$parent.ngModel.$setViewValue($scope.$parent.select_model.selected.value);
-        }
-      });
-    }]
-  };
-}).directive("toggleModel", function () {
-  // some how we get this to work ...
-  return {
-    require: 'ngModel',
-    restrict: "A",
-    scope: {},
-    controller: ['$scope', 'sfSelect', function ($scope, sfSelect) {
-
-      var list = sfSelect($scope.$parent.form.key, $scope.$parent.model);
-      //as per base array implemenation if the array is undefined it must be set as empty for data binding to work
-      if (angular.isUndefined(list)) {
-        list = [];
-        sfSelect($scope.$parent.form.key, $scope.$parent.model, list);
-      }
-      $scope.$parent.$watch('form.selectedOptions', function () {
-        if (!$scope.$parent.form.selectedOptions) {} else if ($scope.$parent.form.selectedOptions.length == 0) {
-
-          if ($scope.$parent.ngModel.$viewValue != undefined) {
-            $scope.$parent.ngModel.$setViewValue($scope.$parent.form.selectedOptions);
-          }
-        } else {
-          $scope.$parent.$$value$$ = [];
-          $scope.$parent.form.selectedOptions.forEach(function (item) {
-            $scope.$parent.$$value$$.push(item.value);
-          });
-          $scope.$parent.ngModel.$setViewValue($scope.$parent.$$value$$);
-        }
-      }, true);
-    }]
-  };
-}).directive('multipleOn', function () {
-  return {
-    link: function link($scope, $element, $attrs) {
-      $scope.$watch(function () {
-        return $element.attr('multiple-on');
-      }, function (newVal) {
-
-        if (newVal == "true") {
-          var select_scope = angular.element($element).scope().$$childTail;
-          select_scope.$isMultiple = true;
-          select_scope.options.multiple = true;
-          select_scope.$select.$element.addClass('select-multiple');
-        } else {
-          angular.element($element).scope().$$childTail.$isMultiple = false;
-        }
-      });
-    }
-  };
-}).filter('whereMulti', function () {
-  return function (items, key, values) {
-    var out = [];
-
-    if (angular.isArray(values) && items !== undefined) {
-      values.forEach(function (value) {
-        for (var i = 0; i < items.length; i++) {
-          if (value == items[i][key]) {
-            out.push(items[i]);
-            break;
-          }
-        }
-      });
-    } else {
-      // Let the output be the input untouched
-      out = items;
-    }
-
-    return out;
-  };
-}).filter('propsFilter', function () {
-  return function (items, props) {
-    var out = [];
-
-    if (angular.isArray(items)) {
-      items.forEach(function (item) {
-        var itemMatches = false;
-
-        var keys = Object.keys(props);
-        for (var i = 0; i < keys.length; i++) {
-          var prop = keys[i];
-          if (item && item.hasOwnProperty(prop)) {
-            //only match if this property is actually in the item to avoid
-            var text = props[prop].toLowerCase();
-            //search for either a space before the text or the textg at the start of the string so that the middle of words are not matched
-            if (item[prop] && (item[prop].toString().toLowerCase().indexOf(text) === 0 || item[prop].toString().toLowerCase().indexOf(' ' + text) !== -1)) {
-              itemMatches = true;
-              break;
-            }
-          }
-        }
-
-        if (itemMatches) {
-          out.push(item);
-        }
-      });
-    } else {
-      // Let the output be the input untouched
-      out = items;
-    }
-
-    return out;
-  };
-}).filter('filterRelated', function () {
-
-  return function (items, props) {
-    if (typeof props.form.options.filterRelated === 'function') {
-      return props.form.options.filterRelated(items);
-    }
-    return items;
-  };
-});
-
-angular.module('ui').controller('dynamicSelectController', ['$scope', '$http', '$timeout', function ($scope, $http, $timeout) {
-
-  $scope.select_model = {};
-
-  $scope.triggerTitleMap = function () {
-    console.log("listener triggered");
-    // Ugly workaround to trigger titleMap expression re-evaluation so that the selectFilter it reapplied.
-    $scope.form.titleMap.push({ "value": "345890u340598u3405u9", "name": "34095u3p4ouij" });
-    $timeout(function () {
-      $scope.form.titleMap.pop();
-    });
-  };
-
-  $scope.initFiltering = function (localModel) {
-    if ($scope.form.options.filterTriggers) {
-      $scope.form.options.filterTriggers.forEach(function (trigger) {
-        $scope.$parent.$watch(trigger, $scope.triggerTitleMap);
-      });
-    }
-    // This is set here, as the model value may become unitialized and typeless if validation fails.
-    $scope.localModelType = Object.prototype.toString.call(localModel);
-    $scope.filteringInitialized = true;
-  };
-
-  /**
-   * Función implementada para solucionar el problema de pre-seleccionar el elemento.
-   * Dejamos el elemento a pre-seleccionar en la primera posición del titleMap.
-   **/
-  function initSelection(data, scope, options) {
-    var model = getModel(options);
-    var map = options.map;
-    if (angular.isArray(model)) {
-      return data;
-    } else {
-
-      if (!model) {
-        return [{ value: undefined, name: $scope.form.placeholder }].concat(data);
-      }
-
-      var isEdit = false;
-      for (var i = 0; i < data.length; i++) {
-        if (data[i][map.valueProperty] === model[map.valueProperty]) {
-          isEdit = true;
-          break;
-        }
-      }
-      var tmp = data[0];
-      data[0] = data[i];
-      data[i] = tmp;
-
-      if (isEdit) {
-        $scope.select_model.selected = data[0];
-      }
-      return data;
-    }
-  }
-
-  function getModel(options) {
-    var form = $scope.form;
-    var modelKey = form.key[0];
-    var _scope = angular.element('form[name=' + options.formName + ']').scope();
-    return _scope.model[modelKey];
-  }
-
-  /**
-   * Función implementada para solucionar el problema de pre-seleccionar el elemento.
-   **/
-  function initEnumSelection(data, options) {
-    var model = getModel(options);
-    $scope.select_model.selected = { value: model, name: model };
-  }
-
-  $scope.remap = function (options, data) {
-
-    if (options && "map" in options && options.map) {
-      var current_row = null;
-      var result = [];
-      data.forEach(function (current_row) {
-        current_row["value"] = current_row[options.map.valueProperty];
-        current_row["name"] = current_row[options.map.nameProperty];
-        result.push(current_row);
-      });
-
-      if (options.formName) {
-        var _scope = angular.element('form[name=' + options.formName + ']').scope();
-        result = initSelection(data, _scope, options);
-      }
-      return result;
-    } else {
-      data.forEach(function (item) {
-        if ("text" in item) {
-          item.name = item.text;
-        }
-      });
-      return data;
-    }
-  };
-
-  $scope.clone = function (obj) {
-    if (null == obj || "object" != (typeof obj === 'undefined' ? 'undefined' : _typeof(obj))) return obj;
-    var copy = obj.constructor();
-    for (var attr in obj) {
-      if (obj.hasOwnProperty(attr)) copy[attr] = $scope.clone(obj[attr]);
-    }
-    return copy;
-  };
-
-  $scope.getCallback = function (callback, name) {
-    if (typeof callback == "string") {
-      var _result = $scope.$parent.evalExpr(callback);
-      if (typeof _result == "function") {
-        return _result;
-      } else {
-        throw "A callback string must match name of a function in the parent scope";
-      }
-    } else if (typeof callback == "function") {
-      return callback;
-    } else {
-      throw "A callback must either be a string matching the name of a function in the parent scope or a " + "direct function reference";
-    }
-  };
-
-  $scope.getOptions = function (options) {
-    // If defined, let the a callback function manipulate the options
-    if (options.httpPost && options.httpPost.optionsCallback) {
-      newOptionInstance = $scope.clone(options);
-      return $scope.getCallback(options.httpPost.optionsCallback)(newOptionInstance);
-    }
-    if (options.httpGet && options.httpGet.optionsCallback) {
-      newOptionInstance = $scope.clone(options);
-      return $scope.getCallback(options.httpGet.optionsCallback)(newOptionInstance);
-    } else {
-      return options;
-    }
-  };
-
-  $scope.test = function (form) {
-    form.titleMap.pop();
-  };
-
-  $scope.populateTitleMap = function (form) {
-
-    if ("enum" in form.schema) {
-      form.titleMap = [];
-      form.schema.enum.forEach(function (item) {
-        form.titleMap.push({ "value": item, "name": item });
-      });
-      initEnumSelection(form.titleMap, form.options);
-    } /* else if (form.titleMap) {
-      console.log("dynamicSelectController.populateTitleMap(key:" + form.key + ") : There is already a titleMap");
-      }*/
-    else if (!form.options) {
-
-        console.log("dynamicSelectController.populateTitleMap(key:" + form.key + ") : No options set, needed for dynamic selects");
-      } else if (form.options.callback) {
-        form.titleMap = $scope.getCallback(form.options.callback)(form.options);
-        console.log('callback items', form.titleMap);
-      } else if (form.options.asyncCallback) {
-        return $scope.getCallback(form.options.asyncCallback)(form.options).then(function (_data) {
-          form.titleMap = $scope.remap(form.options, _data.data);
-
-          if (form.options.multiple) {
-            $scope.uiMultiSelectInitInternalModel(getModel(form.options));
-          } else {
-            //$scope.select_model.selected = form.titleMap[0];
-          }
-          console.log('asyncCallback items', form.titleMap);
-        }, function (data, status) {
-          alert("Loading select items failed(Options: '" + String(form.options) + "\nError: " + status);
-        });
-      } else if (form.options.httpPost) {
-        var finalOptions = $scope.getOptions(form.options);
-
-        return $http.post(finalOptions.httpPost.url, finalOptions.httpPost.parameter).then(function (_data) {
-
-          form.titleMap = $scope.remap(finalOptions, _data.data);
-          console.log('httpPost items', form.titleMap);
-        }, function (data, status) {
-          alert("Loading select items failed (URL: '" + String(finalOptions.httpPost.url) + "' Parameter: " + String(finalOptions.httpPost.parameter) + "\nError: " + status);
-        });
-      } else if (form.options.httpGet) {
-        var finalOptions = $scope.getOptions(form.options);
-        return $http.get(finalOptions.httpGet.url, finalOptions.httpGet.parameter).then(function (data) {
-          form.titleMap = $scope.remap(finalOptions, data.data);
-          console.log('httpGet items', form.titleMap);
-        }, function (data, status) {
-          alert("Loading select items failed (URL: '" + String(finalOptions.httpGet.url) + "\nError: " + status);
-        });
-      }
-  };
-  $scope.uiMultiSelectInitInternalModel = function (_model) {
-
-    function find_in_titleMap(value) {
-      for (i = 0; i < $scope.form.titleMap.length; i++) {
-        if ($scope.form.titleMap[i].value == value) {
-          return $scope.form.titleMap[i].name;
-        }
-      }
-    }
-
-    $scope.internalModel = [];
-
-    if (_model !== undefined && angular.isArray(_model)) {
-      _model.forEach(function (value) {
-        $scope.internalModel.push({ "value": value, "name": find_in_titleMap(value) });
-      });
-    }
-  };
-}]);
-
-angular.module('ui').filter('selectFilter', [function ($filter) {
-  return function (inputArray, controller, localModel, strLocalModel) {
-    // As the controllers' .model is the global and its form is the local, we need to get the local model as well.
-    // We also need tp be able to set it if is undefined after a validation failure,so for that we need
-    // its string representation as well as we do not know its name. A typical value if strLocalModel is model['groups']
-    // This is very ugly, though. TODO: Find out why the model is set to undefined after validation failure.
-
-    if (!angular.isDefined(inputArray) || !angular.isDefined(controller.form.options) || !angular.isDefined(controller.form.options.filter) || controller.form.options.filter == '') {
-      return inputArray;
-    }
-
-    console.log("----- In filtering for " + controller.form.key + "(" + controller.form.title + "), model value: " + JSON.stringify(localModel) + "----");
-    console.log("Filter:" + controller.form.options.filter);
-    if (!controller.filteringInitialized) {
-      console.log("Initialize filter");
-      controller.initFiltering(localModel);
-    }
-    var data = [];
-
-    angular.forEach(inputArray, function (curr_item) {
-      console.log("Compare: curr_item: " + JSON.stringify(curr_item) + "with : " + JSON.stringify(controller.$eval(controller.form.options.filterTriggers[0])));
-      if (controller.$eval(controller.form.options.filter, { item: curr_item })) {
-        data.push(curr_item);
-      } else if (localModel) {
-        // If not in list, also remove the set value
-
-        if (controller.localModelType == "[object Array]" && localModel.indexOf(curr_item.value) > -1) {
-          localModel.splice(localModel.indexOf(curr_item.value), 1);
-        } else if (localModel == curr_item.value) {
-          console.log("Setting model of type " + controller.localModelType + "to null.");
-          localModel = null;
-        }
-      }
-    });
-
-    if (controller.localModelType == "[object Array]" && !localModel) {
-      // An undefined local model seems to mess up bootstrap select's indicators
-      console.log("Resetting model of type " + controller.localModelType + " to [].");
-
-      controller.$eval(strLocalModel + "=[]");
-    }
-
-    console.log("Input: " + JSON.stringify(inputArray));
-    console.log("Output: " + JSON.stringify(data));
-    console.log("Model value out : " + JSON.stringify(localModel));
-    console.log("----- Exiting filter for " + controller.form.title + "-----");
-
-    return data;
-  };
-}]);
-
-(function () {
-  'use strict';
-
-  /**
-   * Anularjs Module for pop up timepicker
-   */
-
-  angular.module('ui').factory('timepickerState', function () {
-    var pickers = [];
-    return {
-      addPicker: function addPicker(picker) {
-        pickers.push(picker);
-      },
-      closeAll: function closeAll() {
-        for (var i = 0; i < pickers.length; i++) {
-          pickers[i].close();
-        }
-      }
-    };
-  }).directive('timeFormat', ['$filter', function ($filter) {
-    return {
-      restrict: 'A',
-      require: 'ngModel',
-      scope: {
-        showMeridian: '='
-      },
-      link: function link(scope, element, attrs, ngModel) {
-        var parseTime = function parseTime(viewValue) {
-
-          if (!viewValue) {
-            ngModel.$setValidity('time', true);
-            return null;
-          } else if (angular.isDate(viewValue) && !isNaN(viewValue)) {
-            ngModel.$setValidity('time', true);
-            return viewValue;
-          } else if (angular.isString(viewValue)) {
-            var timeRegex = /^(0?[0-9]|1[0-2]):[0-5][0-9] ?[a|p]m$/i;
-            if (!scope.showMeridian) {
-              timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-            }
-            if (!timeRegex.test(viewValue)) {
-              ngModel.$setValidity('time', false);
-              return undefined;
-            } else {
-              ngModel.$setValidity('time', true);
-              var date = new Date();
-              var sp = viewValue.split(":");
-              var apm = sp[1].match(/[a|p]m/i);
-              if (apm) {
-                sp[1] = sp[1].replace(/[a|p]m/i, '');
-                if (apm[0].toLowerCase() == 'pm') {
-                  sp[0] = sp[0] + 12;
-                }
-              }
-              date.setHours(sp[0], sp[1]);
-              return date;
-            };
-          } else {
-            ngModel.$setValidity('time', false);
-            return undefined;
-          };
-        };
-
-        ngModel.$parsers.push(parseTime);
-
-        var showTime = function showTime(data) {
-          parseTime(data);
-          var timeFormat = !scope.showMeridian ? "HH:mm" : "hh:mm a";
-          return $filter('date')(data, timeFormat);
-        };
-        ngModel.$formatters.push(showTime);
-        scope.$watch('showMeridian', function (value) {
-          var myTime = ngModel.$modelValue;
-          if (myTime) {
-            element.val(showTime(myTime));
-          }
-        });
-      }
-    };
-  }]).directive('timepickerPop', ['$document', 'timepickerState', function ($document, timepickerState) {
-    return {
-      restrict: 'E',
-      transclude: false,
-      scope: {
-        inputTime: '=',
-        showMeridian: '=',
-        disabled: '='
-      },
-      controller: function controller($scope, $element) {
-        $scope.isOpen = false;
-        $scope.disabledInt = angular.isUndefined($scope.disabled) ? false : $scope.disabled;
-        $scope.toggle = function () {
-          if ($scope.isOpen) {
-            $scope.close();
-          } else {
-            $scope.open();
-          }
-        };
-      },
-      link: function link(scope, element, attrs) {
-        console.log('link de la directiva timepicker');
-        var picker = {
-          open: function open() {
-            timepickerState.closeAll();
-            scope.isOpen = true;
-          },
-          close: function close() {
-            scope.isOpen = false;
-          }
-
-        };
-        timepickerState.addPicker(picker);
-
-        scope.open = picker.open;
-        scope.close = picker.close;
-
-        scope.$watch("disabled", function (value) {
-          scope.disabledInt = angular.isUndefined(scope.disabled) ? false : scope.disabled;
-        });
-
-        scope.$watch("inputTime", function (value) {
-          if (!scope.inputTime) {
-            element.addClass('has-error');
-          } else {
-            element.removeClass('has-error');
-          }
-        });
-
-        element.bind('click', function (event) {
-          event.preventDefault();
-          event.stopPropagation();
-        });
-
-        $document.bind('click', function (event) {
-          scope.$apply(function () {
-            scope.isOpen = false;
-          });
-        });
-      },
-      template: "<input type='text' class='form-control' ng-model='inputTime' ng-disabled='disabledInt' time-format show-meridian='showMeridian' ng-focus='open()' />" + "  <div class='input-group-btn' ng-class='{open:isOpen}'> " + "    <button type='button' ng-disabled='disabledInt' class='btn btn-default form-control' ng-class=\"{'btn-primary':isOpen}\" data-toggle='dropdown' ng-click='toggle()'> " + "        <i class='glyphicon glyphicon-time'></i></button> " + "          <div class='dropdown-menu pull-right'> " + "            <timepicker ng-model='inputTime' show-meridian='showMeridian' style='margin-left: 15%;'></timepicker> " + "           </div> " + "  </div>"
-    };
-  }]);
-})();
-(function () {
-  'use strict';
-  /**
-   * @ngdoc directive
-   * @name ui.directive:uiDatatable
-   * @description
-   * # uiDatatable
-   */
-
-  angular.module('ui').directive('uiDatatable', ['$timeout', '$uibModal', '$compile', '$state', '$resource', 'DTOptionsBuilder', 'DTColumnBuilder', 'baseurl', '$rootScope', '$injector', function ($timeout, $modal, $compile, $state, $resource, DTOptionsBuilder, DTColumnBuilder, baseurl, $rootScope, $injector) {
-
-    return {
-      template: '<div>' + '<div class="widget">' + '<div class="widget-header bordered-top bordered-palegreen" ng-if="!options.hideHeader">' + '<span class="widget-caption">{{options.title}}</span>' + '<div class="widget-buttons">' + '<a href="" ng-show="canCreate()" ng-click="new()" title="Nuevo">' + '<i class="glyphicon glyphicon-plus"></i>' + '</a>' + '<a ng-repeat="menuOption in options.extraMenuOptions" href="" ng-show="menuOption.showCondition()" ng-click="menuOption.action()" title="{{menuOption.title}}">' + '<p><i class="{{menuOption.icon}}"></i>' + '  {{menuOption.data}}&nbsp;&nbsp;&nbsp;</p>' + '</a>' + '</div>' + '</div>' + '<div class="widget-body">' + '<div class="table-responsive">' + '<table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="dtInstanceCallback" width=100% class="table table-hover table-responsive table-condensed no-footer">' + '</table>' + '</div>' + '<div ng-if="selected">' + '<h3>Detalles</h3>' + '<table class="table table-striped table-bordered table-detail">' + '<tbody>' + '<tr ng-repeat="row in options.detailRows">' + '<td ng-if="selected[row.data]" class="row-title">{{row.title}}</td>' + '<td ng-if="selected[row.data] && row.renderWith">{{row.renderWith(selected[row.data])}}</td>' + '<td ng-if="selected[row.data] && !row.renderWith">{{selected[row.data]}}</td>' + '</tr>' + '</tbody>' + '</table>' + '</div>' + '</div>' + '</div>',
-      restrict: 'AE',
-      replace: true,
-      scope: {
-        options: '='
-      },
-      controller: function controller($scope, $element) {
-        var actionsColumn, selectionColumn, urlTemplate;
-        // Se arma la ruta según tenga o no filtros estáticos
-        updateStaticFilters();
-
-        $scope.dtInstance = {};
-        $scope.selectAll = false;
-        $scope.options.selection = {};
-
-        $scope.headerCompiled = false;
-        $scope.customFilters = {};
-
-        function defaultCondition() {
-          return true;
-        }
-        $scope.options.canEditCondition = $scope.options.canEditCondition || defaultCondition;
-        $scope.options.canAddCondition = $scope.options.canAddCondition || defaultCondition;
-        $scope.options.canRemoveCondition = $scope.options.canRemoveCondition || defaultCondition;
-        $scope.options.canListCondition = $scope.options.canListCondition || defaultCondition;
-        var rangeSeparator = "~";
-        var dateFormat = "DD/MM/YYYY";
-        var defaultFilterType = 'string';
-        var table;
-        var tableId;
-
-        var ajaxRequest = function ajaxRequest(data, callback) {
-
-          if (table) {
-            $scope.options.tableAjaxParams = table.ajax.params();
-
-            _.forEach(table.colReorder.order(), function (columnIndex, index) {
-              if ($scope.customFilters[columnIndex]) {
-                data.columns[index]['type'] = $scope.customFilters[columnIndex].filterType;
-              } else {
-                data.columns[index]['type'] = defaultFilterType;
-              }
-            });
-          }
-          data.rangeSeparator = rangeSeparator;
-          data.columns = _.filter(data.columns, function (c) {
-            return !!c.data;
-          });
-          var reqBody = null;
-
-          if ($scope.options.staticFilter) {
-            reqBody = $scope.options.staticFilter;
-          }
-          var xhr = $resource(urlTemplate($scope.options), data, {
-            query: {
-              isArray: false,
-              method: 'POST'
-            }
-          });
-
-          xhr.query(reqBody).$promise.then(function (response) {
-            var datos = response.data;
-            if (datos) {
-              datos.forEach(function (registro) {
-                Object.keys(registro).forEach(function (key) {
-                  if (registro[key] === true) {
-                    registro[key] = "Sí";
-                  } else if (registro[key] === false) {
-                    registro[key] = "No";
-                  }
-                });
-              });
-            }
-            callback(response);
-          }).catch(function (response) {
-            console.log(response);
-          });
-        };
-        var ajaxConfig = $scope.options.ajax ? $scope.options.ajax : ajaxRequest;
-
-        //modelos de los filtros de rangos de fechas
-        $scope.dateRangeFilters = {
-          'i': {
-            startDate: null,
-            endDate: null
-          }
-        };
-
-        //callback para el boton apply en el widget de rango de fechas
-        var datePickerApplyEvent = function datePickerApplyEvent(ev, picker) {
-          var ini = ev.model.startDate.format(dateFormat);
-          var end = ev.model.endDate.format(dateFormat);
-
-          var index = table.colReorder.order().indexOf(ev.opts.index);
-          table.column(index).search(ini + rangeSeparator + end).draw();
-        };
-
-        //callback para el boton cancel en el widget de rango de fechas, que borra el filtro
-        var datePickerCancelEvent = function datePickerCancelEvent(ev, picker) {
-          var index = table.colReorder.order().indexOf(ev.opts.index);
-          table.column(index).search("").draw();
-          $("#daterange_" + ev.opts.index).val("");
-          $scope.dateRangeFilters[ev.opts.index].startDate = null;
-          $scope.dateRangeFilters[ev.opts.index].endDate = null;
-        };
-
-        //callback para borrar el rango previamente seleccionado
-        var datePickerShowEvent = function datePickerShowEvent(ev, picker) {
-
-          if ($scope.dateRangeFilters[ev.opts.index].startDate === null) {
-            var widgetIndex = $scope.dateRangePickerWidgetsOrder.indexOf(ev.opts.index);
-            var widget = $($(".daterangepicker").get(widgetIndex));
-            widget.parent().find('.in-range').removeClass("in-range");
-            widget.parent().find('.active').removeClass("active");
-            widget.parent().find('.input-mini').removeClass("active").val("");
-          }
-        };
-
-        moment.locale('es');
-        var dateRangeLocaleOptions = {
-          cancelLabel: 'Limpiar',
-          applyLabel: 'Aplicar',
-          format: dateFormat,
-          separator: ' a ',
-          weekLabel: 'S',
-          daysOfWeek: moment.weekdaysMin(),
-          monthNames: moment.monthsShort(),
-          firstDay: moment.localeData().firstDayOfWeek()
-        };
-
-        $scope.dateRangeOptions = {};
-
-        var dateRangeDefaultOptions = {
-          eventHandlers: {
-            'apply.daterangepicker': datePickerApplyEvent,
-            'cancel.daterangepicker': datePickerCancelEvent,
-            'show.daterangepicker': datePickerShowEvent
-          },
-          opens: "right",
-          index: 0,
-          showDropdowns: true,
-          locale: dateRangeLocaleOptions
-        };
-
-        $scope.dateRangePickerWidgetsOrder = [];
-
-        //modelos del filtro de rango numericos
-        $scope.numberRangeFilters = {
-          'i': {
-            startRange: null,
-            endRange: null
-          }
-        };
-
-        //callback para el boton apply en el widget de rango de numeros
-        var rangePickerApplyEvent = function rangePickerApplyEvent(ev, picker) {
-          //console.log("apply");
-          var ini = ev.model.startRange;
-          var end = ev.model.endRange;
-
-          var index = table.colReorder.order().indexOf(ev.opts.index);
-          table.column(index).search(ini + rangeSeparator + end).draw();
-        };
-
-        //callback para el boton cancel en el widget de rango de numeros, que borra el filtro
-        var rangePickerCancelEvent = function rangePickerCancelEvent(ev, picker) {
-          //console.log("cancel");
-          var index = table.colReorder.order().indexOf(ev.opts.index);
-          table.column(index).search("").draw();
-          $("#numberrange_" + ev.opts.index).val("");
-          $scope.numberRangeFilters[ev.opts.index].startRange = null;
-          $scope.numberRangeFilters[ev.opts.index].endRange = null;
-
-          var widgetIndex = $scope.rangePickerWidgetsOrder.indexOf(ev.opts.index);
-          var widget = $($(".rangepicker").get(widgetIndex));
-          widget.parent().find('input[name=rangepicker_start]').val();
-          widget.parent().find('input[name=rangepicker_end]').val();
-        };
-
-        var rangeLocaleOptions = {
-          cancelLabel: 'Limpiar',
-          applyLabel: 'Aplicar',
-          separator: ' a '
-        };
-
-        $scope.rangeOptions = {};
-
-        var rangeDefaultOptions = {
-          eventHandlers: {
-            'apply.rangepicker': rangePickerApplyEvent,
-            'cancel.rangepicker': rangePickerCancelEvent
-          },
-          opens: "right",
-          index: 0,
-          showDropdowns: true,
-          locale: rangeLocaleOptions
-        };
-
-        $scope.rangePickerWidgetsOrder = [];
-
-        $scope.dtOptions = DTOptionsBuilder.newOptions().withDataProp('data').withOption('language', {
-          'sProcessing': 'Procesando...',
-          'sLengthMenu': 'Registros _MENU_',
-          'sZeroRecords': 'No se encontraron resultados',
-          'sEmptyTable': 'Ningún dato disponible en esta tabla',
-          'sInfo': 'Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros',
-          'sInfoEmpty': 'Mostrando registros del 0 al 0 de un total de 0 registros',
-          'sInfoFiltered': '(filtrado de un total de _MAX_ registros)',
-          'sInfoPostFix': '.',
-          'sSearch': 'Buscar:',
-          'sInfoThousands': ',',
-          'sLoadingRecords': 'Cargando...',
-          'oPaginate': {
-            'sFirst': 'Primero',
-            'sLast': 'Último',
-            'sNext': 'Siguiente',
-            'sPrevious': 'Anterior'
-          },
-          'oAria': {
-            'sSortAscending': ': Activar para ordenar la columna de manera ascendente',
-            'sSortDescending': ': Activar para ordenar la columna de manera descendente'
-          }
-        }).withOption('createdRow', function (row, data, dataIndex) {
-          $compile(angular.element(row).contents())($scope);
-        }).withOption('headerCallback', function (header) {
-          if (!$scope.headerCompiled) {
-            // Use this headerCompiled field to only compile header once
-            $scope.headerCompiled = true;
-            $compile(angular.element(header).contents())($scope);
-          }
-        }).withPaginationType('full_numbers').withButtons(['colvis']).withBootstrap();
-
-        if ($scope.options.resource === '@') {
-          // @ indica que es los datos para el datatable son locales
-          $scope.dtOptions.withOption('data', $scope.options.factory.all());
-        } else {
-          $scope.dtOptions.withOption('ajax', ajaxConfig);
-          $scope.dtOptions.withOption('serverSide', true);
-          $scope.dtOptions.withOption('processing', true);
-        }
-
-        if ($scope.options.detailRows) {
-          $scope.dtOptions = $scope.dtOptions.withOption('rowCallback', rowCallback);
-        }
-
-        //inicializan la cantidad de columnas visibles
-        $scope.visibleColumns = 0; //$scope.options.columns.length;
-
-        $scope.dtColumns = [];
-        //indices
-        $scope.defaultColumnOrderIndices = [];
-        $scope.originalIndexKey = {};
-
-        //si tiene checkboxes para seleccion
-        var indexPadding = 0;
-        if ($scope.options.isSelectable) {
-
-          var titleHtml = '<label><input type="checkbox" ng-model="selectAll" ng-click="toggleAll()"><span class="text"></span></label>';
-
-          selectionColumn = DTColumnBuilder.newColumn(null).withTitle(titleHtml).notSortable().withOption('searchable', false).renderWith(function (data, type, full, meta) {
-            var checkbox = '<label>' + '<input id="' + data.id + '" type="checkbox" ng-model="options.selection[' + data.id + ']" ng-click="toggleOne()">' + '<span class="text"></span></label>';
-            return checkbox;
-          }).withOption('name', 'checkbox');
-
-          $scope.dtColumns.push(selectionColumn);
-          $scope.visibleColumns += 1;
-          indexPadding = 1;
-          $scope.originalIndexKey[0] = null; //'checkbox';
-          $scope.defaultColumnOrderIndices.push(0);
-          $scope.dtOptions.withColReorderOption('iFixedColumnsLeft', 1);
-        }
-
-        /* RENDERS BASICOS */
-        var dateRender = function dateRender(dateFormat) {
-          return function (data) {
-            //return moment.utc(data).format(dateFormat);
-            return moment(data).format(dateFormat);
-          };
-        };
-
-        var emptyRender = function emptyRender(data) {
-          if (data == undefined) return "";else return data;
-        };
-
-        var numberRender = function numberRender(data) {
-          if (data) return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");else return '';
-        };
-
-        var monedaRender = function monedaRender(pathAtt) {
-          return function (data, type, row) {
-            if (data) {
-              var moneda = "Gs. ";
-              if (row[pathAtt] === 'dolares') {
-                moneda = "Usd. ";
-                data = parseFloat(data).toFixed(2);
-              } else if (row[pathAtt] === 'pesos') {
-                moneda = "Pes. ";
-                data = parseFloat(data).toFixed(2);
-              } else if (row[pathAtt] === 'real') {
-                moneda = "Rel. ";
-                data = parseFloat(data).toFixed(2);
-              } else if (row[pathAtt] === 'euro') {
-                moneda = "Eur. ";
-                data = parseFloat(data).toFixed(2);
-              }
-              return moneda + data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            } else return "";
-          };
-        };
-
-        var commonAttrs = ['data', 'title', 'class', 'renderWith', 'visible', 'sortable', 'searchable'];
-        _.map($scope.options.columns, function (c, index) {
-
-          var column = DTColumnBuilder.newColumn(c.data);
-          //el indice original para la columna
-          var originalIndex = indexPadding + index;
-          $scope.originalIndexKey[originalIndex] = c.data;
-
-          if (c.title) column = column.withTitle(c.title);
-          if (c.class) column = column.withClass(c.class);
-          if (c.renderWith) {
-            if (c.renderWith === 'dateRender') column = column.renderWith(dateRender(c.dateFormat));else if (c.renderWith === 'emptyRender') column = column.renderWith(emptyRender);else if (c.renderWith === 'numberRender') column = column.renderWith(numberRender);else if (c.renderWith === 'monedaRender') column = column.renderWith(monedaRender(c.pathAttMoneda));else column = column.renderWith(c.renderWith);
-          }
-          if (c.sortable === false) column = column.notSortable();
-
-          //si hay un orden definido y no está dentro de ese orden o si especifica que no es visible
-          if (!_.contains($scope.options.defaultColumnOrder, c.data) || c.visible === false) column = column.notVisible();else $scope.visibleColumns += 1;
-
-          _.forOwn(c, function (value, key) {
-            if (!_.contains(commonAttrs, key)) column = column.withOption(key, value);
-          });
-
-          if (c.searchable === false) {
-            column = column.withOption('bSearchable', false);
-          } else {
-            column = column.withOption('bSearchable', true);
-          }
-
-          if (c.type) {
-            var customFilter = { 'filterType': c.type, 'filterUrl': c.filterUrl };
-
-            if (c.type === 'date-range') {
-              $scope.dateRangeFilters[originalIndex] = { startDate: null, endDate: null };
-            } else if (c.type === 'number-range') {
-              $scope.numberRangeFilters[originalIndex] = { startRange: null, endRange: null };
-            }
-
-            $scope.customFilters[originalIndex] = customFilter;
-          }
-          $scope.dtColumns.push(column);
-        });
-
-        //console.log($scope.dtColumns);
-        if ($scope.options.hasOptions) {
-          $scope.originalIndexKey[$scope.visibleColumns] = null; //'actions';
-          // Fix last right column
-          $scope.dtOptions.withColReorderOption('iFixedColumnsRight', 1);
-          $scope.visibleColumns += 1;
-        }
-
-        //columnas reordenables, por defecto habilitado
-        if ($scope.options.colReorder === true || $scope.options.colReorder === undefined) {
-          $scope.dtOptions.withColReorder();
-        }
-
-        actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable().withOption('searchable', false).renderWith(function (data, type, full, meta) {
-          var basicOpts = '<button class="btn-row-datatable btn btn-success btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canEdit(' + data.id + ')}" ng-click="edit(' + data.id + ', $event)">' + '   <span class="glyphicon glyphicon-pencil"></span>' + '</button>' + '<button class="btn-row-datatable btn btn-danger btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canRemove(' + data.id + ')}" ng-click="remove(' + data.id + ', $event)">' + '   <span class="glyphicon glyphicon-trash"></span>' + '</button>' + '<button class="btn-row-datatable btn btn-info btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canList(' + data.id + ')}" ng-click="view(' + data.id + ', $event)">' + '   <span class="glyphicon glyphicon-eye-open"></span>' + '</button>';
-          if ($scope.options.extraRowOptions) {
-            _.forEach($scope.options.extraRowOptions, function (menuOpt) {
-              var compilado = _.template(menuOpt.templateToRender);
-              $scope[menuOpt.functionName] = menuOpt.functionDef;
-              var customAttribute = menuOpt.customAttribute;
-              var compiled = { 'dataId': data.id, '$state': $state, '$scope': $scope };
-              if (customAttribute && customAttribute.constructor === Array) {
-                compiled.dataCustom = JSON.stringify(_.map(customAttribute, function (ca) {
-                  return data[ca];
-                }));
-              } else {
-                compiled.dataCustom = JSON.stringify(data[menuOpt.customAttribute]);
-              }
-              basicOpts = basicOpts + compilado(compiled);
-              $scope[menuOpt.conditionName] = menuOpt.conditionDef;
-            });
-          }
-          return basicOpts;
-        });
-
-        $scope.canEdit = function (data) {
-          return $scope.options.canEditCondition(data) && !$scope.options.hideEditMenu;
-        };
-
-        $scope.canRemove = function (data) {
-          return $scope.options.canRemoveCondition(data) && !$scope.options.hideRemoveMenu;
-        };
-
-        $scope.canCreate = function (data) {
-          return $scope.options.canAddCondition(data) && !$scope.options.hideAddMenu;
-        };
-
-        $scope.canList = function (data) {
-          return $scope.options.canListCondition(data) && !$scope.options.hideViewMenu;
-        };
-
-        if ($scope.options.hasOptions) {
-          $scope.dtColumns.push(actionsColumn);
-          $scope.visibleColumns += 1;
-        }
-
-        $scope.new = function () {
-          if (angular.isFunction($scope.options.onNew)) {
-            $scope.options.onNew();
-          } else {
-            console.warn("No se especificó función options.onNew");
-          }
-        };
-
-        $scope.edit = function (itemId) {
-
-          if (angular.isFunction($scope.options.onEdit)) {
-            $scope.options.onEdit(itemId);
-          } else {
-            console.warn("No se especificó función options.onEdit");
-          }
-        };
-
-        $scope.view = function (itemId) {
-
-          if (angular.isFunction($scope.options.onView)) {
-            $scope.options.onView(itemId);
-          } else {
-            console.warn("No se especificó función options.onView");
-          }
-        };
-
-        $scope.toggleAll = function () {
-          if ($scope.selectAll) {
-            //If true then select visible
-            _.each(table.rows().data(), function (value, index) {
-              $scope.options.selection[value.id] = true;
-            });
-          } else {
-            _.each(table.rows().data(), function (value, index) {
-              $scope.options.selection[value.id] = false;
-            });
-          }
-        };
-
-        $scope.toggleOne = function () {
-          var notSelectAll = _.some(table.rows().data(), function (value, index) {
-            return !$scope.options.selection[value.id];
-          });
-          $scope.selectAll = !notSelectAll;
-        };
-
-        //funcion para crear los filtros
-        var createFilters = function createFilters() {
-          $('#' + tableId + ' tfoot tr').empty();
-          $scope.dateRangePickerWidgetsOrder = [];
-          $(".daterangepicker").remove();
-          $scope.options.currentColumnOrder = [];
-
-          _.forEach(table.context[0].aoColumns, function (column) {
-            var realIndex = column._ColReorder_iOrigCol;
-            var data = column.mData;
-            var html = '<th></th>';
-
-            if (column.bVisible) {
-              if (data) {
-                $scope.options.currentColumnOrder.push(data);
-              }
-
-              var title = column.name;
-              if (!name) {
-                title = column.sTitle;
-              }
-
-              var customFilter = $scope.customFilters[realIndex];
-
-              if (customFilter) {
-                if (customFilter.filterType === 'combo') {
-                  var id = 'combo_' + realIndex;
-                  html = '<th><div id="' + id + '" name="' + title + '" class="filtro-ancho"></div></th>';
-                  $('#' + tableId + ' tfoot tr').append(html);
-                  html = '';
-
-                  $('#' + id).select2({
-                    minimumResultsForSearch: -1,
-                    id: function id(text) {
-                      return text[column.idField];
-                    },
-                    data: function data() {
-                      return $http({
-                        url: baseurl.getUrl() + customFilter.filterUrl,
-                        method: "GET"
-                      });
-                    },
-                    ajax: {
-                      url: baseurl.getUrl() + '/' + customFilter.filterUrl,
-                      dataType: 'json',
-                      params: { headers: { 'Content-Type': 'application/json' } },
-                      quietMillis: 250,
-                      data: function data(term, page) {
-                        // page is the one-based page number tracked by Select2
-                        return {
-                          q: term
-                        };
-                      },
-                      results: function results(data, page) {
-                        // parse the results into the format expected by Select2.
-                        // since we are using custom formatting functions we do not need to alter the remote JSON data
-                        return { results: data };
-                      },
-                      cache: true
-                    },
-
-                    initSelection: function initSelection(element, callback) {
-                      var value = table.column(column.idx).search();
-                      $.ajax(baseurl.getUrl() + '/' + customFilter.filterUrl, {
-                        beforeSend: function beforeSend(xhr) {
-                          xhr.setRequestHeader('Content-Type', 'application/json');
-                          var TokenService = $injector.get('TokenService');
-
-                          if (TokenService) {
-                            xhr.setRequestHeader('Authorization', 'Bearer ' + TokenService.getToken());
-                          }
-                        },
-                        dataType: 'json'
-                      }).done(function (data) {
-                        callback(data);
-                      });
-                    },
-                    formatResult: function formatResult(text) {
-                      return '<div class="select2-user-result">' + text[column.textField] + '</div>';
-                    },
-                    formatSelection: function formatSelection(text) {
-                      return text[column.idField];
-                    },
-                    escapeMarkup: function escapeMarkup(m) {
-                      return m;
-                    }
-                  }).on('change', function (e) {
-                    var value = $('#' + id).select2('val');
-                    //los ids de los inputs tiene la forma "combo_[realIndex]"
-                    var realIndex = parseInt(id.substring(6));
-                    var index = table.colReorder.order().indexOf(realIndex);
-
-                    if (this.value.length >= 1) {
-                      table.column(index).search(this.value).draw();
-                    } else {
-                      table.column(index).search("").draw();
-                    }
-                  });
-                } else if (customFilter.filterType === 'date-range') {
-                  $scope.dateRangeOptions[realIndex] = _.clone(dateRangeDefaultOptions, true);
-                  $scope.dateRangeOptions[realIndex].index = realIndex;
-
-                  //si esta despues de la mitad abrir a la izquierda
-                  if (realIndex > $scope.options.columns.length / 2) {
-                    $scope.dateRangeOptions[realIndex].opens = 'left';
-                  }
-
-                  $scope.dateRangePickerWidgetsOrder.push[realIndex];
-                  var input = '<th><input id="daterange_' + realIndex + '" date-range-picker class="column-filter form-control input-sm date-picker" options="dateRangeOptions[' + realIndex + ']" type="text" ng-model="dateRangeFilters[' + realIndex + ']" /></th>';
-
-                  html = $compile(input)($scope);
-                } else if (customFilter.filterType === 'number-range') {
-                  $scope.rangeOptions[realIndex] = _.clone(rangeDefaultOptions, true);
-                  $scope.rangeOptions[realIndex].index = realIndex;
-
-                  //si esta despues de la mitad abrir a la izquierda
-                  if (realIndex > $scope.options.columns.length / 2) {
-                    $scope.rangeOptions[realIndex].opens = 'left';
-                  }
-
-                  $scope.rangePickerWidgetsOrder.push[realIndex];
-                  var input = '<th><input  id="numberrange_' + realIndex + '" range-picker class="column-filter form-control input-sm " options="rangeOptions[' + realIndex + ']" type="text" ng-model="numberRangeFilters[' + realIndex + ']" /></th>';
-
-                  html = $compile(input)($scope);
-                }
-              } else if (column.mData && column.bSearchable) {
-                var value = table.column(column.idx).search();
-
-                html = '<th><input id="filtro_' + realIndex + '" class="column-filter form-control input-sm" type="text" style="min-width:60px; width: 100%;" value="' + value + '"/></th>';
-              } else {
-                html = '<th></th>';
-              }
-
-              $('#' + tableId + ' tfoot tr').append(html);
-            }
-          });
-
-          //bind de eventos para filtros
-          _.forEach($("[id^='filtro']"), function (el) {
-            $(el).on('keyup change', function (e) {
-              //los ids de los inputs tiene la forma "filtro_[realIndex]"
-              var realIndex = parseInt(el.id.substring(7));
-              var index = table.colReorder.order().indexOf(realIndex);
-
-              if (this.value.length >= 1 || e.keyCode == 13) {
-                table.column(index).search(this.value).draw();
-              }
-
-              // Ensure we clear the search if they backspace far enough
-              if (this.value == "") {
-                table.column(index).search("").draw();
-              }
-            });
-          });
-        };
-
-        /* Funcion de actualizacion de URL Base con o sin filtros estaticos */
-        function updateStaticFilters() {
-          urlTemplate = _.template(baseurl.getUrl() + '/<%= resource %>/datatables');
-        }
-
-        $scope.dtInstanceCallback = function (dtInstance) {
-          $('thead+tfoot').remove();
-          tableId = dtInstance.id;
-          table = dtInstance.DataTable;
-
-          //creacion de filtros
-          $('#' + tableId).append('<tfoot><tr></tr></tfoot>');
-          createFilters();
-          $('#' + tableId + ' tfoot').insertAfter('#' + tableId + ' thead');
-
-          _.each($scope.dtColumns, function (col, index) {
-            if (col.filter) {
-              var a = $('.input-sm')[index + 1]; // data: estado
-              a.value = col.filter;
-            }
-          });
-
-          //Texto del boton de visibilidad de columnas
-          $(".dt-button.buttons-colvis").removeClass().addClass("columns-selection").html('<i class="glyphicon glyphicon-th-list"></i>');
-
-          /* funcion para actualizar la tabla manualmente */
-          $scope.options.reloadData = function () {
-
-            if ($scope.options.resource !== '@') {
-              updateStaticFilters();
-              $('#' + tableId).DataTable().ajax.reload();
-            }
-          };
-
-          /* whatcher para actualizar la tabla automaticamente cuando los filtros estaticos cambian */
-          $scope.$watch("options.staticFilter", function handleStaticFilterChange(newValue, oldValue) {
-
-            if ($scope.options.resource !== '@') {
-              updateStaticFilters();
-              $('#' + tableId).DataTable().ajax.reload();
-            }
-          });
-
-          table.on('draw', function () {
-            $timeout(function () {
-              if (table.rows().data().length > 0) {
-                var selectAll = true;
-                _.each(table.rows().data(), function (value, index) {
-
-                  if ($scope.options.selection[value.id] === undefined) {
-                    $scope.options.selection[value.id] = false;
-                    selectAll = false;
-                  } else if ($scope.options.selection[value.id] == false) {
-                    selectAll = false;
-                  }
-                });
-
-                $scope.selectAll = selectAll;
-              } else {
-                $scope.selectAll = false;
-              }
-            });
-          });
-
-          table.on('column-visibility', function (e, settings, column, state) {
-            createFilters();
-          });
-
-          table.on('column-reorder', function (e, settings, details) {
-            createFilters();
-          });
-
-          $scope.dtInstance = dtInstance;
-
-          // obtiene los filtros actuales
-          $scope.options.getFilters = function getFilters() {
-            var filters = {};
-            _.forEach(table.context[0].aoColumns, function (column) {
-              var realIndex = column._ColReorder_iOrigCol;
-              var data = column.mData;
-              if (data !== undefined && data !== "" && data !== null) {
-                filters[data] = table.column(realIndex).search();
-              }
-            });
-            return filters;
-          };
-
-          if ($scope.options.defaultOrderColumn !== undefined && $scope.options.defaultOrderDir !== undefined) {
-            table.order([[$scope.options.defaultOrderColumn, $scope.options.defaultOrderDir]]);
-          }
-        };
-
-        $scope.remove = function (itemId) {
-          $scope.disableButton = false;
-          $scope.selectedItemId = itemId;
-          $scope.tituloModal = "Confirmación de Borrado";
-          $scope.mensajeModal = "Esta operación eliminará el registro seleccionado. ¿Desea continuar?";
-          $scope.modalInstanceBorrar1 = $modal.open({
-            template: '<div class="modal-header">' + '<h3 class="modal-title">{{::tituloModal}}</h3>' + '</div>' + '<div class="modal-body">{{::mensajeModal}}</div>' + '<div class="modal-footer">' + '<button class="btn btn-primary" ng-disabled="disableButton" ng-click="ok(selectedItemId)">Aceptar</button>' + '<button class="btn btn-warning" ng-disabled="disableButton" ng-click="cancel()">Cancelar</button>' + '</div>',
-            scope: $scope
-          });
-
-          $scope.cancel = function () {
-            $scope.disableButton = true;
-            $scope.modalInstanceBorrar1.dismiss('cancel');
-          };
-
-          $scope.ok = function (itemId) {
-            $scope.disableButton = true;
-
-            if (angular.isFunction($scope.options.onRemove)) {
-              $scope.options.onRemove(itemId);
-              $scope.modalInstanceBorrar1.close(itemId);
-            }
-            // var model = $scope.options.factory.create({ id: itemId });
-            // $scope.options.factory.remove(model).then(function () {
-            //   // se refresca la tabla
-            //   $('#' + tableId).DataTable().ajax.reload();
-            //   $scope.modalInstanceBorrar1.close(itemId);
-            // }, function (error) {
-            //   $scope.modalInstanceBorrar1.dismiss('cancel');
-            //   $scope.tituloModal = "No se pudo borrar el registro";
-            //   $scope.mensajeModal = $scope.options.failedDeleteError;
-            //   var modalInstance = $modal.open({
-            //     template: '<div class="modal-header">' +
-            //     '<h3 class="modal-title">{{::tituloModal}}</h3>' +
-            //     '</div>' +
-            //     '<div class="modal-body">{{::mensajeModal}}</div>' +
-            //     '<div class="modal-footer">' +
-            //     '<button class="btn btn-primary" ng-click="cancel()">Aceptar</button>' +
-            //     '</div>',
-            //     scope: $scope
-            //   });
-            //   $scope.cancel = function () {
-            //     modalInstance.dismiss('cancel');
-            //   };
-            // });
-          };
-        };
-
-        function rowCallback(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
-          $('td', nRow).unbind('click');
-          $('td', nRow).bind('click', function () {
-            $scope.$apply(function () {
-              $scope.selected = aData;
-              $timeout(function () {
-                $(document).scrollTop($('.table-detail').offset().top);
-              });
-            });
-          });
-          return nRow;
-        }
-
-        if ($scope.options.detailRows) {
-          if ($scope.options.detailRows === true) {
-            $scope.options.detailRows = $scope.options.columns;
-          } else {
-            $scope.options.detailRows = _.union($scope.options.columns, $scope.options.detailRows);
-          }
-        }
-      }
-    };
-  }]);
-})();
-(function () {
-  'use strict';
-
-  angular.module('ui').directive('validatedDateInput', validatedDateInput);
-
-  function validatedDateInput() {
-    var directive = {
-      restrict: 'E',
-      scope: {
-        model: '=',
-        form: '=',
-        name: '@',
-        label: '@',
-        isRequired: '=',
-        submittedFlag: '=',
-        classes: '@',
-        onChange: '&',
-        isDisabled: '=',
-        dateOptions: '@',
-        format: '@',
-        opened: '@'
-      },
-      controllerAs: 'vm',
-      bindToController: true,
-      templateUrl: 'views/validated-date-input.html',
-      link: linkFunc,
-      controller: ValidatedDateInputController
-    };
-
-    function linkFunc(scope, elem, attr, controller, dateFilter) {
-      //controller.$formatters.shift();
-      if (controller.model) {
-        controller.model = new Date(controller.model);
-      }
-    }
-
-    return directive;
-  }
-
-  ValidatedDateInputController.$inject = ['$scope', '$timeout'];
-  function ValidatedDateInputController($scope, $timeout) {
-    var vm = this;
-
-    if (!vm.format) vm.format = "dd/MM/yyyy";
-
-    vm.showWeeks = false;
-
-    vm.open = function () {
-      vm.opened = true;
-    };
-
-    vm.focus = false;
-    vm.focus = function () {
-      vm.opened = true;
-      vm.focus = true;
-    };
-
-    vm.today = function () {
-      vm.model = new Date();
-    };
-
-    vm.clear = function () {
-      vm.model = null;
-    };
-
-    vm.dateOptions = {
-      formatYear: 'yy',
-      startingDay: 1
-    };
-
-    activate();
-    vm.updateListener = updateListener;
-
-    function activate() {
-      moment.locale('es');
-    }
-
-    function updateListener() {
-      vm.focus = false;
-      $timeout(vm.onChange, 0);
-    }
-  }
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').directive('validatedTextInput', validatedTextInput);
-
-  function validatedTextInput() {
-    var directive = {
-      restrict: 'E',
-      scope: {
-        model: '=',
-        form: '=',
-        name: '@',
-        label: '@',
-        isRequired: '=',
-        submittedFlag: '=',
-        placeholder: '@',
-        classes: '@',
-        inputType: '@',
-        onChange: '&',
-        maxLength: '@',
-        minLength: '@',
-        focusElement: '@',
-        isDisabled: '=',
-        pattern: '@',
-        min: '=',
-        max: '='
-      },
-      controllerAs: 'vm',
-      bindToController: true,
-      templateUrl: 'views/validated-text-input.html',
-      link: linkFunc,
-      controller: ValidatedTextInputController
-    };
-
-    function linkFunc(scope, elem, attr) {}
-
-    return directive;
-  }
-
-  ValidatedTextInputController.$inject = ['$scope', '$timeout'];
-  function ValidatedTextInputController($scope, $timeout) {
-    var vm = this;
-
-    activate();
-    vm.updateListener = updateListener;
-
-    function activate() {}
-
-    function updateListener() {
-      $timeout(vm.onChange, 0);
-    }
-  };
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').directive('validatedTextareaInput', validatedTextareaInput);
-
-  function validatedTextareaInput() {
-    var directive = {
-      restrict: 'E',
-      scope: {
-        model: '=',
-        form: '=',
-        name: '@',
-        label: '@',
-        isRequired: '=',
-        submittedFlag: '=',
-        classes: '@',
-        inputType: '@',
-        onChange: '&',
-        maxLength: '@',
-        minLength: '@',
-        isDisabled: '='
-      },
-      controllerAs: 'vm',
-      bindToController: true,
-      templateUrl: 'views/validated-textarea-input.html',
-      link: linkFunc,
-      controller: ValidatedTextareaInputController
-    };
-
-    function linkFunc(scope, elem, attr) {}
-
-    return directive;
-  }
-
-  ValidatedTextareaInputController.$inject = ['$scope', '$timeout'];
-  function ValidatedTextareaInputController($scope, $timeout) {
-    var vm = this;
-
-    activate();
-    vm.updateListener = updateListener;
-
-    function activate() {
-      vm.campo = vm.form[vm.name];
-    }
-
-    function updateListener() {
-      $timeout(vm.onChange, 0);
-    }
-  }
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').directive('validatedTimeInput', validatedTimeInput);
-
-  function validatedTimeInput() {
-    var directive = {
-      restrict: 'E',
-      scope: {
-        model: '=',
-        form: '=',
-        name: '@',
-        label: '@',
-        isRequired: '=',
-        submittedFlag: '=',
-        classes: '@',
-        onChange: '&',
-        isDisabled: '=',
-        dateOptions: '@',
-        format: '@',
-        opened: '@'
-      },
-      controllerAs: 'vm',
-      bindToController: true,
-      templateUrl: 'views/validated-time-input.html',
-      link: linkFunc,
-      controller: validatedTimeInputController
-    };
-
-    function linkFunc(scope, elem, attr, controller, dateFilter) {
-      if (controller.model) {
-        controller.model = new Date(controller.model);
-      }
-    }
-    return directive;
-  }
-
-  validatedTimeInputController.$inject = ['$scope', '$timeout', '$element', '$document'];
-  function validatedTimeInputController($scope, $timeout, element, $document) {
-    var vm = this;
-
-    if (!vm.format) {
-      vm.format = 'HH:mm';
-    }
-
-    vm.date = new Date();
-
-    vm.showWeeks = false;
-
-    vm.open = function () {
-      if (vm.opened === false) {
-        vm.opened = true;
-      } else {
-        vm.opened = false;
-      }
-    };
-
-    vm.focus = false;
-    vm.focus = function () {
-      vm.opened = true;
-      vm.focus = true;
-    };
-
-    vm.blur = function () {
-      vm.opened = false;
-      vm.focus = false;
-    };
-
-    vm.today = function () {
-      vm.date = new Date();
-      vm.model = moment(vm.date).format(vm.format);
-    };
-
-    vm.clear = function () {
-      vm.date = null;
-      vm.model = null;
-    };
-
-    vm.close = function () {
-      vm.opened = false;
-      vm.focus = false;
-    };
-
-    activate();
-    vm.updateListener = updateListener;
-
-    function activate() {
-      moment.locale('es');
-      vm.opened = false;
-    }
-
-    function updateListener() {
-      vm.model = moment(vm.date).format(vm.format);
-      $timeout(vm.onChange, 0);
-    }
-
-    vm.keydown = function (evt) {
-      if (evt.which === 27 || evt.which === 9 || evt.which === 13) {
-        vm.close();
-      }
-    };
-
-    element.bind('click', function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    });
-
-    $document.bind('click', function (event) {
-      $scope.$apply(function () {
-        vm.opened = false;
-      });
-    });
-  }
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').directive('validatedUiselectInput', validatedUiselectInput);
-
-  function validatedUiselectInput() {
-    var directive = {
-      restrict: 'E',
-      scope: {
-        model: '=',
-        form: '=',
-        name: '@',
-        label: '@',
-        isRequired: '=',
-        submittedFlag: '=',
-        fieldToShow: '@',
-        options: '=',
-        classes: '@',
-        onSelect: '&',
-        focusElement: '@',
-        isDisabled: '='
-      },
-      controllerAs: 'vm',
-      bindToController: true,
-      templateUrl: 'views/validated-uiselect-input.html',
-      link: linkFunc,
-      controller: ValidatedUiselectInputController,
-      compile: compileFunc
-    };
-
-    function linkFunc(scope, elem, attr) {}
-
-    function compileFunc(element, attrs) {}
-
-    return directive;
-  }
-
-  ValidatedUiselectInputController.$inject = ['$scope', '$timeout'];
-  function ValidatedUiselectInputController($scope, $timeout) {
-    var vm = this;
-
-    vm.getChoice = getChoice;
-
-    vm.selectListener = selectListener;
-
-    vm.getFilter = getFilter;
-
-    activate();
-
-    function activate() {}
-
-    function getChoice(obj) {
-      return _.get(obj, vm.fieldToShow);
-    }
-
-    function selectListener() {
-      $timeout(vm.onSelect, 0);
-    }
-
-    function getFilter(param) {
-      var obj = {};
-      obj[vm.fieldToShow] = param;
-      return obj;
-    }
-  }
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').directive('validatedUiselectMultipleInput', validatedUiselectMultipleInput);
-
-  function validatedUiselectMultipleInput() {
-    var directive = {
-      restrict: 'E',
-      scope: {
-        model: '=',
-        form: '=',
-        name: '@',
-        label: '@',
-        isRequired: '=',
-        submittedFlag: '=',
-        fieldToShow: '@',
-        options: '=',
-        classes: '@',
-        onSelect: '&',
-        isDisabled: '='
-      },
-      controllerAs: 'vm',
-      bindToController: true,
-      templateUrl: 'views/validated-uiselect-multiple-input.html',
-      link: linkFunc,
-      controller: ValidatedUiselectMultipleInputController
-    };
-
-    function linkFunc(scope, elem, attr) {}
-
-    return directive;
-  }
-
-  ValidatedUiselectMultipleInputController.$inject = ['$scope', '$timeout'];
-  function ValidatedUiselectMultipleInputController($scope, $timeout) {
-    var vm = this;
-
-    vm.getChoice = getChoice;
-
-    vm.selectListener = selectListener;
-
-    vm.printTest = printTest;
-
-    vm.getFilter = getFilter;
-
-    activate();
-
-    function activate() {}
-
-    function getChoice(obj) {
-      return _.get(obj, vm.fieldToShow);
-    }
-
-    function selectListener() {
-      $timeout(vm.onSelect, 0);
-    }
-
-    function getFilter(param) {
-      var obj = {};
-      obj[vm.fieldToShow] = param;
-      return obj;
-    }
-
-    function printTest() {
-      console.log('este es un test');
-    }
-  }
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').directive('wizard', wizard);
-
-  function wizard() {
-    var directive = {
-      restrict: 'E',
-      scope: {},
-      controllerAs: 'vm',
-      bindToController: true,
-      templateUrl: 'views/wizard.html',
-      controller: WizardController,
-      transclude: true
-    };
-    return directive;
-  }
-
-  WizardController.$inject = ['$scope', '$timeout'];
-
-  function WizardController($scope, $timeout) {
-    var vm = this;
-    vm.tabs = [];
-
-    activate();
-    vm.addTab = addTab;
-
-    function activate() {}
-
-    function addTab() {
-      // TODO Agregar TAB
-    }
-  }
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').directive('wizardContent', wizardContent);
-
-  function wizardContent() {
-    var directive = {
-      restrict: 'E',
-      transclude: true,
-      scope: {},
-      templateUrl: 'views/wizardcontent.html',
-      link: linkFunc
-    };
-
-    return directive;
-  }
-
-  function linkFunc(scope, element, attrs) {}
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').directive('wizardPane', wizardPane);
-
-  wizardPane.$inject = ['$state'];
-
-  function wizardPane($state) {
-    var directive = {
-      required: '^^wizard',
-      restrict: 'E',
-      scope: {
-        title: '@',
-        number: '@',
-        activeIf: '@',
-        disabledIf: '=',
-        state: '@'
-      },
-      templateUrl: 'views/wizardpane.html',
-      controller: controllerFunc,
-      controllerAs: 'vm',
-      bindToController: true
-    };
-
-    return directive;
-  }
-
-  controllerFunc.$inject = ['$state'];
-
-  function controllerFunc($state) {
-    var vm = this;
-
-    /**
-     * Verifica si el estado dado como parametro es el estado actual
-     * 
-     * @param {string} state - nombre relativo o completo
-     */
-    vm.isActive = function (state) {
-      return state.startsWith('.') ? $state.is($state.get('^').name + state) : $state.is(state);
-    };
-
-    vm.go = function (dest) {
-      if (vm.disabledIf) {
-        return;
-      }
-      $state.go(dest);
-    };
-  }
-})();
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc service
-   * @name ui.Authentication
-   * @description
-   * # Authentication
-   */
-
-  angular.module('ui').service('AuthenticationService', function ($resource, $rootScope, $http, baseurl) {
-    var Authentication = $resource(baseurl.getBaseUrl() + '/:action', { action: '@action' });
-
-    return {
-
-      login: function login(username, password) {
-        $rootScope.auxiliarUsername = username;
-        var auth = new Authentication({ username: username, password: password });
-        return auth.$save({ action: 'login' });
-      },
-
-      postLogin: function postLogin(authParams) {
-        return new Authentication.save({ action: 'loginApp' }, { username: authParams.username });
-      },
-
-      token: function token(authParams) {
-        var auth = new Authentication({
-          username: authParams.username,
-          accessToken: authParams.accessToken,
-          requestToken: authParams.requestToken
-        });
-        return auth.$save({ action: 'token' });
-      },
-
-      logout: function logout() {
-        var authParams = this.getCurrentUser();
-        var auth = new Authentication({
-          username: authParams.username,
-          accessToken: authParams.accessToken
-        });
-        $rootScope.AuthParams = {};
-        localStorage.removeItem('AUTH_PARAMS');
-
-        return auth.$save({ action: 'logout' });
-      },
-
-      getCurrentUser: function getCurrentUser() {
-        var user = $rootScope.AuthParams;
-
-        if (!user || Object.keys(user).length === 0) {
-          user = JSON.parse(localStorage.getItem('AUTH_PARAMS')) || undefined;
-
-          if (user) {
-            $http.defaults.headers.common.Authorization = 'Bearer ' + user.accessToken;
-          }
-        }
-        return user;
-      }
-
-    };
-  });
-})();
-
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc service
-   * @name ui.Authorization
-   * @description
-   * # Authorization
-   */
-
-  angular.module('ui').service('AuthorizationService', function ($rootScope, $resource, $http, baseurl, AuthenticationService) {
-
-    var Authorization = $resource(baseurl.getBaseUrl() + '/authorization/:action', { action: '@action' });
-
-    return {
-      /**
-       * Retorna true si el usuario actual de la aplicación posee el permiso dado como
-       * parámetro.
-       **/
-      hasPermission: function hasPermission(permission, userToCheck) {
-        var user = userToCheck || AuthenticationService.getCurrentUser();
-        var permissions = [];
-
-        if (user) {
-          permissions = user.permissions || [];
-        }
-        return permissions.indexOf(permission) >= 0;
-      },
-
-      principal: function principal() {
-        return Authorization.get({ action: 'principal' }).$promise;
-      },
-
-      setupCredentials: function setupCredentials(username, requestToken, accessToken, callback) {
-
-        var AuthParams = {
-          username: username,
-          requestToken: requestToken,
-          accessToken: accessToken
-        };
-
-        $rootScope.AuthParams = AuthParams;
-        localStorage.setItem('AUTH_PARAMS', JSON.stringify(AuthParams));
-        $http.defaults.headers.common.Authorization = 'Bearer ' + accessToken;
-        // cargamos los permisos del usuario
-        this.principal().then(function (response) {
-          AuthParams.permissions = response.permisos;
-          AuthParams.stamp = response.stamp;
-          localStorage.setItem('AUTH_PARAMS', JSON.stringify(AuthParams));
-          callback(AuthParams);
-        });
-      },
-
-      cleanupCredentials: function cleanupCredentials() {
-        localStorage.removeItem('AUTH_PARAMS');
-      },
-
-      authorize: function authorize(loginRequired, requiredPermissions) {
-        var user = AuthenticationService.getCurrentUser();
-
-        if (loginRequired === true && user === undefined) {
-          return this.enums.LOGIN_REQUIRED;
-        } else if (loginRequired && user !== undefined && (requiredPermissions === undefined || requiredPermissions.length === 0)) {
-          return this.enums.AUTHORIZED;
-        } else if (requiredPermissions) {
-          var isAuthorized = true;
-
-          for (var i = 0; i < requiredPermissions.length; i++) {
-            isAuthorized = this.hasPermission(requiredPermissions[i], user);
-
-            if (isAuthorized === false) {
-              break;
-            }
-          }
-          return isAuthorized ? this.enums.AUTHORIZED : this.enums.NOT_AUTHORIZED;
-        }
-      },
-
-      enums: {
-        LOGIN_REQUIRED: 'loginRequired',
-        NOT_AUTHORIZED: 'notAuthorized',
-        AUTHORIZED: 'authorized'
-      }
-    };
-  });
-})();
-
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc service
-   * @name ui.baseurl
-   * @description
-   * # baseurl
-   */
-
-  angular.module('ui').provider('baseurl', function () {
-    this.config = {};
-
-    this.setConfig = function (config) {
-      this.config = config;
-    };
-
-    this.$get = function () {
-      var Config = this.config;
-      return {
-        getUrl: function getUrl() {
-          return 'http://' + Config.serverIp + ':' + Config.serverPort + '/' + Config.serverName + '/' + Config.serverAPI;
-        },
-
-
-        getBaseUrl: function getBaseUrl() {
-          var hostname = window.location.hostname;
-
-          //si es el servidor de homologacion
-          if (hostname === Config.serverIp) {
-            return 'http://' + hostname + '/' + Config.serverName + '/' + Config.serverAPI;
-          } else {
-            //si es localhost es desarrollo local
-            return 'http://' + hostname + ':' + Config.serverPort + '/' + Config.serverName + '/' + Config.serverAPI;
-          }
-        },
-
-        getPublicBaseUrl: function getPublicBaseUrl() {
-          var hostname = window.location.hostname;
-
-          //si es el servidor de homologacion
-          if (hostname === Config.serverIp) {
-            return 'http://' + hostname + '/public/';
-          } else {
-            //si es localhost es desarrollo local
-            return 'http://' + hostname + ':' + Config.serverPort + '/public/';
-          }
-        },
-
-        getBareServerUrl: function getBareServerUrl() {
-          var hostname = window.location.hostname;
-          //si es el servidor de homologacion
-          if (hostname === Config.serverIp) {
-            return 'ws://' + hostname + '/' + Config.serverWSName + '/';
-          } else {
-            //si es localhost es desarrollo local
-            return 'ws://' + hostname + ':' + Config.serverPort + '/' + Config.serverName + '/';
-          }
-        }
-      };
-    };
-  });
-})();
-
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc service
-   * @name ui.ConfigProvider
-   * @description
-   * # ConfigProvider
-   */
-
-  angular.module('ui').provider('Config', function () {
-
-    var options = {};
-
-    this.config = function (opt) {
-      angular.extend(options, opt);
-    };
-
-    this.$get = [function () {
-      return options;
-    }];
-  });
-})();
-
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc service
-   * @name ui.fileUpload
-   * @description
-   * # fileUpload
-   */
-
-  angular.module('ui').config(['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider', 'flowFactoryProvider', function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider, flowFactoryProvider) {
-
-    flowFactoryProvider.defaults = {
-      method: 'octet'
-    };
-
-    var fileupload = function fileupload(name, schema, options) {
-      if (schema.type === 'object' && schema.format === 'fileupload') {
-        var f = schemaFormProvider.stdFormObj(name, schema, options);
-        f.key = options.path;
-        f.type = 'fileupload';
-        options.lookup[sfPathProvider.stringify(options.path)] = f;
-        return f;
-      }
-    };
-    schemaFormProvider.defaults.object.unshift(fileupload);
-
-    //Add to the bootstrap directive
-    schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'fileupload', 'views/directives/fileupload.html');
-    schemaFormDecoratorsProvider.createDirective('fileupload', 'views/directives/fileupload.html');
-  }]).factory('fileupload', function () {});
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').factory('Filter', FilterFactory);
-
-  function FilterFactory() {
-    var FilterTypes = {
-      EQUALS: 'equals',
-      NOT_EQUALS: 'notEquals',
-      NULL: 'null',
-      NOT_NULL: 'notNull',
-      LIKE: 'like',
-      NOT_LIKE: 'notLike',
-      GT: 'gt',
-      GTE: 'gte',
-      LT: 'lt',
-      LTE: 'lte',
-      IN: 'in'
-    };
-
-    function joinFilters(builder, filters, joinType) {
-      if (!angular.isArray(filters)) {
-        filters = [filters];
-      }
-
-      angular.forEach(filters, function (f) {
-        builder.booleanJoins.push({
-          joinType: joinType,
-          filter: f
-        });
-      });
-    }
-
-    function addCondition(builder, condition, other) {
-      var cond = { condition: condition };
-
-      if (other) {
-        cond.comparingObject = other;
-
-        if (_.isBoolean(other)) {
-          cond.type = 'boolean';
-        } else if (_.isString(other)) {
-          cond.type = 'string';
-        } else if (_.isDate(other)) {
-          cond.type = 'date';
-        } else if (_.isNumber(other)) {
-          cond.type = 'integer';
-        }
-      }
-      builder.conditions.push(cond);
-    }
-
-    // Filter class
-    function Filter(path) {
-      this.path = path;
-      this.conditions = [];
-      this.booleanJoins = [];
-    }
-
-    var prototype = {
-      or: function or(filters) {
-        joinFilters(this, filters, 'or');
-        return this;
-      },
-
-      and: function and(filters) {
-        joinFilters(this, filters, 'and');
-        return this;
-      },
-
-      eq: function eq(other) {
-        addCondition(this, FilterTypes.EQUALS, other);
-        return this;
-      },
-
-      notEq: function notEq(other) {
-        addCondition(this, FilterTypes.NOT_EQUALS, other);
-        return this;
-      },
-
-      isNull: function isNull() {
-        addCondition(this, FilterTypes.NULL);
-        return this;
-      },
-
-      notNull: function notNull() {
-        addCondition(this, FilterTypes.NOT_NULL);
-        return this;
-      },
-
-      like: function like(other) {
-        addCondition(this, FilterTypes.LIKE, other);
-        return this;
-      },
-
-      notLike: function notLike(other) {
-        addCondition(this, FilterTypes.NOT_LIKE, other);
-        return this;
-      },
-
-      gt: function gt(other) {
-        addCondition(this, FilterTypes.GT, other);
-        return this;
-      },
-
-      gte: function gte(other) {
-        addCondition(this, FilterTypes.GTE, other);
-        return this;
-      },
-
-      lt: function lt(other) {
-        addCondition(this, FilterTypes.LT, other);
-        return this;
-      },
-
-      lte: function lte(other) {
-        addCondition(this, FilterTypes.LTE, other);
-        return this;
-      },
-
-      /**
-       * sql IN
-       *
-       * @param other{Array} the elements to include
-       **/
-      in: function _in(other) {
-        addCondition(this, FilterTypes.IN, other);
-        return this;
-      }
-    };
-    Filter.prototype = prototype;
-
-    return {
-      path: function path(filterPath) {
-        return new Filter(filterPath);
-      }
-    };
-  }
-})();
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc service
-   * @name ui.filterFactory
-   * @description
-   * # filterFactory
-   * Factory in the qualita.
-   */
-
-  angular.module('ui').factory('filterFactory', function () {
-    var logicalOp = function logicalOp(type, filters) {
-      var result = {
-        _inner: {
-          type: type
-        }
-      };
-
-      if (filters.constructor !== Array) {
-        filters = [filters];
-      }
-
-      result._inner.filters = this && this._inner ? [this._inner, filters] : filters;
-      if (!result.or && type === 'and') result.or = or;
-      if (!result.value) result.value = value;
-      if (!result.add) result.add = add;
-      result.paginate = paginate;
-      return result;
-    };
-
-    var and = function and(filters) {
-      return logicalOp.call(this, 'and', filters);
-    };
-
-    var or = function or(filters) {
-      return logicalOp.call(this, 'or', filters);
-    };
-
-    var add = function add(filter) {
-      this._inner.filters.push(filter);
-      return this;
-    };
-
-    var single = function single(filter) {
-      return and([filter]);
-    };
-
-    var value = function value() {
-      return this._inner;
-    };
-
-    var paginate = function paginate(limit, offset) {
-      this._inner.limit = limit;
-      this._inner.offset = offset;
-      return this;
-    };
-
-    // Public API here
-    return {
-      and: and,
-      or: or,
-      add: add,
-      single: single,
-      value: value
-    };
-  });
-})();
-
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc service
-   * @name ui.formFactory
-   * @description
-   * # formFactory
-   */
-
-  angular.module('ui').factory('formFactory', function ($location, $localForage, notify, $rootScope, AuthorizationService, $q) {
-    var hasPermission = AuthorizationService.hasPermission;
-
-    // Public API here
-    return {
-      defaultForm: function defaultForm() {
-        return ['*', {
-          type: 'submit',
-          title: 'Guardar',
-          htmlClass: 'pull-right'
-        }];
-      },
-      defaultOptions: function defaultOptions() {
-        return {
-          formDefaults: {
-            ngModelOptions: {
-              updateOn: 'blur'
-            },
-            disabled: false,
-            disableSuccessState: false,
-            disableErrorState: false,
-            feedback: true
-          },
-          validationMessage: {
-            302: 'El campo es obligatorio'
-          }
-        };
-      },
-      defaultViewOptions: function defaultViewOptions() {
-        return {
-          formDefaults: {
-            disabled: true,
-            disableSuccessState: true,
-            disableErrorState: true,
-            feedback: false
-          }
-        };
-      },
-      defaultSubmit: function defaultSubmit(resource, scope, form, factory, vm, errorHandler) {
-        var backEndValidatedField = [];
-
-        _.each(form.$error, function (error, errorKey) {
-
-          if (_.contains(scope.schema.backEndValidatedErrors, errorKey)) {
-            _.each(error, function (field, index) {
-              var fieldName = 'schemaForm.error.' + field.$name;
-              backEndValidatedField.push(fieldName);
-              console.log('schemaForm.error.' + field.$name + ' error: ' + errorKey);
-              scope.$broadcast(fieldName, errorKey.toString(), true, true);
-            });
-          }
-
-          _.each(backEndValidatedField, function (fieldName, index) {
-            console.log(fieldName + ' error: ' + index);
-            scope.$broadcast(fieldName, 'schemaForm', true, true);
-          });
-        });
-
-        // First we broadcast an event so all fields validate themselves
-        scope.$broadcast('schemaFormValidate');
-
-        // Then we check if the form is valid
-        if (form.$valid && !$rootScope.isProcessing) {
-          $rootScope.isProcessing = true;
-          // ... do whatever you need to do with your data.
-          if (scope.model) {
-            var model = factory.create(scope.model);
-          } else {
-            //si se usa controllerAs, se busca el modelo dentro del vm especificado
-            var model = factory.create(vm.model);
-          }
-
-          //se convierten los campos de fecha desde string a date
-          if (scope.schema) {
-            var schema = scope.schema;
-          } else {
-            var schema = vm.schema;
-          }
-          _.each(schema.properties, function (field, fieldName) {
-            if (field.format && (field.format === 'date' || field.format === 'date-time')) {
-              if (model[fieldName] && typeof model[fieldName] === 'string') {
-                //console.log(field.formatDate);
-                model[fieldName] = new moment(model[fieldName], field.formatDate || 'DD/MM/YYYY').toDate();
-              }
-            }
-          });
-
-          factory.save(model).then(function () {
-            $location.path('/' + resource);
-          }).catch(function (e) {
-            console.log(e);
-            $rootScope.isProcessing = false;
-
-            if (errorHandler) {
-              errorHandler(e);
-              return;
-            }
-
-            //se convierten los campos de fecha desde date a string
-            if (scope.schema) {
-              var schema = scope.schema;
-            } else {
-              var schema = vm.schema;
-            }
-            _.each(schema.properties, function (field, fieldName) {
-              if (field.format && (field.format === 'date' || field.format === 'date-time')) {
-                if (scope.model[fieldName] && scope.model[fieldName] instanceof Date) {
-                  scope.model[fieldName] = currentForm[fieldName].$viewValue; //.to('dd/MM/yyyy');
-                }
-              }
-            });
-
-            //se establecen los errores del backend
-            if (e.constructor === Array && e.data[0].constraint) {
-              scope.$broadcast('schemaForm.error.' + e.data[0].constraint, e.data[0].codigoError.toString(), false);
-            }
-
-            if (e.data && e.data.code !== 403) {
-              var msg = 'Error al persistir la operación.';
-              if (!scope.model.id) msg += '\n\nGuardando localmente, reintente más tarde.';
-              notify({ message: msg, classes: 'alert-danger', position: 'right' });
-              $localForage.getItem(resource).then(function (value) {
-                value = value || [];
-                value.unshift(scope.model);
-                if (!scope.model.id) $localForage.setItem(resource, value);
-              });
-            }
-
-            // manejo general de errores
-            else if (e && e.status === 500) {
-                var msg = '';
-                _.forEach(e.data, function (error) {
-                  msg += '\n\n' + error.message + '.';
-                });
-                notify({ message: msg, classes: 'alert-danger', position: 'right' });
-                // guardar en local storage
-                deferred.reject(msg);
-              }
-          });
-        }
-      },
-      defaultNSFSubmit: function defaultNSFSubmit(form, factory, resourceModel, errorHandler) {
-        var deferred = $q.defer();
-        // Then we check if the form is valid
-        if (form.$valid && !$rootScope.isProcessing) {
-          $rootScope.isProcessing = true;
-          // ... do whatever you need to do with your data.
-          var model = factory.create(resourceModel);
-
-          //se convierten los campos de fecha desde string a date
-          factory.save(model).then(function (response) {
-            // la redireccion se deja a cargo del controller
-            // $location.path('/' + resource);
-            deferred.resolve(response);
-          }).catch(function (e) {
-            console.log(e);
-            $rootScope.isProcessing = false;
-
-            if (errorHandler) {
-              errorHandler(e);
-              deferred.reject(msg);
-            } else {
-              //se establecen los errores del backend
-              if (e && e.status === 500) {
-                var msg = '';
-                _.forEach(e.data, function (error) {
-                  msg += '\n\n' + error.message + '.';
-                });
-                notify({ message: msg, classes: 'alert-danger', position: 'right' });
-                // guardar en local storage
-                deferred.reject(msg);
-              }
-            }
-          });
-        }
-        return deferred.promise;
-      },
-
-      canEdit: function canEdit(resource) {
-        var permission = hasPermission('update_' + resource);
-        return permission;
-      },
-
-      canList: function canList(resource) {
-        var permission = hasPermission('index_' + resource);
-        return permission;
-      },
-
-      canRemove: function canRemove(resource) {
-        var permission = hasPermission('delete_' + resource);
-        return permission;
-      },
-
-      canCreate: function canCreate(resource) {
-        var permission = hasPermission('create_' + resource);
-        return permission;
-      }
-    };
-  });
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').factory('LangService', Service);
-
-  Service.$inject = ['$translate', '$translatePartialLoader'];
-
-  function Service($translate, $translatePartialLoader) {
-
-    var service = {
-      getTranslations: getTranslations
-    };
-
-    return service;
-
-    /**
-     * Metodo que retorna un objeto con las traducciones para
-     * los keys dados como parametro.
-     *
-     * @param translationKeys {Array} claves para la traduccion.
-     * @param module {String} (opcional) nombre del modulo que contiene las traducciones.
-     **/
-    function getTranslations(translationKeys, module) {
-
-      if (module) {
-        $translatePartialLoader.addPart(module);
-      }
-      return $translate.refresh().then(function () {
-        return $translate(translationKeys);
-      });
-    }
-  }
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').factory('ModelTrimmer', ModelTrimmer);
-
-  function ModelTrimmer() {
-    var service = {
-      trimDetails: trimDetails
-    };
-
-    return service;
-
-    function trimDetails(model, ignoredFields) {
-      var response = {};
-      var keys = _.keys(model);
-
-      _.forEach(keys, function (key) {
-        var ignoredIndex = _.findIndex(ignoredFields, function (elem) {
-          return elem == key;
-        });
-        if (ignoredFields && ignoredIndex !== -1) {
-          response[key] = model[key];
-          return;
-        }
-
-        if (_.isArray(model[key]) == true) {
-          response[key] = [];
-          _.forEach(model[key], function (elem, index) {
-            //no se hace recursivo porque solo se debería de necesitar comprobar en primer nivel
-            fieldTrimmer(model[key], response[key], index, ignoredFields);
-          });
-        } else {
-          fieldTrimmer(model, response, key, ignoredFields);
-        }
-      });
-      return response;
-    }
-
-    function fieldTrimmer(model, newModel, fieldName, ignoredFields) {
-      if (_.isObject(model[fieldName]) && model[fieldName].hasOwnProperty("id")) {
-        newModel[fieldName] = model[fieldName].id;
-      } else {
-        newModel[fieldName] = model[fieldName];
-      }
-    }
-  }
-})();
-
-(function () {
-  angular.module('ui').factory('NotificacionesWSFactory', NotificacionesWSFactory);
-  NotificacionesWSFactory.$inject = ['$resource', 'baseurl', '$log', '$websocket', '$timeout'];
-
-  function NotificacionesWSFactory($resource, baseurl, $log, $websocket, $timeout) {
-    var service = {
-      all: all,
-      close: close,
-      create: create,
-      get: get,
-      getLatest: getLatest,
-      init: init,
-      remove: remove,
-      save: save,
-      sendAction: sendAction,
-      registerMessageObserver: registerMessageObserver
-    };
-
-    var notificaciones = $resource(baseurl.getBaseUrl() + "/notificaciones/:id", { id: '@id' }, {
-      update: {
-        method: 'PUT'
-      }
-    });
-
-    var closedByUser = false;
-
-    var retries = 0;
-
-    var websocket = undefined;
-
-    return service;
-
-    function all(params) {
-      return notificaciones.query(params);
-    }
-
-    function close(forceClose) {
-      closedByUser = true;
-      var forzar = false;
-      if (forceClose) {
-        forzar = forceClose;
-      }
-
-      websocket.close(forzar);
-    }
-
-    function create(attrs) {
-      return new notificaciones(attrs);
-    }
-
-    function get(id) {
-      return notificaciones.get({ id: id });
-    }
-
-    function getLatest(offset, limit) {
-      var obj = {
-        action: "get",
-        offset: offset,
-        limit: limit
-      };
-      websocket.send(JSON.stringify(obj));
-    }
-
-    function init(username) {
-      websocket = $websocket(baseurl.getBareServerUrl() + "wsnotificaciones");
-      var obj = {
-        action: "init",
-        username: username
-      };
-      websocket.onOpen(function () {
-        console.log("Socket abierto");
-        retries = 0;
-      });
-
-      websocket.onClose(function () {
-        console.log("Socket cerrado");
-        if (!closedByUser) {
-          if (retries < 4) {
-            retries = retries + 1;
-            $timeout(function () {
-              init(username);
-            }, 1000 * retries);
-          } else {
-            console.error("Tras 4 intentos no se pudo reestablecer conexion con websocket de notificaciones.");
-          }
-        } else {
-          closedByUser = false;
-        }
-      });
-      console.log(websocket);
-      websocket.send(JSON.stringify(obj));
-    }
-
-    function sendAction(accion, notificacion) {
-      var obj = {
-        action: accion,
-        notificacion: notificacion.id
-      };
-      $log.info("mensaje a mandar: ");
-      $log.info(obj);
-      websocket.send(JSON.stringify(obj));
-    }
-
-    function registerMessageObserver(functionHandler) {
-      if (!websocket) {
-        websocket = $websocket(baseurl.getBareServerUrl() + "wsnotificaciones");
-      }
-      websocket.onMessage(functionHandler);
-    }
-
-    function remove(notificacion) {
-      return notificacion.$remove();
-    }
-
-    function save(notificacion) {
-      return notificacion.id ? notificacion.$update() : notificacion.$save();
-    }
-  }
-})();
-
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc service
-   * @name ui.ReportTicketFactory
-   * @description
-   * # ReportTicketFactory
-   */
-
-  angular.module('ui').factory('ReportTicketFactory', ['$resource', 'baseurl', function ($resource, baseurl) {
-
-    var ReportTicket = $resource(baseurl.getBaseUrl() + '/ticket/:reportID?:query&currentColumnOrder=:currentColumnOrder', {
-      action: '@reportID'
-    });
-
-    return {
-      ticket: function ticket(reportID, filters, searchParams, currentColumnOrder) {
-        var report = new ReportTicket(filters);
-        var params = { reportID: reportID };
-
-        if (searchParams) {
-          params.query = decodeURIComponent($.param(searchParams));
-        }
-
-        if (currentColumnOrder) {
-          params.currentColumnOrder = currentColumnOrder;
-        }
-
-        return report.$save(params);
-      },
-
-      downloadURL: function downloadURL(reportTicket, exportType) {
-        console.log('downloadURL');
-        return baseurl.getBaseUrl() + '/generar/' + reportTicket + '/' + exportType;
-      },
-
-      downloadCustomReport: function downloadCustomReport(reportID, exportType, filters) {
-        console.log('dowloadCustomReport');
-        var downloadUrl = baseurl.getBaseUrl() + '/reportes/' + reportID;
-        if (filters) {
-          downloadUrl += "?";
-          _.forEach(filters, function (filter) {
-            //console.log(filter);
-            downloadUrl += filter + "&";
-          });
-          return downloadUrl;
-        }
-        return downloadUrl;
-      }
-    };
-  }]);
-})();
-(function () {
-  'use strict';
-
-  /**
-   * Provider que permite:
-   *
-   * 1) Que un controller/service pueda definir las claves de traduccion que necesita.
-   * 2) Que un controller/service pueda recuperar las claves de traduccion registradas por un modulo.
-   *
-   * @author Jorge Ramirez <jorge@codium.com.py>
-   **/
-
-  angular.module('ui').provider('tkeys', Provider);
-
-  function Provider() {
-    var keysMap = {};
-    this.addKeys = addKeys;
-    this.$get = [tkeysFactory];
-
-    /**
-     * Agrega la lista de claves de traduccion que el modulo va a necesitar
-     *
-     * @param module {String}: identificador del modulo.
-     * @param keys {Array}
-     **/
-    function addKeys(module, keys) {
-      keysMap[module] = keys;
-    }
-
-    /**
-     * Esta funcion es la que retorna el prototipo del servicio tkeys.
-     **/
-    function tkeysFactory() {
-      return keysMap;
-    }
-  }
-})();
-
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc service
-   * @name ui.usuariosFactory
-   * @description
-   * # usuariosFactory
-   */
-
-  angular.module('ui').factory('usuariosFactory', function ($resource, filterFactory, baseurl) {
-
-    var Usuario = $resource(baseurl.getBaseUrl() + '/usuarios/:id', { id: '@id' }, {
-      'update': { method: 'PUT' } });
-
-    // Public API here
-    return {
-      all: function all(params) {
-        return Usuario.query(params);
-      },
-
-      get: function get(id) {
-        return Usuario.get({ id: id });
-      },
-
-      getByUsername: function getByUsername(username) {
-        var params = {};
-        params.search = filterFactory.single({
-          path: 'username',
-          equals: username
-        }).value();
-        return Usuario.query(params);
-      },
-
-      create: function create(attrs) {
-        return new Usuario(attrs);
-      },
-
-      save: function save(usuario) {
-        return usuario.id ? usuario.$update() : usuario.$save();
-      },
-
-      remove: function remove(usuario) {
-        return usuario.$remove();
-      }
-    };
-  });
-})();
-
-(function () {
-  'use strict';
-
-  angular.module('ui').factory('Util', Util);
-
-  function Util() {
-    var service = {
-      toUnidadMedidaBase: toUnidadMedidaBase,
-      fromUnidadMedidaBase: fromUnidadMedidaBase
-    };
-
-    return service;
-
-    function toUnidadMedidaBase(cantidad, unidadMedida) {
-      var multiplicador = 1;
-      var unidadActual = unidadMedida;
-      while (!unidadActual.esBase) {
-        multiplicador = multiplicador * unidadActual.cantidad;
-        unidadActual = unidadActual.unidadContenida;
-      }
-      return cantidad * multiplicador;
-    }
-
-    function fromUnidadMedidaBase(cantidad, unidadObjetivo) {
-      var multiplicador = 1;
-      var unidadActual = unidadObjetivo;
-      while (!unidadActual.esBase) {
-        multiplicador = multiplicador * unidadActual.cantidad;
-        unidadActual = unidadActual.unidadContenida;
-      }
-      return cantidad / multiplicador;
-    }
-  }
-})();
