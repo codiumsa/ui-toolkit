@@ -65,7 +65,7 @@
               return true;
             }
             $scope.options.canEditCondition = $scope.options.canEditCondition || defaultCondition;
-            $scope.options.canAddCondition = $scope.options.canAddCondition || defaultCondition;
+            $scope.options.canCreateCondition = $scope.options.canCreateCondition || defaultCondition;
             $scope.options.canRemoveCondition = $scope.options.canRemoveCondition || defaultCondition;
             $scope.options.canListCondition = $scope.options.canListCondition || defaultCondition;
             var rangeSeparator = "~";
@@ -473,7 +473,7 @@
             };
 
             $scope.canCreate = function(data) {
-              return $scope.options.canAddCondition(data) && !$scope.options.hideAddMenu;
+              return $scope.options.canCreateCondition(data) && !$scope.options.hideCreateMenu;
             };
 
             $scope.canList = function(data) {
