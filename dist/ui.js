@@ -1523,7 +1523,8 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
     return {
       restrict: 'A',
       scope: true,
-      link: function link(scope, element, attrs) {
+      require: 'ngModel',
+      link: function link(scope, element, attrs, ngModel) {
         if ($(element).attr('type') !== 'checkbox') {
           console.warn('ui-checkbox solamente se usa en inputs de tipo checkbox');
           return;
@@ -1532,8 +1533,16 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
         var newElement = $compile(element)(scope)[0];
         $(element).replaceWith(newElement);
         $timeout(function () {
-          return $(newElement).bootstrapToggle();
+          return $(newElement).bootstrapToggle().change(changeHandler);
         });
+
+        // actualizamos el ngModel cuando cambia el valor del checkbox
+        function changeHandler() {
+          var checked = $(this).prop('checked');
+          scope.$apply(function () {
+            ngModel.$setViewValue(checked);
+          });
+        }
       }
     };
   }
