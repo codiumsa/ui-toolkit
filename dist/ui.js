@@ -1504,6 +1504,42 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
 })();
 (function () {
   'use strict';
+
+  /**
+   * Wrapper simple para bootstrap-toggle. El wrapper acepta las configuraciones
+   * de bootstrap-toggle.
+   * 
+   * @ngdoc directive
+   * @name ui.directive:uiCheckbox
+   * @description
+   * # uiCheckbox
+   */
+
+  angular.module('ui').directive('uiCheckbox', uiCheckbox);
+
+  uiCheckbox.$inject = ['$compile', '$timeout'];
+
+  function uiCheckbox($compile, $timeout) {
+    return {
+      restrict: 'A',
+      scope: true,
+      link: function link(scope, element, attrs) {
+        if ($(element).attr('type') !== 'checkbox') {
+          console.warn('ui-checkbox solamente se usa en inputs de tipo checkbox');
+          return;
+        }
+        $(element).removeAttr('ui-checkbox');
+        var newElement = $compile(element)(scope)[0];
+        $(element).replaceWith(newElement);
+        $timeout(function () {
+          return $(newElement).bootstrapToggle();
+        });
+      }
+    };
+  }
+})();
+(function () {
+  'use strict';
   /**
    * @ngdoc directive
    * @name ui.directive:uiDatatable

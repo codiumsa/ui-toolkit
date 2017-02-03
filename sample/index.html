@@ -30,6 +30,9 @@
 
   <link rel="stylesheet" href="../dist/ui.theme.css" />
   <link rel="stylesheet" href="../dist/ui.css" />
+
+  <!-- se incluye despues bootstrap-toggle, porque tiene conflictos con ui.css -->
+  <link rel="stylesheet" href="../bower/bootstrap-toggle/css/bootstrap-toggle.css" />
 </head>
 
 <body>
@@ -39,23 +42,9 @@
 
   <!-- Add your site or application content here -->
   <span us-spinner="{radius:30, width:8, length: 16}" spinner-key="spinner-1"></span>
-  <div class="mm-page" style="">
+  <div class="mm-page">
     <div data-ui-view=""></div>
   </div>
-
-
-  <!-- Google Analytics: change UA-XXXXX-X to be your site's ID -->
-  <script>
-    ! function(A, n, g, u, l, a, r) {
-      A.GoogleAnalyticsObject = l, A[l] = A[l] || function() {
-          (A[l].q = A[l].q || []).push(arguments)
-        }, A[l].l = +new Date, a = n.createElement(g),
-        r = n.getElementsByTagName(g)[0], a.src = u, r.parentNode.insertBefore(a, r)
-    }(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
-
-    ga('create', 'UA-XXXXX-X');
-    ga('send', 'pageview');
-  </script>
 
 
   <!-- build:js(.) ../src/scripts/vendor.js -->
@@ -95,7 +84,6 @@
   <script src="../bower/schema-form-file-upload/schema-form-file-upload.min.js"></script>
   <script src="../bower/moment/moment.js"></script>
   <script src="../bower/angular-underscore/angular-underscore.js"></script>
-  <!--<script src="../bower/angular-ui-utils/ui-utils.js"></script>-->
   <script src="../bower/oclazyload/dist/ocLazyLoad.js"></script>
   <script src="../bower/angular-ui-router/release/angular-ui-router.js"></script>
   <script src="../bower/angular-breadcrumb/release/angular-breadcrumb.js"></script>
@@ -148,6 +136,7 @@
   <script src="../bower/ng-flow/dist/ng-flow.js"></script>
   <script src="../bower/clipboard/dist/clipboard.js"></script>
   <script src="../bower/ngclipboard/dist/ngclipboard.js"></script>
+  <script src="../bower/bootstrap-toggle/js/bootstrap-toggle.js"></script>
   <!-- endbower -->
   <!-- endbuild -->
 
@@ -157,6 +146,7 @@
   <script src="js/app.js"></script>
   <script src="js/components/main.js"></script>
   <script src="js/services/service.js"></script>
+  <script src="js/services/token-service.js"></script>
 
   <script type="text/javascript">
     ui.bs.bootstrap();
