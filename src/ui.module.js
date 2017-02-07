@@ -61,19 +61,19 @@
 
     $provide.decorator('uibYearpickerDirective', ['$delegate', function($delegate) {
       var directive = $delegate[0];
-      directive.templateUrl = 'views/widgets/datepicker/year.html';
+      directive.templateUrl = 'views/datepicker/year.html';
       return $delegate;
     }]);
 
     $provide.decorator('uibMonthpickerDirective', ['$delegate', function($delegate) {
       var directive = $delegate[0];
-      directive.templateUrl = 'views/widgets/datepicker/month.html';
+      directive.templateUrl = 'views/datepicker/month.html';
       return $delegate;
     }]);
 
     $provide.decorator('uibDaypickerDirective', ['$delegate', function($delegate) {
       var directive = $delegate[0];
-      directive.templateUrl = 'views/widgets/datepicker/day.html';
+      directive.templateUrl = 'views/datepicker/day.html';
       return $delegate;
     }]);
   }]);
@@ -90,8 +90,8 @@
 
   angular.module('ui').config(['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider',
     function(schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
-      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'customcheckbox', 'views/widgets/custom-checkbox.html');
-      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'switch', 'views/widgets/custom-checkbox-switch.html');
+      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'customcheckbox', 'views/custom-checkbox.html');
+      schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'switch', 'views/custom-checkbox-switch.html');
 
       var datepicker = function(name, schema, options) {
         if (schema.type === 'string' && (schema.format === 'date' || schema.format === 'date-time')) {
@@ -108,11 +108,11 @@
       schemaFormDecoratorsProvider.addMapping(
         'bootstrapDecorator',
         'datepicker',
-        'views/directives/datepicker.html'
+        'views/datepicker.html'
       );
       schemaFormDecoratorsProvider.createDirective(
         'datepicker',
-        'views/directives/datepicker.html'
+        'views/datepicker.html'
       );
     }
   ]);

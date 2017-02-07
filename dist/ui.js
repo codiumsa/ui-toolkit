@@ -24,19 +24,19 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
     $provide.decorator('uibYearpickerDirective', ['$delegate', function ($delegate) {
       var directive = $delegate[0];
-      directive.templateUrl = 'views/widgets/datepicker/year.html';
+      directive.templateUrl = 'views/datepicker/year.html';
       return $delegate;
     }]);
 
     $provide.decorator('uibMonthpickerDirective', ['$delegate', function ($delegate) {
       var directive = $delegate[0];
-      directive.templateUrl = 'views/widgets/datepicker/month.html';
+      directive.templateUrl = 'views/datepicker/month.html';
       return $delegate;
     }]);
 
     $provide.decorator('uibDaypickerDirective', ['$delegate', function ($delegate) {
       var directive = $delegate[0];
-      directive.templateUrl = 'views/widgets/datepicker/day.html';
+      directive.templateUrl = 'views/datepicker/day.html';
       return $delegate;
     }]);
   }]);
@@ -50,8 +50,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
   }]);
 
   angular.module('ui').config(['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider', function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
-    schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'customcheckbox', 'views/widgets/custom-checkbox.html');
-    schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'switch', 'views/widgets/custom-checkbox-switch.html');
+    schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'customcheckbox', 'views/custom-checkbox.html');
+    schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'switch', 'views/custom-checkbox-switch.html');
 
     var datepicker = function datepicker(name, schema, options) {
       if (schema.type === 'string' && (schema.format === 'date' || schema.format === 'date-time')) {
@@ -65,8 +65,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     schemaFormProvider.defaults.string.unshift(datepicker);
 
     //Add to the bootstrap directive
-    schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'datepicker', 'views/directives/datepicker.html');
-    schemaFormDecoratorsProvider.createDirective('datepicker', 'views/directives/datepicker.html');
+    schemaFormDecoratorsProvider.addMapping('bootstrapDecorator', 'datepicker', 'views/datepicker.html');
+    schemaFormDecoratorsProvider.createDirective('datepicker', 'views/datepicker.html');
   }]);
 })(angular);
 (function () {
@@ -2369,21 +2369,22 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
     };
 
     function linkFunc(scope, elem, attr, controller, dateFilter) {
-      //controller.$formatters.shift();
       if (controller.model) {
         controller.model = new Date(controller.model);
       }
     }
-
     return directive;
   }
 
   ValidatedDateInputController.$inject = ['$scope', '$timeout'];
+
   function ValidatedDateInputController($scope, $timeout) {
     var vm = this;
 
-    if (!vm.format) vm.format = "dd/MM/yyyy";
-
+    if (!vm.format) {
+      vm.format = 'dd/MM/yyyy';
+    }
+    vm.onChange = vm.onChange || angular.noop;
     vm.showWeeks = false;
 
     vm.open = function () {
@@ -2391,7 +2392,7 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
     };
 
     vm.focus = false;
-    vm.focus = function () {
+    vm.onFocus = function () {
       vm.opened = true;
       vm.focus = true;
     };
@@ -2422,7 +2423,6 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
     }
   }
 })();
-
 (function () {
   'use strict';
 

@@ -1,27 +1,14 @@
 <div class="form-group {{form.htmlClass}} datepicker-container" ng-class="{ 'has-error' : form.disableErrorState !== true && hasError(), 'has-success' : form.disableSuccessState !== true &&hasSuccess() }">
   <label class="control-label" ng-show="showTitle()">{{form.title}}</label>
   <div class="input-group" style="width: 100%;">
-  <input type="text"
-         ng-show="form.key"
-         class="form-control {{form.fieldHtmlClass}}"
-         schema-validate="form"
-         datepicker-popup="dd/MM/yyyy"
-         datepicker-popup-template-url="views/widgets/datepicker/popup.html"
-         show-weeks="false"
-         ng-model="$$value$$"
-         is-open="status.opened"
-         current-text="Hoy"
-         clear-text="Borrar"
-         close-text="Cerrar"
-         min-date="form.minDate"
-         max-date="form.maxDate"
-         name="{{form.key.slice(-1)[0]}}"
-         ng-change="change()"
-         pick-date="form.pickadate"
-         ng-focus="open($event)"
-         />
-         <span ng-if="form.feedback !== false" class="feedback-datepicker form-control-feedback ng-scope" ng-class="evalInScope(form.feedback) || {'glyphicon': true, 'glyphicon-ok': hasSuccess(), 'glyphicon-remove': hasError() }" aria-hidden="true"></span>
-    <span class="datepicker-btn input-group-btn" >
+    <input type="text" ng-show="form.key" class="form-control {{form.fieldHtmlClass}}" schema-validate="form"
+      datepicker-popup="dd/MM/yyyy" datepicker-popup-template-url="views/datepicker/popup.html" show-weeks="false"
+      ng-model="$$value$$" is-open="status.opened" current-text="Hoy" clear-text="Borrar" close-text="Cerrar"
+      min-date="form.minDate" max-date="form.maxDate" name="{{form.key.slice(-1)[0]}}" ng-change="change()"
+      pick-date="form.pickadate" ng-focus="open($event)" />
+    <span ng-if="form.feedback !== false" class="feedback-datepicker form-control-feedback ng-scope" ng-class="evalInScope(form.feedback) || {'glyphicon': true, 'glyphicon-ok': hasSuccess(), 'glyphicon-remove': hasError() }"
+      aria-hidden="true"></span>
+    <span class="datepicker-btn input-group-btn">
      <button type="button" class="btn btn-default form-control" ng-click="open($event)">
      <i class="glyphicon glyphicon-calendar"></i></button>
     </span>

@@ -133,10 +133,6 @@ body {
   }
 }
 
-.btn {
-  padding: 4px 4px !important;
-}
-
 
 /* Supporting marketing content */
 
@@ -760,10 +756,6 @@ tr td:last-child {
   margin: 0px !important;
   /*width: 120px !important;*/
   width: 100% !important;
-}
-
-.btn {
-  margin-right: 8px;
 }
 
 .angular-ui-tree-handle {
@@ -2072,54 +2064,6 @@ input[type=checkbox] {
   }
 }
 
-.input-group-button {
-  width: 1%;
-  vertical-align: middle;
-}
-
-.input-group input,
-.input-group-button {
-  display: table-cell;
-}
-
-.input-group-button:last-child .btn {
-  margin-left: -1px;
-}
-
-.input-group input:last-child,
-.input-group-button:last-child .btn {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-}
-
-.btn {
-  position: relative;
-  display: inline-block;
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: bold;
-  line-height: 20px;
-  white-space: nowrap;
-  vertical-align: middle;
-  cursor: pointer;
-  border-radius: 3px;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  -webkit-appearance: none;
-}
-
-.input-group {
-  .btn {
-    background-color: #eee;
-    background-image: linear-gradient(#fcfcfc, #eee);
-    border: 1px solid #d5d5d5;
-    height: 34px;
-    width: 100%;
-  }
-}
-
 .field-container {
   margin-bottom: 15px;
 }
@@ -2748,4 +2692,10 @@ body>.ui-select-bootstrap.open {
 
 .ui-select-refreshing.ng-animate {
   -webkit-animation: none 0s;
+}
+
+.input-group-btn {
+  button {
+    padding-right: 12px !important;
+  }
 }

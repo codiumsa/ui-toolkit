@@ -57,9 +57,13 @@
         options="vm.paises" label="País" submitted-flag="vm.submited" field-to-show="nombre" classes="form-group">
       </validated-uiselect-input>
 
+      <validated-date-input model="vm.model.hasta" class="col-lg-6" form="form" name="hasta" submitted-flag="vm.submitted"
+        classes="form-group" input-type="text" label="Fecha hasta" is-disabled="vm.view" is-required="true">
+      </validated-date-input>
+
       <div class="col-lg-12">
         <label>Custom checkbox</label>
-        <input type="checkbox" ui-checkbox data-toggle="toggle" data-on="{{'SI'}}" data-off="{{'NO'}}">
+        <input type="checkbox" ng-model="vm.checkbox" ui-checkbox data-toggle="toggle" data-on="{{'SI'}}" data-off="{{'NO'}}">
       </div>
 
       <password-generator class="col-lg-12" after-generate="vm.onPasswordGenerate(password)"></password-generator>
