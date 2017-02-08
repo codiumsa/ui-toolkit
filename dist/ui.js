@@ -72,92 +72,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 (function () {
   'use strict';
 
-  angular.module('ui').controller('BasicController', ['$rootScope', '$scope', 'formFactory', '$location', '$state', '$injector', function ($rootScope, $scope, formFactory, $location, $state, $injector) {
-
-    $scope.activate = function () {
-      $scope.schema = $scope.factory.schema();
-      $scope.options = formFactory.defaultOptions();
-
-      if ($state.is($scope.newProperties.state)) {
-        activateNew();
-      } else if ($state.is($scope.editProperties.state)) {
-        activateEdit();
-      } else if ($state.is($scope.viewProperties.state)) {
-        activateView();
-      }
-
-      $rootScope.isProcessing = false;
-    };
-
-    function activateNew() {
-      if (!formFactory.canCreate($scope.resources)) {
-        var notify = $injector.get('notify');
-        // error de autorización
-        notify({
-          message: 'No tiene permiso de creación',
-          classes: ['alert-danger'],
-          position: 'right'
-        });
-        $location.path('/');
-      }
-      $scope.title = $scope.newProperties.title;
-      $scope.form = $scope.factory.form('new');
-      $scope.model = {};
-      $scope.schema.readonly = false;
-    }
-
-    function activateEdit() {
-      if (!formFactory.canEdit($scope.resources)) {
-        var notify = $injector.get('notify');
-        // error de autorización
-        notify({
-          message: 'No tiene permiso de edición',
-          classes: ['alert-danger'],
-          position: 'right'
-        });
-        $location.path('/');
-      }
-      $scope.model = $scope.prepService;
-      $scope.entidadId = $scope.model.id;
-      $scope.entidad = $scope.editProperties.entidad;
-      $scope.form = $scope.factory.form('edit');
-      $scope.title = $scope.editProperties.title;
-      $scope.schema.readonly = false;
-    }
-
-    function activateView() {
-      if (!formFactory.canList($scope.resources)) {
-        var notify = $injector.get('notify');
-        // error de autorización
-        notify({
-          message: 'No tiene permiso de vista',
-          classes: ['alert-danger'],
-          position: 'right'
-        });
-        $location.path('/');
-      }
-      $scope.options = formFactory.defaultViewOptions();
-      $scope.model = $scope.prepService;
-      $scope.entidadId = $scope.model.id;
-      $scope.entidad = $scope.viewProperties.entidad;
-      $scope.form = $scope.factory.form('view');
-      $scope.title = $scope.viewProperties.title;
-      $scope.view = true;
-      $scope.schema.readonly = true;
-    }
-
-    $scope.submit = function (form) {
-      formFactory.defaultSubmit($scope.resource, $scope, form, $scope.factory);
-    };
-
-    $scope.cancel = function () {
-      $location.path('/' + $scope.resource);
-    };
-  }]);
-})();
-(function () {
-  'use strict';
-
   angular.module('ui').directive('aDisabled', function () {
     return {
       compile: function compile(tElement, tAttrs, transclude) {
@@ -1529,19 +1443,28 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
           console.warn('ui-checkbox solamente se usa en inputs de tipo checkbox');
           return;
         }
+
         $(element).removeAttr('ui-checkbox');
-        var newElement = $compile(element)(scope)[0];
+        var newElement = $compile(element)(scope.$parent)[0];
         $(element).replaceWith(newElement);
+
         $timeout(function () {
           return $(newElement).bootstrapToggle().change(changeHandler);
+        });
+        var initialized = false;
+
+        scope.$watch(attrs.ngModel, function (value) {
+          if (initialized || !value) {
+            return;
+          }
+          initialized = true;
+          $(newElement).bootstrapToggle('on');
         });
 
         // actualizamos el ngModel cuando cambia el valor del checkbox
         function changeHandler() {
           var checked = $(this).prop('checked');
-          scope.$apply(function () {
-            ngModel.$setViewValue(checked);
-          });
+          ngModel.$setViewValue(checked);
         }
       }
     };
@@ -2882,6 +2805,92 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
       $state.go(dest);
     };
   }
+})();
+(function () {
+  'use strict';
+
+  angular.module('ui').controller('BasicController', ['$rootScope', '$scope', 'formFactory', '$location', '$state', '$injector', function ($rootScope, $scope, formFactory, $location, $state, $injector) {
+
+    $scope.activate = function () {
+      $scope.schema = $scope.factory.schema();
+      $scope.options = formFactory.defaultOptions();
+
+      if ($state.is($scope.newProperties.state)) {
+        activateNew();
+      } else if ($state.is($scope.editProperties.state)) {
+        activateEdit();
+      } else if ($state.is($scope.viewProperties.state)) {
+        activateView();
+      }
+
+      $rootScope.isProcessing = false;
+    };
+
+    function activateNew() {
+      if (!formFactory.canCreate($scope.resources)) {
+        var notify = $injector.get('notify');
+        // error de autorización
+        notify({
+          message: 'No tiene permiso de creación',
+          classes: ['alert-danger'],
+          position: 'right'
+        });
+        $location.path('/');
+      }
+      $scope.title = $scope.newProperties.title;
+      $scope.form = $scope.factory.form('new');
+      $scope.model = {};
+      $scope.schema.readonly = false;
+    }
+
+    function activateEdit() {
+      if (!formFactory.canEdit($scope.resources)) {
+        var notify = $injector.get('notify');
+        // error de autorización
+        notify({
+          message: 'No tiene permiso de edición',
+          classes: ['alert-danger'],
+          position: 'right'
+        });
+        $location.path('/');
+      }
+      $scope.model = $scope.prepService;
+      $scope.entidadId = $scope.model.id;
+      $scope.entidad = $scope.editProperties.entidad;
+      $scope.form = $scope.factory.form('edit');
+      $scope.title = $scope.editProperties.title;
+      $scope.schema.readonly = false;
+    }
+
+    function activateView() {
+      if (!formFactory.canList($scope.resources)) {
+        var notify = $injector.get('notify');
+        // error de autorización
+        notify({
+          message: 'No tiene permiso de vista',
+          classes: ['alert-danger'],
+          position: 'right'
+        });
+        $location.path('/');
+      }
+      $scope.options = formFactory.defaultViewOptions();
+      $scope.model = $scope.prepService;
+      $scope.entidadId = $scope.model.id;
+      $scope.entidad = $scope.viewProperties.entidad;
+      $scope.form = $scope.factory.form('view');
+      $scope.title = $scope.viewProperties.title;
+      $scope.view = true;
+      $scope.schema.readonly = true;
+    }
+
+    $scope.submit = function (form) {
+      formFactory.defaultSubmit($scope.resource, $scope, form, $scope.factory);
+    };
+
+    $scope.cancel = function () {
+      $location.path('/' + $scope.resource);
+    };
+  }]);
 })();
 (function () {
   'use strict';

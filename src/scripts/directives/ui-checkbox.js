@@ -26,17 +26,26 @@
           console.warn('ui-checkbox solamente se usa en inputs de tipo checkbox');
           return;
         }
+
         $(element).removeAttr('ui-checkbox');
-        let newElement = $compile(element)(scope)[0];
+        let newElement = $compile(element)(scope.$parent)[0];
         $(element).replaceWith(newElement);
+
         $timeout(() => $(newElement).bootstrapToggle().change(changeHandler));
+        let initialized = false;
+
+        scope.$watch(attrs.ngModel, (value) => {
+          if (initialized || !value) {
+            return;
+          }
+          initialized = true;
+          $(newElement).bootstrapToggle('on');
+        });
 
         // actualizamos el ngModel cuando cambia el valor del checkbox
         function changeHandler() {
-          var checked = $(this).prop('checked');
-          scope.$apply(function() {
-            ngModel.$setViewValue(checked);
-          });
+          let checked = $(this).prop('checked');
+          ngModel.$setViewValue(checked);
         }
       }
     };
