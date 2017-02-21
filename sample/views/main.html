@@ -2,15 +2,14 @@
   <div class="row">
     <h1> UIX </h1>
     <p>
-      Este es un proyecto que muestra como utilizar el toolkit <a href="https://gitlab.com/codium/ui"
-        target="_blank">UI</a>, adem&aacute;s de servir como proyecto base para un nuevo desarrollo.
+      Este es un proyecto que muestra como utilizar el toolkit <a href="https://gitlab.com/codium/ui" target="_blank">UI</a>,
+      adem&aacute;s de servir como proyecto base para un nuevo desarrollo.
     </p>
 
     <section>
       <h3>wizard</h3>
 
-      <p>Un wizard es un componente que define un flujo de multiples pasos. A continuaci&oacute;n se muestra
-        un wizard b&aacute;sico:</p>
+      <p>Un wizard es un componente que define un flujo de multiples pasos. A continuaci&oacute;n se muestra un wizard b&aacute;sico:</p>
 
 
       <wizard>
@@ -44,21 +43,26 @@
     </section>
 
     <section>
+      <h3>ConfirmationModal</h3>
+      <button class="btn btn-default" ng-click="vm.showConfirmationModal()">Abrir modal</button>
+    </section>
+
+    <section>
       <h3>Forms</h3>
-      <validated-text-input model="vm.model.nombre" class="col-lg-12" form="form" name="nombre" submitted-flag="vm.submitted"
-        classes="form-group" input-type="text" label="Nombre" is-disabled="false" is-required="true">
+      <validated-text-input model="vm.model.nombre" class="col-lg-12" form="form" name="nombre" submitted-flag="vm.submitted" classes="form-group"
+        input-type="text" label="Nombre" is-disabled="false" is-required="true">
       </validated-text-input>
 
       <validated-text-input model="vm.model.descripcion" class="col-lg-12" form="form" name="descripcion" submitted-flag="vm.submitted"
         classes="form-group" input-type="text" label="Descripción">
       </validated-text-input>
 
-      <validated-uiselect-input is-required="true" class="col-lg-12" model="vm.model.pais" form="form" name="pais"
-        options="vm.paises" label="País" submitted-flag="vm.submited" field-to-show="nombre" classes="form-group">
+      <validated-uiselect-input is-required="true" class="col-lg-12" model="vm.model.pais" form="form" name="pais" options="vm.paises"
+        label="País" submitted-flag="vm.submited" field-to-show="nombre" classes="form-group">
       </validated-uiselect-input>
 
-      <validated-date-input model="vm.model.hasta" class="col-lg-6" form="form" name="hasta" submitted-flag="vm.submitted"
-        classes="form-group" input-type="text" label="Fecha hasta" is-disabled="vm.view" is-required="true">
+      <validated-date-input model="vm.model.hasta" class="col-lg-6" form="form" name="hasta" submitted-flag="vm.submitted" classes="form-group"
+        input-type="text" label="Fecha hasta" is-disabled="vm.view" is-required="true">
       </validated-date-input>
 
       <div class="col-lg-12">

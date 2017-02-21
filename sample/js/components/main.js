@@ -14,10 +14,11 @@
       controllerAs: 'vm'
     });
 
-  MainCtrl.$inject = ['PersonaService', '$timeout', 'Filter'];
+  MainCtrl.$inject = ['PersonaService', '$timeout', 'Filter', 'ConfirmationModal'];
 
-  function MainCtrl(PersonaService, $timeout, Filter) {
+  function MainCtrl(PersonaService, $timeout, Filter, ConfirmationModal) {
     var vm = this;
+    Object.assign(this, { ConfirmationModal });
 
     activate();
 
@@ -77,6 +78,7 @@
       ];
       vm.fileuploadDisabled = false;
       vm.onPasswordGenerate = (password) => console.log('password', password);
+      vm.showConfirmationModal = showConfirmationModal.bind(vm);
     }
   }
 
@@ -98,5 +100,16 @@
 
   function onRemove(itemId) {
     console.log('on remove: ' + itemId);
+  }
+
+  function showConfirmationModal() {
+    this.ConfirmationModal.open({
+      title: 'Borrar elemento',
+      id: 1,
+      message: '¿Desea borrar elemento?',
+      ok: function() {
+        console.log(`Se borró ${this.id}`);
+      }
+    });
   }
 }());

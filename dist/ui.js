@@ -3147,6 +3147,59 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
 
   /**
    * @ngdoc service
+   * @name ui.ConfirmationModal
+   * @description
+   * # ConfirmationModal
+   */
+
+  angular.module('ui').factory('ConfirmationModal', ConfirmationModal);
+
+  ConfirmationModal.$inject = ['$uibModal', '$rootScope'];
+
+  function ConfirmationModal($uibModal, $rootScope) {
+
+    return {
+      /**
+       * Se encarga de mostrar un confirmation modal.
+       * 
+       * @param {Object} options - Las opciones de configuración del modal.
+       * @param {string} options.title - titulo del modal.
+       * @param {string} options.message - El mensaje de confirmación.
+       * @param {Function} options.ok - Función a invocar cuando se hace click en Aceptar.
+       * @param {Function} [options.cancel] - Función a invocar cuando se hace click en Cancelar.
+       */
+      open: function open(options) {
+        var scope = $rootScope.$new(true);
+        Object.assign(scope, options);
+        var modalInstance = $uibModal.open({
+          template: '\n              <div class="modal-header">\n                <h3 class="modal-title">{{::title}}</h3>\n              </div>\n              <div class="modal-body">{{::message}}</div>\n              <div class="modal-footer">\n                <button class="btn btn-primary" ng-click="submit()">Aceptar</button>\n                <button class="btn btn-warning" ng-click="doCancel()">Cancelar</button>\n              </div>',
+          scope: scope
+        });
+
+        scope.submit = function () {
+          modalInstance.dismiss('cancel');
+          scope.$destroy();
+
+          if (angular.isFunction(options.ok)) {
+            options.ok();
+          }
+        };
+        scope.doCancel = function (id) {
+          modalInstance.dismiss('cancel');
+          scope.$destroy();
+          if (angular.isFunction(options.cancel)) {
+            options.cancel();
+          }
+        };
+      }
+    };
+  }
+})();
+(function () {
+  'use strict';
+
+  /**
+   * @ngdoc service
    * @name ui.fileUpload
    * @description
    * # fileUpload
