@@ -450,7 +450,7 @@
                     var compilado = _.template(menuOpt.templateToRender);
                     $scope[menuOpt.functionName] = menuOpt.functionDef;
                     var customAttribute = menuOpt.customAttribute;
-                    var compiled = { 'dataId': data.id, '$state': $state, '$scope': $scope, data: data };
+                    var compiled = { 'dataId': data.id, '$state': $state, '$scope': $scope };
                     if (customAttribute && customAttribute.constructor === Array) {
                       compiled.dataCustom = JSON.stringify(_.map(customAttribute, function(ca) { return data[ca] }));
                     } else {
@@ -458,6 +458,7 @@
                     }
                     basicOpts = basicOpts + compilado(compiled);
                     $scope[menuOpt.conditionName] = menuOpt.conditionDef;
+                    $scope.currentRowData = data;
                   });
                 }
                 return basicOpts;
