@@ -450,7 +450,7 @@
                     var compilado = _.template(menuOpt.templateToRender);
                     $scope[menuOpt.functionName] = menuOpt.functionDef;
                     var customAttribute = menuOpt.customAttribute;
-                    var compiled = { 'dataId': data.id, '$state': $state, '$scope': $scope };
+                    var compiled = { 'dataId': data.id, '$state': $state, '$scope': $scope, data: data };
                     if (customAttribute && customAttribute.constructor === Array) {
                       compiled.dataCustom = JSON.stringify(_.map(customAttribute, function(ca) { return data[ca] }));
                     } else {
