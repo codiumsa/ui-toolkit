@@ -9,6 +9,8 @@
     var directive = {
       restrict: 'E',
       scope: {
+        // el valor que almacena la fecha asociada al input. Para precargar el input se puede
+        // especificar un date, string o un unix timestamp.
         model: '=',
         form: '=',
         name: '@',
@@ -19,28 +21,38 @@
         onChange: '&',
         isDisabled: '=',
         dateOptions: '@',
+        // formato esperado para la fecha dada como parámetro.
+        // Posibles formatos: http://angular-ui.github.io/bootstrap/#!#dateparser
         format: '@',
         opened: '@'
       },
       controllerAs: 'vm',
       bindToController: true,
       templateUrl: 'views/validated-date-input.html',
-      link: linkFunc,
       controller: ValidatedDateInputController,
     };
-
-    function linkFunc(scope, elem, attr, controller, dateFilter) {
-      if (controller.model) {
-        controller.model = new Date(controller.model);
-      }
-    }
     return directive;
   }
 
-  ValidatedDateInputController.$inject = ['$scope', '$timeout'];
+  ValidatedDateInputController.$inject = ['$scope', '$timeout', 'uibDateParser'];
 
-  function ValidatedDateInputController($scope, $timeout) {
-    var vm = this;
+  function ValidatedDateInputController($scope, $timeout, uibDateParser) {
+    let vm = this;
+    let init = false;
+
+    $scope.$watch('vm.model', (model) => {
+      if (model && !init) {
+
+        if (angular.isString(model)) {
+          $scope.vm.model = uibDateParser.parse(model, $scope.vm.format);
+        } else if (angular.isDate(model)) {
+          $scope.vm.model = model;
+        } else {
+          $scope.vm.model = new Date(model);
+        }
+        init = true;
+      }
+    });
 
     if (!vm.format) {
       vm.format = 'dd/MM/yyyy';
