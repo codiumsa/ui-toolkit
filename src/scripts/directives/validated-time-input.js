@@ -51,7 +51,7 @@
     };
 
     vm.focus = false;
-    vm.focus = function() {
+    vm.onFocus = function() {
       vm.opened = true;
       vm.focus = true;
     };

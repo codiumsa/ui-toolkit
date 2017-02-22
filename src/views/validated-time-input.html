@@ -2,10 +2,10 @@
   <label ng-if="vm.label" for="{{vm.name}}" ng-class="{ 'help-block' : vm.form[vm.name].$invalid &&((!vm.focus && vm.form[vm.name].$touched)|| vm.submittedFlag), 'custom-success': !vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submittedFlag)}">{{vm.label}} {{vm.isRequired ? '*' : ''}}</label>
   <div class="input-group" style="width: 100%;">
     <input type="text" name="{{vm.name}}" id="{{vm.name}}" ng-model="vm.model" ng-required="vm.isRequired" class="form-control"
-      ng-disabled="vm.isDisabled" ng-focus="vm.focus()" ng-blur="vm.blur()" />
+      ng-disabled="vm.isDisabled" ng-focus="vm.onFocus()" ng-blur="vm.blur()" />
     <div class="datepicker-theme dropdown-menu" dropdown-nested ng-if="vm.opened" style="display: block; width:auto;" ng-style="{top: position.top+'px', left: position.left+'px'}"
       ng-keydown="vm.keydown($event)" ng-click="$event.stopPropagation()">
-      <div uib-timepicker ng-model="vm.date" ng-change="vm.updateListener()" show-meridian="false" ng-focus="vm.focus()" style="padding-right: 20px; padding-left: 20px;"></div>
+      <div uib-timepicker ng-model="vm.date" ng-change="vm.updateListener()" show-meridian="false" ng-focus="vm.onFocus()" style="padding-right: 20px; padding-left: 20px;"></div>
       <li class="uib-button-bar">
         <span class="btn-group pull-left">
 		      <button type="button" class="btn btn-sm btn-info" ng-click="vm.today()">Ahora</button>
