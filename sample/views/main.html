@@ -65,6 +65,10 @@
         input-type="text" label="Fecha hasta" is-disabled="vm.view" is-required="true">
       </validated-date-input>
 
+      <validated-time-input model="vm.model.hora" class="col-lg-6" form="form" name="hora" submitted-flag="vm.submitted" classes="form-group"
+        input-type="text" label="Hora" is-disabled="vm.view" is-required="true">
+      </validated-time-input>
+
       <div class="col-lg-12">
         <label>Custom checkbox</label>
         <input type="checkbox" ng-model="vm.checkbox" ui-checkbox data-toggle="toggle" data-on="{{'SI'}}" data-off="{{'NO'}}">
