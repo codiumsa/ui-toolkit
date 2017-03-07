@@ -38,7 +38,9 @@ var sourceFiles = [
 var cssFiles = [
   path.join(sourceDirectory, '/styles/main.scss'),
   path.join(sourceDirectory, '/**/*.css'),
-  path.join(bowerDirectory, '/angular-ui-select/dist/select.css')
+  path.join(bowerDirectory, '/angular-ui-select/dist/select.css'),
+  path.join(bowerDirectory, '/bootstrap-rangepicker/rangepicker.css'),
+  path.join(bowerDirectory, '/bootstrap-daterangepicker/daterangepicker.css')
 ];
 
 var fontFiles = [
@@ -61,7 +63,7 @@ var lintFiles = [
   'karma-*.conf.js'
 ].concat(sourceFiles);
 
-gulp.task('build', function () {
+gulp.task('build', function() {
   gulp.src(sourceFiles)
     .pipe(plumber())
     .pipe(concat('ui.js'))
@@ -105,7 +107,7 @@ gulp.task('build', function () {
     .pipe(gulp.dest('./dist'));
 });
 
-gulp.task('views', function () {
+gulp.task('views', function() {
   // Any other view files from app/views
   gulp.src('./views/*')
     // Will be put in the dist/views folder
@@ -115,14 +117,14 @@ gulp.task('views', function () {
 /**
  * Process
  */
-gulp.task('process-all', function (done) {
-  runSequence(/*'jshint',*/ 'test-src', 'build', 'views', done);
+gulp.task('process-all', function(done) {
+  runSequence( /*'jshint',*/ 'test-src', 'build', 'views', done);
 });
 
 /**
  * Watch task
  */
-gulp.task('watch', function () {
+gulp.task('watch', function() {
 
   // Watch JavaScript files
   gulp.watch(sourceFiles, ['process-all']);
@@ -142,7 +144,7 @@ gulp.task('watch', function () {
 /**
  * Run test once and exit
  */
-gulp.task('test-src', function (done) {
+gulp.task('test-src', function(done) {
   karma.start({
     configFile: __dirname + '/karma-src.conf.js',
     singleRun: true
@@ -152,7 +154,7 @@ gulp.task('test-src', function (done) {
 /**
  * Run test once and exit
  */
-gulp.task('test-dist-concatenated', function (done) {
+gulp.task('test-dist-concatenated', function(done) {
   karma.start({
     configFile: __dirname + '/karma-dist-concatenated.conf.js',
     singleRun: true
@@ -162,13 +164,13 @@ gulp.task('test-dist-concatenated', function (done) {
 /**
  * Run test once and exit
  */
-gulp.task('test-dist-minified', function (done) {
+gulp.task('test-dist-minified', function(done) {
   karma.start({
     configFile: __dirname + '/karma-dist-minified.conf.js',
     singleRun: true
   }, done);
 });
 
-gulp.task('default', function () {
+gulp.task('default', function() {
   runSequence('process-all', 'watch');
 });
