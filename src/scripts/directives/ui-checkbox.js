@@ -40,7 +40,7 @@
             return;
           }
           initialized = true;
-          $(newElement).bootstrapToggle('on');
+          $(newElement).bootstrapToggle(value ? 'on' : 'off');
 
           if (disabled) {
             $(newElement).bootstrapToggle('disable');

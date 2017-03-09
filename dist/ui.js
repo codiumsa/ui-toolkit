@@ -1544,7 +1544,7 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
             return;
           }
           initialized = true;
-          $(newElement).bootstrapToggle('on');
+          $(newElement).bootstrapToggle(value ? 'on' : 'off');
 
           if (disabled) {
             $(newElement).bootstrapToggle('disable');
