@@ -1537,17 +1537,30 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
           return $(newElement).bootstrapToggle().change(changeHandler);
         });
         var initialized = false;
+        var disabled = false;
 
         scope.$watch(attrs.ngModel, function (value) {
-          if (initialized || !value) {
+          if (initialized || value === undefined) {
             return;
           }
           initialized = true;
           $(newElement).bootstrapToggle('on');
+
+          if (disabled) {
+            $(newElement).bootstrapToggle('disable');
+          }
         });
 
         scope.$watch(attrs.isDisabled, function (value) {
-          $(newElement).bootstrapToggle(!value ? 'enable' : 'disable');
+          if (value === undefined) {
+            return;
+          }
+
+          if (initialized) {
+            $(newElement).bootstrapToggle(!value ? 'enable' : 'disable');
+          } else {
+            disabled = value;
+          }
         });
 
         // actualizamos el ngModel cuando cambia el valor del checkbox

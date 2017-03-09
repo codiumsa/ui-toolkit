@@ -79,6 +79,10 @@
       vm.fileuploadDisabled = false;
       vm.onPasswordGenerate = (password) => console.log('password', password);
       vm.showConfirmationModal = showConfirmationModal.bind(vm);
+      vm.checkbox = true;
+      $timeout(() => {
+        vm.checkboxDisabled = true;
+      }, 3000);
     }
   }
 
