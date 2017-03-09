@@ -1,11 +1,10 @@
 <div class="{{ vm.classes }} has-feedback" ng-class="{ 'has-error' : vm.form[vm.name].$invalid && ((!vm.focus && vm.form[vm.name].$touched) || vm.submittedFlag), 'has-success' : !vm.form[vm.name].$invalid && ((!vm.focus && vm.form[vm.name].$touched) || vm.submittedFlag) }">
-  <label ng-if="vm.label" for="{{vm.name}}" ng-class="{ 'help-block' : vm.form[vm.name].$invalid &&((!vm.focus && vm.form[vm.name].$touched)|| vm.submittedFlag), 'custom-success': !vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submittedFlag)}">{{vm.label}}</label>
+  <label ng-if="vm.label" for="{{vm.name}}" ng-class="{ 'help-block' : vm.form[vm.name].$invalid &&((!vm.focus && vm.form[vm.name].$touched)|| vm.submittedFlag), 'custom-success': !vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submittedFlag)}">{{vm.label}} {{vm.isRequired ? '*' : ''}}</label>
   <div class="input-group" style="width: 100%;">
-    <input type="text" name="{{vm.name}}" id="{{vm.name}}" ng-model="vm.model" ng-required="vm.isRequired"
-      class="form-control" uib-datepicker-popup="{{vm.format}}" is-open="vm.opened" datepicker-options="vm.dateOptions"
-      close-text="Cerrar" current-text="Hoy" clear-text="Borrar" datepicker-popup-template-urll="views/datepicker/popup.html"
-      ng-disabled="vm.isDisabled" ng-change="vm.updateListener()" init-date="vm.model" show-weeks="vm.showWeeks"
-      ng-focus="vm.onFocus()" />
+    <input type="text" name="{{vm.name}}" id="{{vm.name}}" ng-model="vm.model" ng-required="vm.isRequired" class="form-control"
+      uib-datepicker-popup="{{vm.format}}" is-open="vm.opened" datepicker-options="vm.dateOptions" close-text="Cerrar" current-text="Hoy"
+      clear-text="Borrar" datepicker-popup-template-urll="views/datepicker/popup.html" ng-disabled="vm.isDisabled" ng-change="vm.updateListener()"
+      init-date="vm.model" show-weeks="vm.showWeeks" ng-focus="vm.onFocus()" />
     <span ng-if="(!vm.focus && vm.form[vm.name].$touched)|| vm.submittedFlag" class="feedback-datepicker form-control-feedback glyphicon"
       ng-class="{'glyphicon': true, 'glyphicon-ok': !vm.form[vm.name].$invalid && ((!vm.focus && vm.form[vm.name].$touched)|| vm.submittedFlag), 'glyphicon-remove': vm.form[vm.name].$invalid && ((!vm.focus && vm.form[vm.name].$touched)|| vm.submittedFlag) }"
       aria-hidden="true"></span>
@@ -15,6 +14,5 @@
 		</span>
   </div>
 
-  <div ng-show="vm.form[vm.name].$invalid && ((!vm.focus && vm.form[vm.name].$touched)|| vm.submittedFlag)"
-    class="help-block">El campo es obligatorio</div>
+  <div ng-show="vm.form[vm.name].$invalid && ((!vm.focus && vm.form[vm.name].$touched)|| vm.submittedFlag)" class="help-block">El campo es obligatorio</div>
 </div>

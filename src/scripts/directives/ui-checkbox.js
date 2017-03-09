@@ -34,12 +34,16 @@
         $timeout(() => $(newElement).bootstrapToggle().change(changeHandler));
         let initialized = false;
 
-        scope.$watch(attrs.ngModel, (value) => {
+        scope.$watch(attrs.ngModel, value => {
           if (initialized || !value) {
             return;
           }
           initialized = true;
           $(newElement).bootstrapToggle('on');
+        });
+
+        scope.$watch(attrs.isDisabled, value => {
+          $(newElement).bootstrapToggle(!value ? 'enable' : 'disable');
         });
 
         // actualizamos el ngModel cuando cambia el valor del checkbox

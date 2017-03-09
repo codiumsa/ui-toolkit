@@ -69,9 +69,13 @@
         input-type="text" label="Hora" is-disabled="vm.view" is-required="true">
       </validated-time-input>
 
-      <div class="col-lg-12">
-        <label>Custom checkbox</label>
+      <div class="col-lg-12" style="margin-bottom: 30px; margin-top: 10px;">
+        <label>Disabled Custom checkbox?</label>
         <input type="checkbox" ng-model="vm.checkbox" ui-checkbox data-toggle="toggle" data-on="{{'SI'}}" data-off="{{'NO'}}">
+
+        <label>custom checkbox</label>
+        <input type="checkbox" ng-model="vm.checkboxDisabled" ui-checkbox is-disabled="vm.checkbox" data-toggle="toggle" data-on="{{'SI'}}"
+          data-off="{{'NO'}}">
       </div>
 
       <password-generator class="col-lg-12" after-generate="vm.onPasswordGenerate(password)"></password-generator>

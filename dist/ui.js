@@ -1546,6 +1546,10 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
           $(newElement).bootstrapToggle('on');
         });
 
+        scope.$watch(attrs.isDisabled, function (value) {
+          $(newElement).bootstrapToggle(!value ? 'enable' : 'disable');
+        });
+
         // actualizamos el ngModel cuando cambia el valor del checkbox
         function changeHandler() {
           var checked = $(this).prop('checked');
@@ -2467,7 +2471,7 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
         minLength: '@',
         focusElement: '@',
         isDisabled: '=',
-        pattern: '@',
+        textPattern: '@',
         min: '=',
         max: '='
       },
@@ -2484,6 +2488,7 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
   }
 
   ValidatedTextInputController.$inject = ['$scope', '$timeout'];
+
   function ValidatedTextInputController($scope, $timeout) {
     var vm = this;
 
@@ -2497,7 +2502,6 @@ angular.module('ui').filter('selectFilter', [function ($filter) {
     }
   };
 })();
-
 (function () {
   'use strict';
 
