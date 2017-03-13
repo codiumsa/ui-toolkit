@@ -2273,7 +2273,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         isDisabled: '=',
         /**
          * Representa un callback que recibe como parámetro el texto ingresado por el usuario y retorna
-         * un promise.
+         * un promise. Al especificar esta opción, se define ui-select en modo lazy load.
          */
         optionsLoader: '&?',
 
@@ -2286,13 +2286,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         /**
          * Longitud mínima para que el search input dispare la lógica de búsqueda. Valor por defecto 0.
          */
-        searchTextMinLength: '@',
-
-        /**
-         * Al especificar el callback lazy-loader, ui-select agrega el enlace "..." al final del dropdown. Este
-         * handler es invocado al hacer click en el enlace. Debe retornar un promise.
-         */
-        lazyLoader: '&?'
+        searchTextMinLength: '@'
       },
       controllerAs: 'vm',
       bindToController: true,
@@ -2310,13 +2304,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     vm.selectListener = selectListener.bind(this);
     vm.getFilter = getFilter.bind(this);
     vm.loadOptions = loadOptions.bind(this);
-    vm.handleLazyLoading = handleLazyLoading.bind(this);
 
     activate();
 
     function activate() {
       vm.availableOptions = [];
       vm.loadOptions();
+      vm.handleLazyLoading = vm.optionsLoader ? vm.loadOptions : undefined;
       var len = vm.searchTextMinLength ? parseInt(vm.searchTextMinLength) : 0;
 
       // listener para el text input asociado al ui-select.
@@ -2364,18 +2358,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
       if (angular.isFunction(rsp.then)) {
         rsp.then(function (response) {
-          return vm.availableOptions = response;
+          vm.availableOptions = vm.availableOptions.concat(response);
         });
       }
-    }
-
-    function handleLazyLoading() {
-      if (!angular.isFunction(this.lazyLoader)) {
-        return;
-      }
-      this.lazyLoader().then(function (response) {
-        return vm.availableOptions = vm.availableOptions.concat(response);
-      });
     }
   }
 })();

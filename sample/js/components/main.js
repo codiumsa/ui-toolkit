@@ -86,7 +86,7 @@
 
       vm.searchRepositories = searchRepositories.bind(vm);
       vm.renderRepo = renderRepo.bind(vm);
-      vm.nextPage = nextPage.bind(vm);
+      vm.currentPage = 1;
     }
 
     function onNew() {
@@ -121,15 +121,15 @@
      * @param {string} query.
      * @param {number} page.
      */
-    function searchRepositories(query, page) {
-      this.currentPage = page || 1;
-      this.currentQuery = query || 'angular';
+    function searchRepositories(query) {
+      this.currentPage = this.currentPage + 1;
+      query = query || 'angular';
 
-      return $http({ url: 'https://api.github.com/search/repositories?q=' + this.currentQuery + '&page=' + this.currentPage }).then(
+      return $http({ url: 'https://api.github.com/search/repositories?q=' + query + '&page=' + this.currentPage }).then(
         response => {
           return response.data.items;
         }
-      )
+      );
     }
 
     function renderRepo(repo) {
@@ -138,11 +138,6 @@
           ${repo.full_name} <i class="fa fa-star">  ${repo.stargazers_count}</i>
         </p>
       `;
-    }
-
-    function nextPage() {
-      this.currentPage += 1;
-      return this.searchRepositories(this.currentQuery, this.currentPage);
     }
   }
 
