@@ -58,7 +58,12 @@
       </validated-text-input>
 
       <validated-uiselect-input is-required="true" class="col-lg-12" model="vm.model.pais" form="form" name="pais" options="vm.paises"
-        label="País" submitted-flag="vm.submited" field-to-show="nombre" classes="form-group">
+        label="País" submitted-flag="vm.submited" field-to-show="nombre" classes="form-group" search-text-min-length="4">
+      </validated-uiselect-input>
+
+      <validated-uiselect-input class="col-lg-12" model="vm.model.repositorios" form="form" name="pais" options-loader="vm.searchRepositories(query)"
+        label="Repositorios" submitted-flag="vm.submited" renderer="vm.renderRepo(item)" classes="form-group" search-text-min-length="4"
+        lazy-loader="vm.nextPage()">
       </validated-uiselect-input>
 
       <validated-date-input model="vm.model.hasta" class="col-lg-6" form="form" name="hasta" submitted-flag="vm.submitted" classes="form-group"

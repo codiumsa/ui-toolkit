@@ -54,7 +54,8 @@
     'angular-intro',
     'datatables.colreorder',
     'ngNotify',
-    'ngclipboard'
+    'ngclipboard',
+    'infinite-scroll'
   ]);
 
   angular.module('ui').config(['$provide', function($provide) {
