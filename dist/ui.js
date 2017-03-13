@@ -18,7 +18,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
   angular.module('ui.directives', []);
   angular.module('ui.filters', []);
   angular.module('ui.services', []);
-  angular.module('ui', ['ui.config', 'ui.directives', 'ui.filters', 'ui.services', 'ngResource', 'ngCookies', 'ngSanitize', 'ngTouch', 'datatables', 'datatables.bootstrap', 'schemaForm', 'pascalprecht.translate', 'cgNotify', 'angular-underscore/filters', 'flow', 'ui.bootstrap', 'ui.select', 'ui.highlight', 'ncy-angular-breadcrumb', 'ui.router', 'oc.lazyLoad', 'ngStorage', 'LocalForageModule', 'datatables.buttons', 'datatables.colreorder', 'daterangepicker', 'rangepicker', 'ngWebSocket', 'pickadate', 'ngAnimate', 'ngMessages', 'ngResource', 'angularSpinner', 'ngTagsInput', 'angular-ladda', 'perfect_scrollbar', 'angular-intro', 'datatables.colreorder', 'ngNotify', 'ngclipboard', 'infinite-scroll']);
+  angular.module('ui', ['ui.config', 'ui.directives', 'ui.filters', 'ui.services', 'ngResource', 'ngCookies', 'ngSanitize', 'ngTouch', 'datatables', 'datatables.bootstrap', 'schemaForm', 'pascalprecht.translate', 'cgNotify', 'angular-underscore/filters', 'flow', 'ui.bootstrap', 'ui.select', 'ui.highlight', 'ncy-angular-breadcrumb', 'ui.router', 'oc.lazyLoad', 'ngStorage', 'LocalForageModule', 'datatables.buttons', 'datatables.colreorder', 'daterangepicker', 'rangepicker', 'ngWebSocket', 'pickadate', 'ngAnimate', 'ngMessages', 'ngResource', 'angularSpinner', 'ngTagsInput', 'angular-ladda', 'perfect_scrollbar', 'angular-intro', 'datatables.colreorder', 'ngNotify', 'ngclipboard']);
 
   angular.module('ui').config(['$provide', function ($provide) {
 
