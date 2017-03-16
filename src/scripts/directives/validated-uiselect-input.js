@@ -102,7 +102,7 @@
 
     function loadOptions(query) {
       if (!angular.isFunction(this.optionsLoader)) {
-        vm.availableOptions = $filter('filter')(vm.options, this.getFilter(query));
+        vm.availableOptions = query ? $filter('filter')(vm.options, this.getFilter(query)) : vm.options;
         return;
       }
       let rsp = this.optionsLoader({ query });
