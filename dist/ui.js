@@ -2308,7 +2308,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     activate();
 
     function activate() {
-      vm.availableOptions = [];
       vm.loadOptions();
       vm.handleLazyLoading = vm.optionsLoader ? vm.loadOptions : undefined;
       var len = vm.searchTextMinLength ? parseInt(vm.searchTextMinLength) : 0;
@@ -2350,14 +2349,23 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     }
 
     function loadOptions(query) {
+      var vm = this;
+
       if (!angular.isFunction(this.optionsLoader)) {
-        vm.availableOptions = query ? $filter('filter')(vm.options, this.getFilter(query)) : vm.options;
+        $scope.$watch('vm.options', function (value) {
+          if (!value) {
+            return;
+          }
+          vm.availableOptions = query ? $filter('filter')(value, vm.getFilter(query)) : value;
+        });
+        vm.availableOptions = query ? $filter('filter')(vm.options, vm.getFilter(query)) : vm.options;
         return;
       }
       var rsp = this.optionsLoader({ query: query });
 
-      if (angular.isFunction(rsp.then)) {
+      if (rsp && angular.isFunction(rsp.then)) {
         rsp.then(function (response) {
+          vm.availableOptions = vm.availableOptions || [];
           vm.availableOptions = vm.availableOptions.concat(response);
         });
       }

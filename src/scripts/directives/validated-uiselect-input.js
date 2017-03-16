@@ -58,19 +58,17 @@
 
     activate();
 
-
     function activate() {
-      vm.availableOptions = [];
       vm.loadOptions();
       vm.handleLazyLoading = vm.optionsLoader ? vm.loadOptions : undefined;
-      const len = vm.searchTextMinLength ? parseInt(vm.searchTextMinLength) : 0;
+      var len = vm.searchTextMinLength ? parseInt(vm.searchTextMinLength) : 0;
 
       // listener para el text input asociado al ui-select.
       $timeout(() => {
-        let input = $element.find('input.ui-select-search');
+        var input = $element.find('input.ui-select-search');
 
         $(input).on('keyup', () => {
-          const query = $(input).val();
+          var query = $(input).val();
 
           if (query !== '' && len && query.length < len) {
             return;
@@ -86,7 +84,7 @@
       }
 
       if (angular.isFunction(vm.renderer)) {
-        return vm.renderer({ item });
+        return vm.renderer({ item: item });
       }
       return _.get(item, vm.fieldToShow);
     }
@@ -99,16 +97,26 @@
       return { $: param };
     }
 
-
     function loadOptions(query) {
+      let vm = this;
+
       if (!angular.isFunction(this.optionsLoader)) {
-        vm.availableOptions = query ? $filter('filter')(vm.options, this.getFilter(query)) : vm.options;
+        $scope.$watch('vm.options', (value) => {
+          if (!value) {
+            return;
+          }
+          vm.availableOptions = query ? $filter('filter')(value, vm.getFilter(query)) : value;
+        });
+        vm.availableOptions = query ? $filter('filter')(vm.options, vm.getFilter(query)) : vm.options;
         return;
       }
-      let rsp = this.optionsLoader({ query });
+      let rsp = this.optionsLoader({ query: query });
 
-      if (angular.isFunction(rsp.then)) {
-        rsp.then(response => { vm.availableOptions = vm.availableOptions.concat(response) });
+      if (rsp && angular.isFunction(rsp.then)) {
+        rsp.then(response => {
+          vm.availableOptions = vm.availableOptions || [];
+          vm.availableOptions = vm.availableOptions.concat(response);
+        });
       }
     }
   }
