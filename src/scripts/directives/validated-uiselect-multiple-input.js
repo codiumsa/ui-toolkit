@@ -1,72 +1,126 @@
 (function() {
-'use strict';
+  'use strict';
 
-angular
-  .module('ui')
-  .directive('validatedUiselectMultipleInput', validatedUiselectMultipleInput);
+  angular
+    .module('ui')
+    .directive('validatedUiselectMultipleInput', validatedUiselectMultipleInput);
 
-function validatedUiselectMultipleInput() {
-  var directive = {
-    restrict: 'E',
-    scope: {
-      model: '=',
-      form: '=',
-      name: '@',
-      label: '@',
-      isRequired: '=',
-      submittedFlag: '=',
-      fieldToShow: '@',
-      options: '=',
-      classes: '@',
-      onSelect: '&',
-      isDisabled: '='
-    },
-    controllerAs: 'vm',
-    bindToController: true,
-    templateUrl: 'views/validated-uiselect-multiple-input.html',
-    link: linkFunc,
-    controller: ValidatedUiselectMultipleInputController,
-  };
+  function validatedUiselectMultipleInput() {
+    var directive = {
+      restrict: 'E',
+      scope: {
+        model: '=',
+        form: '=',
+        name: '@',
+        label: '@',
+        isRequired: '=',
+        submittedFlag: '=',
+        fieldToShow: '@',
+        options: '=',
+        classes: '@',
+        onSelect: '&',
+        isDisabled: '=',
+        /**
+         * Representa un callback que recibe como parámetro el texto ingresado por el usuario y retorna
+         * un promise. Al especificar esta opción, se define ui-select en modo lazy load.
+         */
+        optionsLoader: '&?',
 
-  function linkFunc(scope, elem, attr) {
+        /**
+         * Callback que se encarga de definir el texto que se muestra al usuario. Al especificar
+         * un renderer, el campo atributo field-to-show se ignora por completo.
+         */
+        renderer: '&?',
+
+        /**
+         * Longitud mínima para que el search input dispare la lógica de búsqueda. Valor por defecto 0.
+         */
+        searchTextMinLength: '@'
+      },
+      controllerAs: 'vm',
+      bindToController: true,
+      templateUrl: 'views/validated-uiselect-multiple-input.html',
+      link: linkFunc,
+      controller: ValidatedUiselectMultipleInputController,
+    };
+
+    function linkFunc(scope, elem, attr) {}
+
+    return directive;
   }
 
-  return directive;
-}
+  ValidatedUiselectMultipleInputController.$inject = ['$scope', '$timeout'];
 
-ValidatedUiselectMultipleInputController.$inject =  ['$scope', '$timeout'];
-function ValidatedUiselectMultipleInputController($scope, $timeout) {
-  var vm = this;
+  function ValidatedUiselectMultipleInputController($scope, $timeout) {
+    var vm = this;
 
-  vm.getChoice = getChoice;
+    vm.getChoice = getChoice.bind(this);
+    vm.selectListener = selectListener.bind(this);
+    vm.getFilter = getFilter.bind(this);
+    vm.loadOptions = loadOptions.bind(this);
 
-  vm.selectListener = selectListener;
+    activate();
 
-  vm.printTest = printTest;
+    function activate() {
+      vm.loadOptions();
+      vm.handleLazyLoading = vm.optionsLoader ? vm.loadOptions : undefined;
+      var len = vm.searchTextMinLength ? parseInt(vm.searchTextMinLength) : 0;
 
-  vm.getFilter = getFilter;
+      // listener para el text input asociado al ui-select.
+      $timeout(() => {
+        var input = $element.find('input.ui-select-search');
 
-  activate();
+        $(input).on('keyup', () => {
+          var query = $(input).val();
 
-  function activate() {
+          if (query !== '' && len && query.length < len) {
+            return;
+          }
+          $scope.$apply(() => vm.loadOptions(query));
+        });
+      }, 0);
+    }
+
+    function getChoice(item) {
+      if (!item) {
+        return;
+      }
+
+      if (angular.isFunction(vm.renderer)) {
+        return vm.renderer({ item: item });
+      }
+      return _.get(item, vm.fieldToShow);
+    }
+
+    function selectListener() {
+      $timeout(vm.onSelect, 0);
+    }
+
+    function getFilter(param) {
+      return { $: param };
+    }
+
+    function loadOptions(query) {
+      let vm = this;
+
+      if (!angular.isFunction(this.optionsLoader)) {
+        $scope.$watch('vm.options', (value) => {
+          if (!value) {
+            return;
+          }
+          vm.availableOptions = query ? $filter('filter')(value, vm.getFilter(query)) : value;
+        });
+        vm.availableOptions = query ? $filter('filter')(vm.options, vm.getFilter(query)) : vm.options;
+        return;
+      }
+      let rsp = this.optionsLoader({ query: query });
+
+      if (rsp && angular.isFunction(rsp.then)) {
+        rsp.then(response => {
+          vm.availableOptions = vm.availableOptions || [];
+          vm.availableOptions = vm.availableOptions.concat(response);
+        });
+      }
+    }
   }
-
-  function getChoice(obj) {
-    return _.get(obj, vm.fieldToShow);
-  }
-
-  function selectListener() {
-    $timeout(vm.onSelect, 0);
-  }
-
-  function getFilter(param) {
-    var obj = {};
-    obj[vm.fieldToShow] = param;
-      return obj;
-  }
-
-  function printTest() {
-    console.log('este es un test');
-  }
-}
 }());
