@@ -2421,9 +2421,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     return directive;
   }
 
-  ValidatedUiselectMultipleInputController.$inject = ['$scope', '$timeout'];
+  ValidatedUiselectMultipleInputController.$inject = ['$scope', '$timeout', '$element'];
 
-  function ValidatedUiselectMultipleInputController($scope, $timeout) {
+  function ValidatedUiselectMultipleInputController($scope, $timeout, $element) {
     var vm = this;
 
     vm.getChoice = getChoice.bind(this);
