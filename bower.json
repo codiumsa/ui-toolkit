@@ -1,6 +1,6 @@
 {
   "name": "ui",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "authors": [
     {
       "name": "Jorge Ramirez",
@@ -9,6 +9,10 @@
     {
       "name": "Verena Ojeda",
       "email": "vereojeda@gmail.com"
+    },
+    {
+      "name": "Nahuel Hernández",
+      "email": "jnanuelhernandez@gmail.com"
     }
   ],
   "main": [

@@ -2286,7 +2286,20 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         /**
          * Longitud mínima para que el search input dispare la lógica de búsqueda. Valor por defecto 0.
          */
-        searchTextMinLength: '@'
+        searchTextMinLength: '@',
+        /**
+         *  Indica el atributo por el cual se agrupan las opciones
+         */
+        groupBy: '=',
+        /**
+         *  Si es true, se borra lo que se escribio en el input del serch despues de seleccionar
+         */
+        resetSearchInput: '=',
+        /**
+         *  Si es true, no concatena la respuesta del optionsLoader
+         */
+        loadReplace: '=',
+        theme: '='
       },
       controllerAs: 'vm',
       bindToController: true,
@@ -2302,12 +2315,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     var vm = this;
     vm.getChoice = getChoice.bind(this);
     vm.selectListener = selectListener.bind(this);
-    vm.getFilter = getFilter.bind(this);
-    vm.loadOptions = loadOptions.bind(this);
+    vm.getFilter = getFilter.bind(this);vm.loadOptions = loadOptions.bind(this);
+    vm.currentQuery = null;
 
     activate();
 
     function activate() {
+      vm.availableOptions = [];
       vm.loadOptions();
       vm.handleLazyLoading = vm.optionsLoader ? vm.loadOptions : undefined;
       var len = vm.searchTextMinLength ? parseInt(vm.searchTextMinLength) : 0;
@@ -2318,13 +2332,24 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
         $(input).on('keyup', function () {
           var query = $(input).val();
-
+          if (query === vm.currentQuery) {
+            return;
+          }
+          vm.currentQuery = query;
           if (query !== '' && len && query.length < len) {
             return;
           }
           $scope.$apply(function () {
             return vm.loadOptions(query);
           });
+        });
+        $(input).on('focus', function () {
+          if (!vm.currentQuery) {
+            var query = $(input).val();
+            $scope.$apply(function () {
+              return vm.loadOptions(query);
+            });
+          }
         });
       }, 0);
     }
@@ -2366,7 +2391,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       if (rsp && angular.isFunction(rsp.then)) {
         rsp.then(function (response) {
           vm.availableOptions = vm.availableOptions || [];
-          vm.availableOptions = vm.availableOptions.concat(response);
+          if (vm.loadReplace) {
+            vm.availableOptions = response;
+          } else {
+            vm.availableOptions = vm.availableOptions.concat(response);
+          }
         });
       }
     }
