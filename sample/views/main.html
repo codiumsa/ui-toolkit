@@ -65,6 +65,10 @@
         label="Repositorios" submitted-flag="vm.submited" renderer="vm.renderRepo(item)" classes="form-group" search-text-min-length="4">
       </validated-uiselect-input>
 
+      <validated-uiselect-multiple-input class="col-lg-12" model="vm.model.repositoriosMultiple" form="form" name="pais" options-loader="vm.searchRepositories(query)"
+        label="Repositorios (multiples)" submitted-flag="vm.submited" renderer="vm.renderRepo(item)" classes="form-group" search-text-min-length="4">
+      </validated-uiselect-multiple-input>
+
       <validated-date-input model="vm.model.hasta" class="col-lg-6" form="form" name="hasta" submitted-flag="vm.submitted" classes="form-group"
         input-type="text" label="Fecha hasta" is-disabled="vm.view" is-required="true">
       </validated-date-input>
