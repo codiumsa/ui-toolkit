@@ -1,9 +1,9 @@
 {
   "name": "ui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "author": {
-    "name": "Jorge Ramirez",
+    "name": "Jorge Ramírez",
     "email": "jorge@codium.com.py"
   },
   "scripts": {
@@ -13,6 +13,10 @@
     {
       "name": "Verena Ojeda",
       "email": "vojeda@codium.com.py"
+    },
+    {
+      "name": "Nahuel Hernández",
+      "email": "nahuel@codium.com.py"
     }
   ],
   "repository": {
