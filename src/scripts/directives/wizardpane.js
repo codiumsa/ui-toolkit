@@ -38,7 +38,10 @@
      * @param {string} state - nombre relativo o completo
      */
     vm.isActive = function(state) {
-      return state.startsWith('.') ? $state.is($state.get('^').name + state) : $state.is(state);
+      var params = state.indexOf("(");
+      params = params !== -1 ? params : state.length;
+      var rawState = state.substr(0, params);
+      return state.startsWith('.') ? $state.is($state.get('^').name + state) : $state.is(rawState);
     };
 
     vm.go = function(dest) {
