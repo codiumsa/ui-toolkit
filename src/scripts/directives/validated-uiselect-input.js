@@ -14,6 +14,7 @@
         form: '=',
         name: '@',
         label: '@',
+        placeholder: '@',
         isRequired: '=',
         submittedFlag: '=',
         fieldToShow: '@',

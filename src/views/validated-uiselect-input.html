@@ -2,7 +2,7 @@
   <label ng-if="vm.label" for="{{vm.name}}" ng-class="{ 'help-block' : vm.form[vm.name].$invalid &&(vm.form[vm.name].$touched || vm.submittedFlag), 'custom-success': !vm.form[vm.name].$invalid && (vm.form[vm.name].$touched || vm.submittedFlag)}">{{ vm.label }} {{vm.isRequired ? '*' : ''}}</label>
   <ui-select theme="vm.theme" focus-on="{{vm.focusElement}}" id="{{vm.name}}" name="{{vm.name}}" ng-required="vm.isRequired" ng-model="vm.model"
     on-select="vm.selectListener()" ng-disabled="vm.isDisabled" reset-search-input="vm.resetSearchInput">
-    <ui-select-match>
+    <ui-select-match placeholder="vm.placeholder">
       <span ng-bind-html="vm.getChoice($select.selected)"></span>
     </ui-select-match>
 
