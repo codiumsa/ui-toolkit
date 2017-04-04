@@ -35,7 +35,12 @@
         /**
          * Longitud mínima para que el search input dispare la lógica de búsqueda. Valor por defecto 0.
          */
-        searchTextMinLength: '@'
+        searchTextMinLength: '@',
+
+        /**
+         * El theme a utilizar por ui-select. Por defecto boostrap.
+         */
+        theme: '='
       },
       controllerAs: 'vm',
       bindToController: true,
@@ -58,6 +63,7 @@
     vm.selectListener = selectListener.bind(this);
     vm.getFilter = getFilter.bind(this);
     vm.loadOptions = loadOptions.bind(this);
+    vm.selectedTheme = vm.theme || 'bootstrap';
 
     activate();
 

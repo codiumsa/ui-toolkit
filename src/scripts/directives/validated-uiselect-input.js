@@ -50,6 +50,10 @@
          *  Si es true, no concatena la respuesta del optionsLoader
          */
         loadReplace: '=',
+
+        /**
+         * El theme a utilizar por ui-select. Por defecto boostrap.
+         */
         theme: '='
       },
       controllerAs: 'vm',
@@ -66,8 +70,10 @@
     var vm = this;
     vm.getChoice = getChoice.bind(this);
     vm.selectListener = selectListener.bind(this);
-    vm.getFilter = getFilter.bind(this);    vm.loadOptions = loadOptions.bind(this);
+    vm.getFilter = getFilter.bind(this);
+    vm.loadOptions = loadOptions.bind(this);
     vm.currentQuery = null;
+    vm.selectedTheme = vm.theme || 'bootstrap';
 
     activate();
 
@@ -78,10 +84,10 @@
       var len = vm.searchTextMinLength ? parseInt(vm.searchTextMinLength) : 0;
 
       // listener para el text input asociado al ui-select.
-      $timeout(function () {
+      $timeout(function() {
         var input = $element.find('input.ui-select-search');
 
-        $(input).on('keyup', function () {
+        $(input).on('keyup', function() {
           var query = $(input).val();
           if (query === vm.currentQuery) {
             return;
@@ -90,14 +96,14 @@
           if (query !== '' && len && query.length < len) {
             return;
           }
-          $scope.$apply(function () {
+          $scope.$apply(function() {
             return vm.loadOptions(query);
           });
         });
-        $(input).on('focus', function () {
+        $(input).on('focus', function() {
           if (!vm.currentQuery) {
             var query = $(input).val();
-            $scope.$apply(function () {
+            $scope.$apply(function() {
               return vm.loadOptions(query);
             });
           }
