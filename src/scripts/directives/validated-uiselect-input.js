@@ -55,6 +55,11 @@
          *  Si se usa optionsLoader, el key donde está la respuesta del server
          */
         keyData: '@',
+
+
+        /**
+         * El theme a utilizar por ui-select. Por defecto boostrap.
+         */
         theme: '='
       },
       controllerAs: 'vm',
@@ -75,6 +80,7 @@
     vm.loadOptions = loadOptions.bind(this);
     vm.currentQuery = null;
     vm.placeholder = vm.placeholder || 'Seleccione una opción';
+    vm.selectedTheme = vm.theme || 'bootstrap';
 
     activate();
 

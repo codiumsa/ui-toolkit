@@ -325,6 +325,22 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 (function () {
   'use strict';
+  // helper para poder definir theme de forma dinámica para ui-select.
+
+  angular.module('ui').directive('bindTheme', bindTheme);
+
+  function bindTheme() {
+    return {
+      restrict: 'A',
+      scope: false,
+      link: function link(scope, element, attrs) {
+        element.attr('theme', attrs.bindTheme);
+      }
+    };
+  }
+})();
+(function () {
+  'use strict';
 
   angular.module('ui').value('$datepickerSuppressError', true).directive('pickDate', ['$filter', function ($filter) {
     return {
@@ -2304,6 +2320,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
          *  Si se usa optionsLoader, el key donde está la respuesta del server
          */
         keyData: '@',
+
+        /**
+         * El theme a utilizar por ui-select. Por defecto boostrap.
+         */
         theme: '='
       },
       controllerAs: 'vm',
@@ -2324,6 +2344,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     vm.loadOptions = loadOptions.bind(this);
     vm.currentQuery = null;
     vm.placeholder = vm.placeholder || 'Seleccione una opción';
+    vm.selectedTheme = vm.theme || 'bootstrap';
 
     activate();
 
@@ -2447,7 +2468,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         /**
          * Longitud mínima para que el search input dispare la lógica de búsqueda. Valor por defecto 0.
          */
-        searchTextMinLength: '@'
+        searchTextMinLength: '@',
+
+        /**
+         * El theme a utilizar por ui-select. Por defecto boostrap.
+         */
+        theme: '='
       },
       controllerAs: 'vm',
       bindToController: true,
@@ -2470,6 +2496,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     vm.selectListener = selectListener.bind(this);
     vm.getFilter = getFilter.bind(this);
     vm.loadOptions = loadOptions.bind(this);
+    vm.selectedTheme = vm.theme || 'bootstrap';
 
     activate();
 
