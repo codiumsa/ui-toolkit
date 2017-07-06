@@ -81,6 +81,7 @@
     vm.currentQuery = null;
     vm.placeholder = vm.placeholder || 'Seleccione una opción';
     vm.selectedTheme = vm.theme || 'bootstrap';
+    vm.loadReplace = vm.loadReplace || true;
 
     activate();
 
