@@ -407,7 +407,7 @@
               }
 
               if (c.type) {
-                var customFilter = { 'filterType': c.type, 'filterUrl': c.filterUrl };
+                var customFilter = { 'filterType': c.type, 'filterUrl': c.filterUrl, 'keyData': c.keyData };
 
                 if (c.type === 'date-range') {
                   $scope.dateRangeFilters[originalIndex] = { startDate: null, endDate: null };
@@ -591,8 +591,9 @@
                                 q: term
                               };
                             },
-                            results: function(data, page) { // parse the results into the format expected by Select2.
+                            results: function(payload, page) { // parse the results into the format expected by Select2.
                               // since we are using custom formatting functions we do not need to alter the remote JSON data
+                              var data = customFilter.keyData ? payload[customFilter.keyData] : payload;
                               return { results: data };
                             },
                             cache: true
