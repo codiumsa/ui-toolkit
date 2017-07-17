@@ -36,6 +36,14 @@
          * Longitud mínima para que el search input dispare la lógica de búsqueda. Valor por defecto 0.
          */
         searchTextMinLength: '@',
+        /**
+         *  Si es true, no concatena la respuesta del optionsLoader
+         */
+        loadReplace: '=',
+        /**
+         *  Si se usa optionsLoader, el key donde está la respuesta del server
+         */
+        keyData: '@',
 
         /**
          * El theme a utilizar por ui-select. Por defecto boostrap.
@@ -122,9 +130,17 @@
       let rsp = this.optionsLoader({ query: query });
 
       if (rsp && angular.isFunction(rsp.then)) {
-        rsp.then(response => {
+        rsp.then(function(response) {
+          var data = response;
+          if (vm.keyData) {
+            data = response[vm.keyData];
+          }
           vm.availableOptions = vm.availableOptions || [];
-          vm.availableOptions = vm.availableOptions.concat(response);
+          if (vm.loadReplace == undefined || vm.loadReplace) {
+            vm.availableOptions = data;
+          } else {
+            vm.availableOptions = vm.availableOptions.concat(data);
+          }
         });
       }
     }

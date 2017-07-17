@@ -20,7 +20,7 @@
         classes: '@',
         onChange: '&',
         isDisabled: '=',
-        dateOptions: '@',
+        dateOptions: '=?',
         // formato esperado para la fecha dada como parámetro.
         // Posibles formatos: http://angular-ui.github.io/bootstrap/#!#dateparser
         format: '@',
@@ -78,7 +78,7 @@
       vm.model = null;
     };
 
-    vm.dateOptions = {
+    vm.dateOptions = vm.dateOptions || {
       formatYear: 'yy',
       startingDay: 1
     };

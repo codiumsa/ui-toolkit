@@ -9,8 +9,24 @@
     return {
       restrict: 'A',
       scope: false,
-      link(scope, element, attrs) {
+      require: 'ngModel',
+      link(scope, element, attrs, ngModelCtrl) {
         element.attr('theme', attrs.bindTheme);
+        scope.$parent.vm.form = ngModelCtrl.$$parentForm;
+        if (_isMultiSelect()) scope.$watchCollection(attrs.ngModel, _setTouched)
+        else scope.$watch(attrs.ngModel, _setTouched);
+
+        function _setTouched(newValue, oldValue) {
+          if (!ngModelCtrl.$touched && _isNotInitialLoad()) ngModelCtrl.$setTouched();
+
+          function _isNotInitialLoad() {
+            return newValue !== oldValue;
+          }
+        };
+
+        function _isMultiSelect() {
+          return angular.isDefined(attrs.multiple);
+        }
       }
     };
   }
