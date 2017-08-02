@@ -436,15 +436,25 @@
             actionsColumn = DTColumnBuilder.newColumn(null).withTitle('Operaciones').notSortable()
               .withOption('searchable', false)
               .renderWith(function(data, type, full, meta) {
-                var basicOpts = '<button class="btn-row-datatable btn btn-success btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canEdit(' + data.id + ')}" ng-click="edit(' + data.id + ', $event)">' +
-                  '   <span class="glyphicon glyphicon-pencil"></span>' +
-                  '</button>' +
-                  '<button class="btn-row-datatable btn btn-danger btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canRemove(' + data.id + ')}" ng-click="remove(' + data.id + ', $event)">' +
-                  '   <span class="glyphicon glyphicon-trash"></span>' +
-                  '</button>' +
-                  '<button class="btn-row-datatable btn btn-info btn-dt" style="margin-right: 5px;" ng-class="{ hidden : !canList(' + data.id + ')}" ng-click="view(' + data.id + ', $event)">' +
-                  '   <span class="glyphicon glyphicon-eye-open"></span>' +
+                var basicOpts = '';
+                if ($scope.canEdit(data)) {
+                  basicOpts += '<button class="btn-row-datatable btn btn-success btn-dt" style="margin-right: 5px;" ng-click="edit(' + data.id + ', $event)">' +
+                    '   <span class="glyphicon glyphicon-pencil"></span>';
                   '</button>';
+                }
+                if ($scope.canList(data)) {
+                  basicOpts += '<button class="btn-row-datatable btn btn-info btn-dt" style="margin-right: 5px;" ng-click="view(' + data.id + ', $event)">' +
+                    '   <span class="glyphicon glyphicon-eye-open"></span>' +
+                    '</button>';
+                }
+
+                if ($scope.canRemove(data)) {
+                  basicOpts += '<button class="btn-row-datatable btn btn-danger btn-dt" style="margin-right: 5px;" ng-click="remove(' + data.id + ', $event)">' +
+                    '   <span class="glyphicon glyphicon-trash"></span>' +
+                    '</button>';
+                }
+
+
                 if ($scope.options.extraRowOptions) {
                   _.forEach($scope.options.extraRowOptions, function(menuOpt) {
                     var compilado = _.template(menuOpt.templateToRender);
