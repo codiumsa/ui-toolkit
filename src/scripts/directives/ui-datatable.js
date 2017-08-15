@@ -715,7 +715,7 @@
 
             /* Funcion de actualizacion de URL Base con o sin filtros estaticos */
             function updateStaticFilters() {
-              urlTemplate = _.template(baseurl.getUrl() + '/<%= resource %>/datatables');
+              urlTemplate = _.template(baseurl.getUrl() + ($scope.options.urlTemplate || '/datatables/<%= resource %>'));
             }
 
             $scope.dtInstanceCallback = function(dtInstance) {
