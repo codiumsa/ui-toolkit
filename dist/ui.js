@@ -1569,7 +1569,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
               }
               basicOpts = basicOpts + compilado(compiled);
               $scope[menuOpt.conditionName] = menuOpt.conditionDef;
-              $scope.currentRowData = data;
+
+              var rows = $scope.rowsData || {};
+              rows[data.id] = data;
+              $scope.rowsData = rows;
             });
           }
           return basicOpts;
@@ -1730,7 +1733,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                       return '<div class="select2-user-result">' + text[column.textField] + '</div>';
                     },
                     formatSelection: function formatSelection(text) {
-                      return text[column.idField];
+                      return text[column.textField];
                     },
                     escapeMarkup: function escapeMarkup(m) {
                       return m;
