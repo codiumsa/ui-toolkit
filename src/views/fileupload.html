@@ -16,20 +16,19 @@
 
       <div>
         <div ng-repeat="file in $flow.files" class="transfer-box">
-          <span style="display:block; margin-top: 10px"><small>{{file.relativePath}} ({{ (file.size / 1024) | filesize: 2 }} KB)</small></span>
+          <span><small>{{file.relativePath}} ({{ file.size | filesize: 2 }})</small></span>
           <div class="progress progress-striped" ng-class="{active: file.isUploading()}">
-            <uib-progressbar class="progress progressbar-xs" value="file.progress() * 100" type="{{file.error ? 'danger': (file.isUploading() ? 'info' : 'success')}}"
-              style="width: 80%; display: inline-block;"></uib-progressbar>
+            <uib-progressbar class="progress progress-bar progress-bar-sm" value="file.progress() * 100" type="{{file.error ? 'danger': (file.isUploading() ? 'info' : 'success')}}"></uib-progressbar>
           </div>
           <div class="btn-group upload-buttons">
             <button title="Pausar subida de archivo" ng-click="file.pause()" ng-show="!file.paused && file.isUploading()"
-              class="waves-effect waves-button waves-sm waves-float waves-default"><i class="fa fa-pause"></i></button>
+              class="btn btn-default btn-sm"><i class="fa fa-pause"></i></button>
 
-            <button title="Continuar subida de archivo" ng-click="file.resume()" ng-show="file.paused" class="waves-effect waves-button waves-sm waves-float waves-default"><i class="fa fa-play"></i></button>
+            <button title="Continuar subida de archivo" ng-click="file.resume()" ng-show="file.paused" class="btn btn-default btn-sm"><i class="fa fa-play"></i></button>
 
-            <button title="Borrar archivo" ng-click="file.cancel()" class="waves-effect waves-button waves-sm waves-float waves-default"><i class="fa fa-times"></i></button>
+            <button title="Borrar archivo" ng-click="file.cancel()" class="btn btn-default btn-sm"><i class="fa fa-times"></i></button>
 
-            <button title="Reintentar subida" ng-click="file.retry()" ng-show="file.error" class="waves-effect waves-button waves-sm waves-float waves-default"><i class="fa fa-repeat"></i></button>
+            <button title="Reintentar subida" ng-click="file.retry()" ng-show="file.error" class="btn btn-default btn-sm"><i class="fa fa-repeat"></i></button>
 
           </div>
         </div>
@@ -43,9 +42,10 @@
       flow-name="uploader.flow" class="ng-scope">
       <h4>{{title}}</h4>
       <div class="drop" flow-drop ng-class="dropClass" flow-drop-enabled="!disabled">
-        <span class="btn btn-default" ng-disabled="disabled" flow-btn>Subir imagen</span>
-        <span class="btn btn-default" ng-disabled="disabled" flow-btn flow-directory ng-show="$flow.supportDirectory">Subir directorio con im&aacute;genes</span>
-        <b>O</b> Arrastrar las im&aacute;genes aqu&iacute;.
+        <span class="btn btn-default btn-sm" ng-disabled="disabled" flow-btn>Subir imagen</span>
+        <span class="btn btn-default btn-sm" ng-disabled="disabled" flow-btn flow-directory ng-show="$flow.supportDirectory">Subir directorio con im&aacute;genes</span>
+        <span><small>&nbsp; o arrastre las im&aacute;genes aqu&iacute;</small></span><b>O</b> Arrastrar
+        las im&aacute;genes aqu&iacute;.
       </div>
       <br/>
       <div>
@@ -56,21 +56,18 @@
             <img ng-if="file.file.image_url" ng-src="{{file.file.image_url}}" />
           </div>
           <div class="progress progress-striped" ng-class="{active: file.isUploading()}">
-            <div class="progress-bar" role="progressbar" aria-valuenow="{{file.progress() * 100}}" aria-valuemin="0"
-              aria-valuemax="100" ng-style="{width: (file.progress() * 100) + '%'}">
-              <span class="sr-only">{{file.progress()}}% Completo</span>
-            </div>
+            <uib-progressbar class="progress progress-bar progress-bar-sm" value="file.progress() * 100" type="{{file.error ? 'danger': (file.isUploading() ? 'info' : 'success')}}"></uib-progressbar>
           </div>
           <div class="btn-group">
-            <a class="btn btn-xs btn-danger" ng-disabled="disabled" ng-click="remove(file)">
-          Remover
-        </a>
+            <a class="btn btn-sm btn-default" ng-disabled="disabled" ng-click="remove(file)">
+              <i class="fa fa-times"></i>
+            </a>
           </div>
         </div>
-        <div ng-if="options.showFilesSummary" class="row" ng-show="files.length > 0">
+        <div ng-if="options.showFilesSummary" class="row" ng-show="$flow.files.length > 0">
           <div class="col-lg-12" style="margin-left: 10px; margin-top: 15px;">
-            <h4> Archivos subidos </h4>
-            <div ng-repeat="file in files">
+            <h4> Im&aacute;genes subidas </h4>
+            <div ng-repeat="file in $flow.files">
               [{{$index + 1}}] <strong>URL:</strong> <span style="font-size: 13px;">{{adjuntosBaseURL}}/{{file.path}}</span>
             </div>
           </div>
