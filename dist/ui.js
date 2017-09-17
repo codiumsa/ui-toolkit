@@ -18,7 +18,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
   angular.module('ui.directives', []);
   angular.module('ui.filters', []);
   angular.module('ui.services', []);
-  angular.module('ui', ['ui.config', 'ui.directives', 'ui.filters', 'ui.services', 'ngResource', 'ngCookies', 'ngSanitize', 'ngTouch', 'datatables', 'datatables.bootstrap', 'schemaForm', 'pascalprecht.translate', 'cgNotify', 'angular-underscore/filters', 'flow', 'ui.bootstrap', 'ui.select', 'ui.highlight', 'ncy-angular-breadcrumb', 'ui.router', 'oc.lazyLoad', 'ngStorage', 'LocalForageModule', 'datatables.buttons', 'datatables.colreorder', 'daterangepicker', 'rangepicker', 'ngWebSocket', 'pickadate', 'ngAnimate', 'ngMessages', 'ngResource', 'angularSpinner', 'ngTagsInput', 'angular-ladda', 'perfect_scrollbar', 'angular-intro', 'datatables.colreorder', 'ngNotify', 'ngclipboard']);
+  angular.module('ui', ['ui.config', 'ui.directives', 'ui.filters', 'ui.services', 'ngResource', 'ngCookies', 'ngSanitize', 'ngTouch', 'datatables', 'datatables.bootstrap', 'schemaForm', 'pascalprecht.translate', 'cgNotify', 'angular-underscore/filters', 'flow', 'ui.bootstrap', 'ui.select', 'ui.highlight', 'ncy-angular-breadcrumb', 'ui.router', 'oc.lazyLoad', 'ngStorage', 'datatables.buttons', 'datatables.colreorder', 'daterangepicker', 'rangepicker', 'ngWebSocket', 'pickadate', 'ngAnimate', 'ngMessages', 'ngResource', 'angularSpinner', 'ngTagsInput', 'angular-ladda', 'perfect_scrollbar', 'angular-intro', 'datatables.colreorder', 'ngNotify', 'ngclipboard']);
 
   angular.module('ui').config(['$provide', function ($provide) {
 
@@ -737,59 +737,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     };
   });
 })();
-(function () {
-  'use strict';
-
-  /**
-   * @ngdoc directive
-   * @name qualita.directive:offlineFormRecovery
-   * @description
-   * # offlineFormRecovery
-   */
-
-  angular.module('ui').directive('offlineFormRecovery', ['$localForage', function ($localForage) {
-    return {
-      template: '<div class="btn-group" role="group" aria-label="First group">' + '<button ng-disabled="!pending.length || position == 0" type="button" class="glyphicon glyphicon-arrow-left btn btn-default btn-recovery" ng-click="previous()"></button>' + '<button ng-disabled="!pending.length || position == pending.length" type="button" class="glyphicon glyphicon-arrow-right btn btn-default btn-recovery" ng-click="next()"></button>' + '<button ng-disabled="!pending.length || position == 0" type="button" class="glyphicon glyphicon-remove btn btn-default btn-recovery" ng-click="remove()"></button>' + '</div>',
-      restrict: 'EA',
-      link: function postLink(scope, element, attrs) {
-        scope.position = 0;
-
-        if (scope.resource) {
-          $localForage.getItem(scope.resource).then(function (value) {
-            scope.pending = _(value).filter(function (e) {
-              return !e.id;
-            }).map(function (e, i) {
-              e.index = i;return e;
-            }).value();
-          });
-        } else {
-          console.log('scope.resource no definido');
-        }
-
-        scope.next = function () {
-          scope.position++;
-          scope.model = scope.position == 0 ? {} : scope.pending[scope.position - 1];
-        };
-
-        scope.previous = function () {
-          scope.position--;
-          scope.model = scope.position == 0 ? {} : scope.pending[scope.position - 1];
-        };
-
-        scope.remove = function () {
-          $localForage.getItem(scope.resource).then(function (value) {
-            scope.pending = _.filter(value, function (e, i) {
-              return i !== scope.position - 1;
-            });
-            $localForage.setItem(scope.resource, scope.pending);
-            scope.previous();
-          });
-        };
-      }
-    };
-  }]);
-})();
-
 (function () {
   'use strict';
 
@@ -3285,7 +3232,7 @@ angular.module('ui').filter('filesize', function () {
    * # formFactory
    */
 
-  angular.module('ui').factory('formFactory', function ($location, $localForage, notify, $rootScope, AuthorizationService, $q) {
+  angular.module('ui').factory('formFactory', function ($location, notify, $rootScope, AuthorizationService, $q) {
     var hasPermission = AuthorizationService.hasPermission;
 
     // Public API here
@@ -3402,16 +3349,16 @@ angular.module('ui').filter('filesize', function () {
               scope.$broadcast('schemaForm.error.' + e.data[0].constraint, e.data[0].codigoError.toString(), false);
             }
 
-            if (e.data && e.data.code !== 403) {
-              var msg = 'Error al persistir la operación.';
-              if (!scope.model.id) msg += '\n\nGuardando localmente, reintente más tarde.';
-              notify({ message: msg, classes: 'alert-danger', position: 'right' });
-              $localForage.getItem(resource).then(function (value) {
-                value = value || [];
-                value.unshift(scope.model);
-                if (!scope.model.id) $localForage.setItem(resource, value);
-              });
-            }
+            // if(e.data && e.data.code !== 403) {
+            //   var msg = 'Error al persistir la operación.';
+            //   if(!scope.model.id) msg += '\n\nGuardando localmente, reintente más tarde.'
+            //     notify({ message: msg, classes: 'alert-danger', position: 'right' });
+            //     $localForage.getItem(resource).then(function(value) {
+            //       value = value || [];
+            //       value.unshift(scope.model);
+            //       if(!scope.model.id) $localForage.setItem(resource, value);
+            //     });
+            // }
 
             // manejo general de errores
             else if (e && e.status === 500) {
@@ -3485,7 +3432,6 @@ angular.module('ui').filter('filesize', function () {
     };
   });
 })();
-
 (function () {
   'use strict';
 

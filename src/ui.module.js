@@ -37,7 +37,6 @@
     'ui.router',
     'oc.lazyLoad',
     'ngStorage',
-    'LocalForageModule',
     'datatables.buttons',
     'datatables.colreorder',
     'daterangepicker',
