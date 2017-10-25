@@ -584,6 +584,8 @@
                       }
 
                       $('#' + id).select2({
+                          allowClear: true,
+                          placeholder: ' ',
                           minimumResultsForSearch: -1,
                           id: function(text) {
                             return text[column.idField];
