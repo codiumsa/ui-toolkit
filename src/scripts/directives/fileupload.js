@@ -84,8 +84,11 @@
         return false;
       }
       var ext = file.getExtension();
-      // si es imagen controlamos que sea alguna de las extensiones permitidas
-      if (this.options.imageOnly && ['png', 'gif', 'jpg', 'jpeg'].indexOf(ext) < 0) {
+      if (this.options.permitedExtensions && this.options.permitedExtensions.length && this.options.permitedExtensions.indexOf(ext.toLowerCase()) < 0) {
+        ngNotify.set('Solo se permiten archivos con extensión: ' + this.options.permitedExtensions.join(', '), 'error');
+        return false;
+      } else if (this.options.imageOnly && ['png', 'gif', 'jpg', 'jpeg'].indexOf(ext) < 0) {
+        // si es imagen controlamos que sea alguna de las extensiones permitidas
         ngNotify.set('Solo se permiten archivos con extensión: png, gif, jpg o jpeg.', 'error');
         return false;
       }
