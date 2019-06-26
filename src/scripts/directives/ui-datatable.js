@@ -720,9 +720,9 @@
 
             /* Funcion de actualizacion de URL Base con o sin filtros estaticos */
             function updateStaticFilters() {
-              var api = '/datatables/<%= resource %>';
+              var api = '/<%= resource %>/datatables';
               if ($scope.options.invertedApi) {
-                api = '/<%= resource %>/datatables';
+                api = '/datatables/<%= resource %>';
               }
 
               urlTemplate = _.template(baseurl.getUrl() + ($scope.options.urlTemplate || api));
